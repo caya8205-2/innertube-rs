@@ -1,0 +1,37 @@
+import { type ObservedArray, YTNode } from '../helpers.js';
+import { Parser, type RawNode } from '../index.js';
+import ExpandableVideoDescriptionBody from './ExpandableVideoDescriptionBody.js';
+import HorizontalCardList from './HorizontalCardList.js';
+import VideoDescriptionHeader from './VideoDescriptionHeader.js';
+import VideoDescriptionInfocardsSection from './VideoDescriptionInfocardsSection.js';
+import VideoDescriptionMusicSection from './VideoDescriptionMusicSection.js';
+import VideoDescriptionTranscriptSection from './VideoDescriptionTranscriptSection.js';
+import VideoDescriptionCourseSection from './VideoDescriptionCourseSection.js';
+import VideoAttributesSectionView from './VideoAttributesSectionView.js';
+import HowThisWasMadeSectionView from './HowThisWasMadeSectionView.js';
+import ReelShelf from './ReelShelf.js';
+import ExpandableMetadata from './ExpandableMetadata.js';
+import MerchandiseShelf from './MerchandiseShelf.js';
+import HypeFanCreditsSectionView from './HypeFanCreditsSectionView.js';
+import VideoDescriptionYouchatSectionView from './VideoDescriptionYouchatSectionView.js';
+
+export default class StructuredDescriptionContent extends YTNode {
+  static type = 'StructuredDescriptionContent';
+
+  public items: ObservedArray<
+    VideoDescriptionHeader | ExpandableVideoDescriptionBody | VideoDescriptionMusicSection |
+    VideoDescriptionInfocardsSection | VideoDescriptionTranscriptSection | VideoDescriptionCourseSection |
+    VideoDescriptionYouchatSectionView | HorizontalCardList | ReelShelf | VideoAttributesSectionView |
+    HowThisWasMadeSectionView | ExpandableMetadata | MerchandiseShelf | HypeFanCreditsSectionView
+  >;
+
+  constructor(data: RawNode) {
+    super();
+    this.items = Parser.parseArray(data.items, [
+      VideoDescriptionHeader, ExpandableVideoDescriptionBody, VideoDescriptionMusicSection,
+      VideoDescriptionInfocardsSection, VideoDescriptionCourseSection, VideoDescriptionTranscriptSection,
+      VideoDescriptionYouchatSectionView, HorizontalCardList, ReelShelf, VideoAttributesSectionView,
+      HowThisWasMadeSectionView, ExpandableMetadata, MerchandiseShelf, HypeFanCreditsSectionView
+    ]);
+  }
+}
