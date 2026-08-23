@@ -3,7 +3,7 @@ use serde::Serialize;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use innertube_rs::models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
-use innertube_rs::{Innertube, SessionOptions};
+use innertube_rs::Innertube;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -75,16 +75,7 @@ async fn main() {
         i += 1;
     }
 
-    let options = SessionOptions {
-        client_name: Some(innertube_rs::constants::clients::ANDROID_VR_NAME.to_string()),
-        client_version: Some(innertube_rs::constants::clients::ANDROID_VR_VERSION.to_string()),
-        device_category: Some("MOBILE".to_string()),
-        user_agent: Some(innertube_rs::constants::clients::ANDROID_VR_USER_AGENT.to_string()),
-        generate_session_locally: Some(true),
-        ..Default::default()
-    };
-
-    let yt = match Innertube::with_options(options).await {
+    let yt = match Innertube::new().await {
         Ok(client) => client,
         Err(e) => {
             eprintln!(r#"{{"error": "Failed to initialize Innertube: {}"}}"#, e);

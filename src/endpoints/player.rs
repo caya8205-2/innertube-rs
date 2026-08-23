@@ -36,14 +36,16 @@ pub async fn fetch_player_response(
 
     let mut player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
-    // Check if adaptive formats have URLs or ciphers. If not, fallback to ANDROID_VR, then MWEB, then iOS
-    let needs_fallback = player_response.streaming_data.as_ref().is_none_or(|sd| {
+    // Check if playability status is not OK or adaptive formats have no URLs/ciphers. If so, fallback to ANDROID_VR, then iOS, then MWEB
+    let needs_fallback = player_response.playability_status.status != "OK" || player_response.streaming_data.as_ref().is_none_or(|sd| {
         sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
     });
 
     if needs_fallback {
         if let Ok(vr_response) = fetch_player_response_android_vr(session, video_id).await {
-            if let Some(vr_streaming) = vr_response.streaming_data {
+            if vr_response.playability_status.status == "OK" {
+                player_response = vr_response;
+            } else if let Some(vr_streaming) = vr_response.streaming_data {
                 if let Some(ref mut sd) = player_response.streaming_data {
                     sd.formats = vr_streaming.formats;
                     sd.adaptive_formats = vr_streaming.adaptive_formats;
@@ -51,22 +53,42 @@ pub async fn fetch_player_response(
                     player_response.streaming_data = Some(vr_streaming);
                 }
             }
-        } else if let Ok(mweb_response) = fetch_player_response_mweb(session, video_id, signature_timestamp).await {
-            if let Some(mweb_streaming) = mweb_response.streaming_data {
-                if let Some(ref mut sd) = player_response.streaming_data {
-                    sd.formats = mweb_streaming.formats;
-                    sd.adaptive_formats = mweb_streaming.adaptive_formats;
-                } else {
-                    player_response.streaming_data = Some(mweb_streaming);
+        }
+
+        let still_needs_fallback = player_response.playability_status.status != "OK" || player_response.streaming_data.as_ref().is_none_or(|sd| {
+            sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
+        });
+
+        if still_needs_fallback {
+            if let Ok(ios_response) = fetch_player_response_ios(session, video_id).await {
+                if ios_response.playability_status.status == "OK" {
+                    player_response = ios_response;
+                } else if let Some(ios_streaming) = ios_response.streaming_data {
+                    if let Some(ref mut sd) = player_response.streaming_data {
+                        sd.formats = ios_streaming.formats;
+                        sd.adaptive_formats = ios_streaming.adaptive_formats;
+                    } else {
+                        player_response.streaming_data = Some(ios_streaming);
+                    }
                 }
             }
-        } else if let Ok(ios_response) = fetch_player_response_ios(session, video_id).await {
-            if let Some(ios_streaming) = ios_response.streaming_data {
-                if let Some(ref mut sd) = player_response.streaming_data {
-                    sd.formats = ios_streaming.formats;
-                    sd.adaptive_formats = ios_streaming.adaptive_formats;
-                } else {
-                    player_response.streaming_data = Some(ios_streaming);
+        }
+
+        let still_needs_fallback_mweb = player_response.playability_status.status != "OK" || player_response.streaming_data.as_ref().is_none_or(|sd| {
+            sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
+        });
+
+        if still_needs_fallback_mweb {
+            if let Ok(mweb_response) = fetch_player_response_mweb(session, video_id, signature_timestamp).await {
+                if mweb_response.playability_status.status == "OK" {
+                    player_response = mweb_response;
+                } else if let Some(mweb_streaming) = mweb_response.streaming_data {
+                    if let Some(ref mut sd) = player_response.streaming_data {
+                        sd.formats = mweb_streaming.formats;
+                        sd.adaptive_formats = mweb_streaming.adaptive_formats;
+                    } else {
+                        player_response.streaming_data = Some(mweb_streaming);
+                    }
                 }
             }
         }
