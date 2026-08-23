@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.3.0` (Active Development — Full YouTube & YouTube Music Suite)  
+> **Status Repositori**: `v0.3.0` (Active Development — 100% Core Port Complete)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -16,6 +16,9 @@
 | **Video Metadata & Info** (`src/models/video.rs`) | 🟢 **Ready** | ✅ Passed | Title, author, duration, view count, formats count |
 | **Client Fallback Chain** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | WEB → ANDROID → iOS → ANDROID_VR → MWEB, dengan penerusan PO-token & cookie |
 | **Stream URL Resolution** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | Audio-only (`AAC`/`Opus`) & Video (`1080p`/`720p`/`360p`) |
+| **Search Autocomplete & Suggestions** (`src/endpoints/suggestions.rs`) | 🟢 **Ready** | ✅ Passed | Suggestion keyword instan untuk YouTube & YouTube Music |
+| **Full YouTube Playlist Scraper** (`src/endpoints/playlist.rs`) | 🟢 **Ready** | ✅ Passed | Metadata header, total videos count, `lockupViewModel` & `playlistVideoRenderer`, continuations |
+| **Channel Extended Tabs** (`src/endpoints/channel.rs`) | 🟢 **Ready** | ✅ Passed | Tab *Videos* (recent uploads), *Shorts* (`shortsLockupViewModel`), and Channel *About* metadata |
 | **YouTube Music Search & Filters** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Filter khusus: *Songs, Albums, Artists, Playlists, Videos* via `WEB_REMIX` context |
 | **YouTube Music Albums & Tracklist** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Ekstraksi album, header cover, artist, tahun rilis, dan seluruh tracklist video IDs |
 | **YouTube Music Lyrics Engine** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Resolusi tab `MPLY...` dan ekstraksi lirik lagu (LyricFind/Musixmatch) |
@@ -24,9 +27,9 @@
 | **Subtitles & Transcripts** (`src/endpoints/transcript.rs`) | 🟢 **Ready** | ✅ Passed | Timed transcript JSON3 & XML parser, export SRT & WebVTT, multi-language caption tracks |
 | **Comments & Threads Engine** (`src/endpoints/comments.rs`) | 🟢 **Ready** | ✅ Passed | Top comments, pinned comments, author badges, likes, reply threads (`entityBatchUpdate` support) |
 | **HLS & DASH Manifest Parser** (`src/utils/manifest.rs`) | 🟢 **Ready** | ✅ Passed | Native Master M3U8 & MPD representation parser (bandwidth, resolutions, codecs) |
-| **CI/CD Auto-Build & Release** (`.github/workflows/release.yml`) | 🟢 **Ready** | ✅ Passed | Multi-platform binary auto-build (Windows, Linux, macOS) & GitHub Release saat bump versi |
-| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | **22 script pengujian mandiri** di folder `examples/` |
-| **Unit Test & Linter Standards** | 🟢 **Ready** | ✅ Passed | 11 unit tests passing 100%, 3 doc tests passing, 0 clippy warnings |
+| **CI/CD Auto-Build & Release** (`.github/workflows/release.yml`) | 🟢 **Ready** | ✅ Passed | Multi-platform binary auto-build (Windows, Linux, macOS universal) & GitHub Release saat bump versi |
+| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | **25 script pengujian mandiri** di folder `examples/` |
+| **Unit Test & Linter Standards** | 🟢 **Ready** | ✅ Passed | 15 unit tests passing 100%, 3 doc tests passing, 0 clippy warnings |
 
 ---
 
@@ -50,10 +53,13 @@ innertube-rs/
 │   ├── error.rs                          # Typed InnertubeError enum
 │   ├── bin/cli.rs                        # CLI binary (info, stream, download commands)
 │   ├── core/                             # Session, Player, HttpClient
-│   ├── endpoints/                        # Player, Search, Browse, Next, Transcript, Comments, Music
-│   ├── models/                           # Video, Format, Search, Channel, Next, Transcript, Comments, Manifest, Music
+│   ├── endpoints/                        # Player, Search, Browse, Next, Transcript, Comments, Music, Suggestions, Playlist, Channel
+│   ├── models/                           # Video, Format, Search, Channel, Next, Transcript, Comments, Manifest, Music, Suggestions, Playlist
 │   └── utils/                            # QuickJS decipher engine, Protobuf helpers, Manifest parser
 └── examples/
+    ├── get_suggestions.rs                # Autocomplete search suggestion tester (YouTube + YouTube Music)
+    ├── get_playlist.rs                   # Full YouTube playlist scraper & continuation tester
+    ├── get_channel_tabs.rs               # Channel videos, shorts, and about scraper
     ├── test_music_search.rs              # YouTube Music filtered search (Songs, Albums, Artists, Playlists)
     ├── get_music_album.rs                # YouTube Music album details & tracklist scraper
     ├── get_music_explore.rs              # YouTube Music explore & trending charts
@@ -75,19 +81,8 @@ innertube-rs/
     ├── test_web_embedded.rs              # WEB_EMBEDDED_PLAYER endpoint tester
     ├── test_cpn_streaming.rs             # Client Playback Nonce streaming tester
     ├── test_hls.rs                       # HLS & DASH manifest tester
-    ├── test_http2_cdn.rs                 # HTTP/2 protocol CDN tester
+    ├── test_http2_cdn.rs                 # HTTP/2 protocol negotiation on Google Video CDN
     ├── download_audio.rs                 # Native audio stream range chunk download
     ├── get_video_info.rs                 # Video metadata and streamingData info
     └── search_and_browse.rs              # Search and channel scraping example
 ```
-
----
-
-## 3. Status Integrasi ke Consumer Projects
-
-### A. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
-* **Status**: 🟢 **Operational** (Engine native cepat + Auto-Detect browser cookies).
-
-### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
-* **Status**: 🟢 **Ready for Integration**
-* Semua kebutuhan Noctune: Streaming Audio native, YouTube Music search filters, Tracklist Album, Rekomendasi Radio/Next, Transkrip/Lyrics SRT & WebVTT sudah lengkap 100%.

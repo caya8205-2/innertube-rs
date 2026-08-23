@@ -112,7 +112,10 @@ pub use error::{InnertubeError, Result};
 pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
 pub use models::video::{PlayerResponse, VideoDetails, StreamingData, PlayabilityStatus, Thumbnail};
 pub use models::search::{SearchResults, SearchResultItem, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};
-pub use models::channel::{ChannelArtistView, ChannelTrack, ChannelPlaylist, YouTubePlaylistView};
+pub use models::channel::{
+    ChannelAbout, ChannelArtistView, ChannelPlaylist, ChannelShortItem, ChannelShortsResponse,
+    ChannelTrack, ChannelVideoItem, ChannelVideosResponse, YouTubePlaylistView,
+};
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
 pub use models::comments::{Comment, CommentThread, CommentsResult};
@@ -122,15 +125,20 @@ pub use models::music::{
     MusicExplore, MusicLyrics, MusicPlaylistItem, MusicSearchFilter, MusicSearchResults,
     MusicTrackItem,
 };
+pub use models::suggestions::{SearchSuggestion, SearchSuggestionsResult};
+pub use models::playlist::{PlaylistContinuation, PlaylistVideoItem, PlaylistView};
 pub use core::session::{Session, SessionOptions};
 pub use core::player::Player;
 
-use crate::endpoints::browse::{get_channel, get_playlist};
+use crate::endpoints::browse::get_channel;
+use crate::endpoints::channel::{get_channel_about, get_channel_shorts, get_channel_videos};
 use crate::endpoints::comments::{get_comment_replies, get_comments};
 use crate::endpoints::music::{get_music_album, get_music_explore, get_music_lyrics, search_music};
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
+use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
 use crate::endpoints::search::search;
+use crate::endpoints::suggestions::get_search_suggestions;
 use crate::endpoints::transcript::{get_transcript, get_transcript_tracks};
 
 /// Main high-level Innertube client.
@@ -194,9 +202,46 @@ impl Innertube {
         get_channel(&self.session, channel_id_or_handle).await
     }
 
-    /// Fetch playlist tracklist by playlist ID.
-    pub async fn get_playlist(&self, playlist_id: &str) -> Result<YouTubePlaylistView> {
+    /// Fetch search autocomplete suggestions for YouTube or YouTube Music.
+    pub async fn get_search_suggestions(
+        &self,
+        query: &str,
+        is_music: bool,
+    ) -> Result<SearchSuggestionsResult> {
+        get_search_suggestions(&self.session, query, is_music).await
+    }
+
+    /// Fetch full YouTube playlist metadata and videos.
+    pub async fn get_playlist(&self, playlist_id: &str) -> Result<PlaylistView> {
         get_playlist(&self.session, playlist_id).await
+    }
+
+    /// Fetch next page of playlist videos using a continuation token.
+    pub async fn get_playlist_continuation(&self, continuation_token: &str) -> Result<PlaylistContinuation> {
+        get_playlist_continuation(&self.session, continuation_token).await
+    }
+
+    /// Fetch channel profile and about details.
+    pub async fn get_channel_about(&self, channel_id: &str) -> Result<ChannelAbout> {
+        get_channel_about(&self.session, channel_id).await
+    }
+
+    /// Fetch channel videos (Videos tab) with pagination support.
+    pub async fn get_channel_videos(
+        &self,
+        channel_id: &str,
+        continuation_token: Option<&str>,
+    ) -> Result<ChannelVideosResponse> {
+        get_channel_videos(&self.session, channel_id, continuation_token).await
+    }
+
+    /// Fetch channel shorts (Shorts tab) with pagination support.
+    pub async fn get_channel_shorts(
+        &self,
+        channel_id: &str,
+        continuation_token: Option<&str>,
+    ) -> Result<ChannelShortsResponse> {
+        get_channel_shorts(&self.session, channel_id, continuation_token).await
     }
 
     /// Fetch watch next details including recommended/related videos, autoplay, and playlist queue.

@@ -8,3 +8,5 @@ pub mod transcript;
 pub mod manifest;
 pub mod comments;
 pub mod music;
+pub mod suggestions;
+pub mod playlist;

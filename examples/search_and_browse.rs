@@ -42,10 +42,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(pl) = channel_info.channel_playlists.first() {
         println!("\n4. Fetching playlist info for '{}' (ID: {})...", pl.name, pl.id);
         let pl_info = yt.get_playlist(&pl.id).await?;
-        println!("   >> Playlist Name: {}", pl_info.name);
-        println!("   >> Track count: {}", pl_info.tracks.len());
-        for (i, track) in pl_info.tracks.iter().take(3).enumerate() {
-            println!("      [{i}] {} - {} (ID: {})", track.artist, track.title, track.youtube_id);
+        println!("   >> Playlist Name: {}", pl_info.title);
+        println!("   >> Video count: {}", pl_info.videos.len());
+        for (i, video) in pl_info.videos.iter().take(3).enumerate() {
+            println!("      [{i}] {} - {} (ID: {})", video.author, video.title, video.id);
         }
     }
 

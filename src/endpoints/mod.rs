@@ -5,3 +5,6 @@ pub mod next;
 pub mod transcript;
 pub mod comments;
 pub mod music;
+pub mod suggestions;
+pub mod playlist;
+pub mod channel;
