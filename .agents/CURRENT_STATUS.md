@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 23 Agustus 2026  
-> **Status Repositori**: `v0.1.0` (Active Development — CDN Download Iteration)  
+> **Status Repositori**: `v0.1.0` (Active Development — CDN Download & Format Selection)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -14,35 +14,27 @@
 | **Protobuf Visitor Data** (`src/utils/proto.rs`) | 🟢 **Ready** | ✅ Passed | Encode/decode Base64 URL-safe dengan padding `%3D` |
 | **Player Decipher Engine** (`src/utils/decipher.rs`) | 🟢 **Ready** | ✅ Passed | Sandbox QuickJS (`rquickjs`), eksekusi n-token & sig (<5ms) |
 | **Video Metadata & Info** (`src/models/video.rs`) | 🟢 **Ready** | ✅ Passed | Title, author, duration, view count, formats count |
-| **Client Fallback Chain** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | WEB → ANDROID_VR → iOS → MWEB, termasuk playability status |
-| **Stream URL Resolution** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | Audio-only (`AAC`/`Opus`) & Video (`1080p`) resolved URLs |
-| **Stream Download** (`src/bin/cli.rs`) | 🟡 **In Progress** | ⚠️ Partial | `&range=` + `&rn=` pattern, Chrome UA. CDN rate-limit masih terjadi |
+| **Client Fallback Chain** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | WEB → ANDROID_VR → iOS → MWEB, termasuk update `playability_status` |
+| **Stream URL Resolution** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | Audio-only (`AAC`/`Opus`) & Video (`1080p`/`720p`/`360p`) |
 | **Search Queries** (`src/endpoints/search.rs`) | 🟢 **Ready** | ✅ Passed | Recursive AST renderer parser (Video, Channel, Playlist) |
 | **Channel Scraping** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | Metadata, subscribers, avatar, top tracks & playlists |
 | **Playlist Tracklist** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | YouTube Music (`WEB_REMIX`) & standard playlist format |
+| **Stream Download** (`src/bin/cli.rs`) | 🟡 **In Progress** | ⚠️ Partial | Investigasi format selection (Progressive itag 18 vs Adaptive itag 140) |
 | **Library Documentation** (`src/lib.rs`, `README.md`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc` 100% pass, `cargo doc` HTML site |
 
 ---
 
-## 2. Status Download Stream (Known Issues)
+## 2. Analisis Masalah: Error 403 pada Download Stream
 
-### Masalah Aktif: Google CDN Rate Limiting
-- **Gejala**: HTTP `403 Forbidden` pada request download stream ke Google Video CDN.
-- **Root Cause**: Google CDN menerapkan per-IP rate limiting. Setelah banyak request stream dalam waktu singkat, semua subsequent download request ditolak.
-- **Perilaku yang Dikonfirmasi**:
-  - Chunk pertama (Range `bytes=0-1048575`) selalu berhasil (`206 Partial Content`).
-  - Chunk kedua ke URL yang sama selalu ditolak (`403 Forbidden`), terlepas dari metode (Range header, `&range=` query param, client baru per chunk).
-  - File sangat kecil (<300KB) yang muat dalam satu chunk tetap berhasil.
-  - Bahkan `yt-dlp` mengalami hal yang sama ketika rate-limit aktif.
-- **Mitigasi Saat Ini**:
-  - `avpull` memiliki fallback otomatis ke `yt-dlp` jika `innertube` download gagal.
-  - Download function sudah diubah ke pola `&range=` + `&rn=` (sesuai yt-dlp) yang lebih robust setelah rate-limit reset.
-
-### Pendekatan Download Saat Ini (`download_stream_to_file`)
-- Menggunakan **`&range=` query param + `&rn=` request number** (bukan Range header).
-- **Chrome User-Agent** untuk CDN download (sesuai perilaku yt-dlp).
-- **Chunk size 10MB** (matching yt-dlp `http_chunk_size`).
-- **Dedicated download client** terpisah dari session HTTP client.
+### Root Cause Analysis
+1. **Perbedaan Pemilihan Format (Format Selection Strategy)**:
+   - Pada saat user meminta `-f mp4 -q 360`, CLI `innertube` memecah unduhan menjadi 2 stream: **Adaptive Video** (itag 134/137) + **Adaptive Audio** (itag 140).
+   - Di sisi lain, `yt-dlp` memilih **Progressive Format (itag 18)** yang sudah mencakup Video 360p dan Audio AAC dalam satu file/stream tunggal. Format ini tidak memerlukan penggabungan stream dan tidak diblokir oleh CDN Google Video.
+2. **Restriksi Stream Adaptive Mobile (`ANDROID_VR`)**:
+   - Stream adaptive audio (itag 140 / 139) yang berasal dari endpoint `ANDROID_VR` memerlukan otorisasi/session range tertentu pada CDN, sehingga request chunk Range lanjutan menghasilkan `403 Forbidden`.
+   - Stream progressive (itag 18 / 22) dan Web deciphered formats (dengan n-token yang valid) tidak memiliki restriksi ini.
+3. **Kesimpulan**:
+   - **Masalah berada di library `innertube-rs`** (khususnya strategi pemilihan format dan mekanisme stream download di `src/bin/cli.rs`), bukan pada aplikasi consumer `avpull`.
 
 ---
 
@@ -75,40 +67,27 @@ innertube-rs/
 
 ---
 
-## 4. Status Build & Pengujian
+## 4. Status Integrasi ke Consumer Projects
 
-* **`cargo check --all-targets`**: **0 errors / 0 warnings**
-* **`cargo test`**: **100% passing** (unit tests & integration tests)
-* **`cargo test --doc`**: **3/3 passing**
-* **`cargo doc --no-deps`**: Berhasil di-generate di `target/doc/innertube_rs/index.html`
+### A. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
+* **Status**: 🟢 **Operational with Fallback**
+* **Keterangan**:
+  - `youtubei.js` sudah dihapus sepenuhnya.
+  - Native binary `innertube.exe` dipakai untuk ekstraksi info & streaming awal.
+  - Jika native download menemui error 403, avpull otomatis fallback ke `yt-dlp` dan berhasil menyelesaikan download sampai `[OK]`.
 
----
-
-## 5. Status Integrasi ke Consumer Projects
-
-### A. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
-* **Tujuan**: Menggantikan backend Node.js sidecar (`youtubei.js`) untuk streaming audio playback.
-* **Kesiapan**:
-  - `innertube_rs::Innertube::get_stream_url()` siap dipanggil langsung dari Tauri backend (`src-tauri`).
-  - Model `ChannelArtistView` dan `YouTubePlaylistView` di `src/models/channel.rs` sudah disesuaikan dengan schema yang digunakan oleh Noctune.
-
-### B. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
-* **Status**: 🟡 **Partially Working** (CDN rate-limit masih mengganggu file besar)
-* **Implementasi**:
-  - `youtubei.js` dihapus sepenuhnya dari `package.json`.
-  - Menggunakan native binary `innertube` (Rust) untuk metadata extraction dan stream download.
-  - Fallback otomatis ke `yt-dlp` jika `innertube` download gagal.
-  - Video kecil (<300KB) berhasil didownload langsung via `innertube`.
+### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
+* **Status**: 🟢 **Ready for Integration**
+* **Keterangan**:
+  - Model data (`ChannelArtistView`, `YouTubePlaylistView`) sudah disesuaikan untuk kebutuhan player Noctune.
 
 ---
 
-## 6. Roadmap & Langkah Mendatang
+## 5. Rencana Perbaikan (Next Steps)
 
-1. **Fix CDN Download (Prioritas Tinggi)**:
-   - Investigasi lebih lanjut setelah IP rate-limit reset (biasanya beberapa jam).
-   - Kemungkinan solusi: PoToken/Proof of Origin Token, visitor data yang valid, atau session cookie yang lebih lengkap.
-2. **Integrasi Downstream**:
-   - Pasang `innertube-rs` di `music-player/src-tauri/Cargo.toml` sebagai local path dependency atau git dependency.
-3. **Hardening**:
-   - Pantau pembaruan obfuscation script YouTube (`base.js`) jika ada perubahan pattern.
-   - Optimasi pooling / reusable runtime QuickJS untuk high-throughput concurrent requests jika diperlukan.
+1. **Prioritaskan Progressive Formats di `src/bin/cli.rs`**:
+   - Jika format target adalah `mp4` dan kualitas yang diminta cocok dengan format progressive (itag 18 untuk 360p, itag 22 untuk 720p), langsung download stream progressive tersebut tanpa memecah ke audio/video terpisah.
+2. **Web Decipher Fallback untuk Audio Adaptive**:
+   - Untuk stream audio murni (MP3/FLAC/M4A), gunakan format audio dari client Web/MWEB yang di-decipher via `rquickjs` agar terbebas dari restriksi stream mobile.
+3. **Rebuild & Sync**:
+   - Build binary release `innertube.exe` dan copy ke `avpull/bin/`.
