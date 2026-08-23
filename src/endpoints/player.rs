@@ -127,8 +127,8 @@ pub fn select_format<'a>(
 
     // Sort by bitrate
     match filter.quality {
-        QualityPreference::Highest => candidates.sort_by(|a, b| b.bitrate.cmp(&a.bitrate)),
-        QualityPreference::Lowest => candidates.sort_by(|a, b| a.bitrate.cmp(&b.bitrate)),
+        QualityPreference::Highest => candidates.sort_by_key(|a| std::cmp::Reverse(a.bitrate)),
+        QualityPreference::Lowest => candidates.sort_by_key(|a| a.bitrate),
     }
 
     Ok(candidates[0])
