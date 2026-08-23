@@ -73,27 +73,25 @@ async fn main() {
                 i += 2;
                 continue;
             }
-        } else if args[i] == "--po-token" || args[i] == "--pot" {
-            if i + 1 < args.len() {
-                po_token = Some(args[i + 1].clone());
-                i += 2;
-                continue;
-            }
-        } else if args[i] == "--cookies" || args[i] == "--cookie" {
-            if i + 1 < args.len() {
-                cookie_input = Some(args[i + 1].clone());
-                i += 2;
-                continue;
-            }
+        } else if (args[i] == "--po-token" || args[i] == "--pot") && i + 1 < args.len() {
+            po_token = Some(args[i + 1].clone());
+            i += 2;
+            continue;
+        } else if (args[i] == "--cookies" || args[i] == "--cookie") && i + 1 < args.len() {
+            cookie_input = Some(args[i + 1].clone());
+            i += 2;
+            continue;
         }
         i += 1;
     }
 
     let parsed_cookie = cookie_input.map(|c| parse_cookies_input(&c));
 
-    let mut session_opts = innertube_rs::core::session::SessionOptions::default();
-    session_opts.po_token = po_token.clone();
-    session_opts.cookie = parsed_cookie.clone();
+    let session_opts = innertube_rs::core::session::SessionOptions {
+        po_token: po_token.clone(),
+        cookie: parsed_cookie.clone(),
+        ..Default::default()
+    };
 
     let yt = match Innertube::with_options(session_opts).await {
         Ok(client) => client,
