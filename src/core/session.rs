@@ -331,4 +331,41 @@ impl Session {
 
         Ok(res)
     }
+
+    /// POST request to an InnerTube endpoint using a specific client type (e.g. `WEB_REMIX`, `ANDROID`).
+    pub async fn post_innertube_client(&self, client_name: &str, endpoint: &str, mut payload: Value) -> Result<reqwest::Response> {
+        let clean_endpoint = endpoint.trim_start_matches('/');
+        let url = format!("{INNERTUBE_API_BASE_URL}/{clean_endpoint}?prettyPrint=false&alt=json&key={}", self.api_key);
+
+        let mut custom_context = self.context.clone();
+        custom_context.client.client_name = client_name.to_string();
+        if client_name == "WEB_REMIX" || client_name == "YTMUSIC" {
+            custom_context.client.client_version = "1.20240820.01.00".to_string();
+        }
+
+        if let Some(obj) = payload.as_object_mut() {
+            if !obj.contains_key("context") {
+                obj.insert("context".to_string(), serde_json::to_value(&custom_context)?);
+            }
+        }
+
+        let mut headers = self.build_innertube_headers();
+        let client_id = Self::client_name_id(client_name);
+        headers.insert("X-Youtube-Client-Name", HeaderValue::from_static(client_id));
+        if client_name == "WEB_REMIX" || client_name == "YTMUSIC" {
+            headers.insert("X-Youtube-Client-Version", HeaderValue::from_static("1.20240820.01.00"));
+            headers.insert(ORIGIN, HeaderValue::from_static("https://music.youtube.com"));
+            headers.insert(REFERER, HeaderValue::from_static("https://music.youtube.com/"));
+        }
+
+        let res = self.http_client
+            .post(&url)
+            .headers(headers)
+            .json(&payload)
+            .send()
+            .await
+            .map_err(InnertubeError::Network)?;
+
+        Ok(res)
+    }
 }

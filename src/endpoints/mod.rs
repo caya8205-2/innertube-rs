@@ -4,3 +4,4 @@ pub mod browse;
 pub mod next;
 pub mod transcript;
 pub mod comments;
+pub mod music;

@@ -7,3 +7,4 @@ pub mod next;
 pub mod transcript;
 pub mod manifest;
 pub mod comments;
+pub mod music;

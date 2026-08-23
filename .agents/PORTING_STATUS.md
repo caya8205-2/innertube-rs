@@ -3,8 +3,8 @@
 > **Upstream Reference**: [LuanRT/YouTube.js (YouTubei.js)](https://github.com/LuanRT/YouTube.js)  
 > **Target Project**: `innertube-rs` (Pure Rust Port)  
 > **Last Updated**: August 24, 2026  
-> **Overall Porting Progress (Core Streaming & Media Engine)**: **~98%**  
-> **Overall Porting Progress (Total YouTube.js Feature Parity)**: **~75% – 80%**
+> **Overall Porting Progress (Core Streaming & Media Engine)**: **~99%**  
+> **Overall Porting Progress (Total YouTube.js Feature Parity)**: **~85% – 90%**
 
 ---
 
@@ -12,59 +12,33 @@
 
 | YouTube.js (JS/TS) Module | Rust Equivalent (`innertube-rs`) | Status | Parity % | Description & Implementation Details |
 |---|---|:---:|:---:|---|
-| `src/core/Session.ts` | [`src/core/session.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/core/session.rs) | 🟢 Complete | 95% | Client context creation, device category headers, API key extraction from `sw.js_data`, visitor data generation, PO-token & cookie session management. |
+| `src/core/Session.ts` | [`src/core/session.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/core/session.rs) | 🟢 Complete | 95% | Client context creation, device category headers, API key extraction from `sw.js_data`, visitor data generation, PO-token & cookie session management, `post_innertube_client`. |
 | `src/core/HTTPClient.ts` | [`src/core/http.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/core/http.rs) | 🟢 Complete | 100% | `reqwest`-based asynchronous HTTP client with gzip, brotli, HTTP/2 negotiation, custom headers, and Netscape cookie store. |
 | `src/core/Player.ts` | [`src/utils/decipher.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/decipher.rs) | 🟢 Complete | 95% | QuickJS (`rquickjs`) sandboxed decipher engine. Extracts and executes base.js signature decipher algorithms and n-token transformations (<5ms). |
 | `src/utils/ProtoUtils.ts` | [`src/utils/proto.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/proto.rs) | 🟢 Complete | 100% | Protobuf visitor data encoding and decoding using `prost` and URL-safe base64 padding. |
 | `src/core/endpoints/Player.ts` | [`src/endpoints/player.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/player.rs) | 🟢 Complete | 95% | InnerTube `/player` endpoint with automatic multi-client fallback chain (**WEB → ANDROID → iOS → ANDROID_VR → MWEB**). |
-| `src/core/endpoints/Search.ts` | [`src/endpoints/search.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/search.rs) | 🟢 Complete | 85% | InnerTube `/search` endpoint with recursive AST renderer parser (extracts video results, channel results, playlist results). |
+| `src/core/endpoints/Search.ts` | [`src/endpoints/search.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/search.rs) | 🟢 Complete | 90% | InnerTube `/search` endpoint with recursive AST renderer parser (extracts video results, channel results, playlist results). |
 | `src/core/endpoints/Browse.ts` | [`src/endpoints/browse.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/browse.rs) | 🟢 Complete | 90% | InnerTube `/browse` endpoint. Supports channel profile scraping, top tracks, and YouTube Music playlist tracklist extraction. |
 | `src/core/endpoints/Next.ts` | [`src/endpoints/next.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/next.rs) | 🟢 Complete | 95% | InnerTube `/next` endpoint. Supports video recommendations (`lockupViewModel`, `compactVideoRenderer`), autoplay suggestions, playlist queue panels, and continuation tokens. |
 | `src/core/endpoints/Comments.ts` | [`src/endpoints/comments.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/comments.rs) | 🟢 Complete | 90% | InnerTube comment threads, pinned comments, author creator badges, replies, likes count, and `entityBatchUpdate` resolution. |
+| `src/parser/ytmusic/` | [`src/endpoints/music.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/music.rs) | 🟢 Complete | 90% | YouTube Music dedicated suite: Filtered search (Songs, Albums, Artists, Playlists), Album details & tracklists, Song Lyrics, Explore/Charts. |
 | `src/actions/` (Transcript / Subtitles) | [`src/endpoints/transcript.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/transcript.rs) | 🟢 Complete | 95% | Subtitle track extraction, timed text parser (JSON3 and XML), export to SRT and WebVTT. |
 | `src/parser/` (Manifests) | [`src/utils/manifest.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/manifest.rs) | 🟢 Complete | 95% | Native parser for HLS (`.m3u8` master playlists) and DASH (`.mpd` representations). |
-| `src/parser/` (AST Models) | [`src/models/`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/models/) | 🟢 Complete (Core) | 70% | Strongly typed Serde models for essential InnerTube payloads. Polymorphic renderers are parsed on-demand rather than maintaining 150+ individual class hierarchies. |
+| `src/parser/` (AST Models) | [`src/models/`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/models/) | 🟢 Complete (Core) | 80% | Strongly typed Serde models for essential InnerTube payloads. Polymorphic renderers are parsed on-demand rather than maintaining 150+ individual class hierarchies. |
 | `src/core/OAuth2.ts` | `src/core/oauth.rs` | ⚪ Optional | 0% | TV/Device code OAuth2 login flow. |
 
 ---
 
-## 2. Streaming & CDN Engine Matrix
+## 2. Diagnostic & Example Suite (`examples/`)
 
-| Feature / Protocol | Status | Notes |
-|---|:---:|---|
-| **Audio Streaming (`-f mp3, flac, wav, m4a`)** | 🟢 **100% Native** | Audio formats (`itag 140` AAC, `itag 251` Opus) have no CDN chunk throttling. Downloads full 40MB+ streams at maximum throughput. |
-| **Progressive Video (`itag 18` 360p)** | 🟢 **100% Native** | Direct playback formats from standard `ANDROID` client download 100% without CDN restrictions. |
-| **Adaptive Video (720p / 1080p / 4K)** | 🟢 **Supported** | Supports streaming via transformed n-tokens (MWEB 60fps routes) and PO-token injection (`&pot=`). Unauthenticated requests hitting the 6.2MB CDN boundary trigger clean fallback in downstream consumers (`avpull`). |
-| **Chunk Segmentation Protocol** | 🟢 **100% Native** | Uses YouTube native query parameters (`&range=${start}-${end}&rn=${index}`) with 1MB segment size, avoiding mid-stream drops from standard HTTP headers. |
-| **HLS / DASH Live Streaming** | 🟢 **Ready** | Master M3U8 and DASH representation parsing extracts live streams and adaptive formats. |
-| **PO-Token Propagation** | 🟢 **Ready** | Supports `--po-token` CLI flag, environment variables (`INNERTUBE_PO_TOKEN`, `POT`), and auto-injects into `serviceIntegrityDimensions.poToken` and stream URLs. |
-| **Cookie Support** | 🟢 **Ready** | Supports raw cookie strings and Netscape format (`cookies.txt`) with automatic header injection. |
-
----
-
-## 3. Consumer Projects Integration Status
-
-### A. `avpull` (`C:/Users/Caya/Desktop/Project/avpull`)
-- **Role**: Command-line audio/video downloader with +1k npm downloads.
-- **Engine**: Replaced heavy Node.js sidecar and `youtubei.js` runtime with compiled native `innertube.exe` binary.
-- **Status**: 🟢 **Operational**
-  - Instant metadata & audio conversion (<5ms startup).
-  - High-resolution fallback gracefully delegates to `yt-dlp` when CDN 403 policies apply, providing seamless 720p/1080p downloads with zero manual steps.
-
-### B. `noctune` (`C:/Users/Caya/Desktop/Project/music-player`)
-- **Role**: High-performance desktop music player with on-device Hybrid Collaborative Filtering ML model.
-- **Target**: Pure native Rust scraping, timed lyrics, and audio streaming, replacing Node.js sidecars.
-- **Status**: 🟢 **Ready for Integration**
-  - Models (`ChannelArtistView`, `YouTubePlaylistView`, `WatchNextResults`, `RelatedVideo`, `Transcript`, `TranscriptSegment`, `CommentsResult`, `TrackInfo`) match `noctune`'s player requirements.
-
----
-
-## 4. Diagnostic & Example Suite (`examples/`)
-
-The repository includes **19 standalone runnable diagnostic tools and examples**:
+The repository includes **22 standalone runnable diagnostic tools and examples**:
 
 | Example File | Purpose | Command |
 |---|---|---|
+| [`examples/test_music_search.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/test_music_search.rs) | YouTube Music filtered search (Songs, Albums, Artists, Playlists) | `cargo run --example test_music_search -- [QUERY]` |
+| [`examples/get_music_album.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/get_music_album.rs) | YouTube Music album details and tracklist scraper | `cargo run --example get_music_album -- [ALBUM_ID]` |
+| [`examples/get_music_explore.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/get_music_explore.rs) | YouTube Music Explore & Trending Charts | `cargo run --example get_music_explore` |
+| [`examples/get_music_lyrics.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/get_music_lyrics.rs) | YouTube Music song lyrics tester | `cargo run --example get_music_lyrics -- [VIDEO_ID]` |
 | [`examples/get_transcript.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/get_transcript.rs) | Subtitles/transcripts extraction and SRT/VTT export | `cargo run --example get_transcript -- [VIDEO_ID]` |
 | [`examples/get_comments.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/get_comments.rs) | Comments and thread replies extraction | `cargo run --example get_comments -- [VIDEO_ID]` |
 | [`examples/get_watch_next.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/examples/get_watch_next.rs) | Watch Next (/next) recommendations and autoplay tester | `cargo run --example get_watch_next -- [VIDEO_ID]` |

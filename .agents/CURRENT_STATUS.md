@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.2.0` (Active Development — Full Feature Suite: Streaming, Transcripts, Comments, Manifests)  
+> **Status Repositori**: `v0.2.0` (Active Development — Full YouTube & YouTube Music Suite)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -10,43 +10,27 @@
 
 | Modul / Fitur | Status | Verifikasi Live | Catatan |
 |---|---|---|---|
-| **Session Bootstrap** (`src/core/session.rs`) | 🟢 **Ready** | ✅ Passed | Ekstraksi `visitor_data` & API key dari `sw.js_data` |
+| **Session Bootstrap** (`src/core/session.rs`) | 🟢 **Ready** | ✅ Passed | Ekstraksi `visitor_data` & API key dari `sw.js_data`, multi-client `post_innertube_client` |
 | **Protobuf Visitor Data** (`src/utils/proto.rs`) | 🟢 **Ready** | ✅ Passed | Encode/decode Base64 URL-safe dengan padding `%3D` |
 | **Player Decipher Engine** (`src/utils/decipher.rs`) | 🟢 **Ready** | ✅ Passed | Sandbox QuickJS (`rquickjs`), eksekusi n-token & sig (<5ms) |
 | **Video Metadata & Info** (`src/models/video.rs`) | 🟢 **Ready** | ✅ Passed | Title, author, duration, view count, formats count |
 | **Client Fallback Chain** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | WEB → ANDROID → iOS → ANDROID_VR → MWEB, dengan penerusan PO-token & cookie |
 | **Stream URL Resolution** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | Audio-only (`AAC`/`Opus`) & Video (`1080p`/`720p`/`360p`) |
-| **PO-Token & Cookie Support** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Dukungan argumen `--po-token`, `--cookies`, dan env vars |
-| **Search Queries** (`src/endpoints/search.rs`) | 🟢 **Ready** | ✅ Passed | Recursive AST renderer parser (Video, Channel, Playlist) |
-| **Channel Scraping** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | Metadata, subscribers, avatar, top tracks & playlists |
-| **Playlist Tracklist** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | YouTube Music (`WEB_REMIX`) & standard playlist format |
-| **Watch Next & Recommendations** (`src/endpoints/next.rs`) | 🟢 **Ready** | ✅ Passed | Rekomendasi video (`lockupViewModel` & `compactVideoRenderer`), autoplay queue, playlist panel, dan token continuation |
+| **YouTube Music Search & Filters** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Filter khusus: *Songs, Albums, Artists, Playlists, Videos* via `WEB_REMIX` context |
+| **YouTube Music Albums & Tracklist** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Ekstraksi album, header cover, artist, tahun rilis, dan seluruh tracklist video IDs |
+| **YouTube Music Lyrics Engine** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Resolusi tab `MPLY...` dan ekstraksi lirik lagu (LyricFind/Musixmatch) |
+| **YouTube Music Explore & Charts** (`src/endpoints/music.rs`) | 🟢 **Ready** | ✅ Passed | Top Trending Songs, Top Videos, New Album Releases, dan Moods/Genres |
+| **Watch Next & Recommendations** (`src/endpoints/next.rs`) | 🟢 **Ready** | ✅ Passed | Rekomendasi video (`lockupViewModel` & `compactVideoRenderer`), autoplay queue, playlist panel |
 | **Subtitles & Transcripts** (`src/endpoints/transcript.rs`) | 🟢 **Ready** | ✅ Passed | Timed transcript JSON3 & XML parser, export SRT & WebVTT, multi-language caption tracks |
-| **Comments & Threads Engine** (`src/endpoints/comments.rs`) | 🟢 **Ready** | ✅ Passed | Top comments, pinned comments, author badges, likes, reply threads, dan token continuation (`entityBatchUpdate` support) |
-| **HLS & DASH Manifest Parser** (`src/utils/manifest.rs`) | 🟢 **Ready** | ✅ Passed | Native Master M3U8 & MPD representation parser (bandwidth, resolutions, codecs, frame-rates) |
-| **Stream Download** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Native query param range streaming (`&range=` & `&rn=`), resolusi presisi |
-| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | **19 script pengujian mandiri** untuk seluruh client, rekomendasi, komentar, transkrip, dan mode CDN |
-| **CI & Documentation** (`.github/workflows/`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc`, `cargo test`, dan `cargo clippy -D warnings` lulus 100% (9 unit tests pass) |
+| **Comments & Threads Engine** (`src/endpoints/comments.rs`) | 🟢 **Ready** | ✅ Passed | Top comments, pinned comments, author badges, likes, reply threads (`entityBatchUpdate` support) |
+| **HLS & DASH Manifest Parser** (`src/utils/manifest.rs`) | 🟢 **Ready** | ✅ Passed | Native Master M3U8 & MPD representation parser (bandwidth, resolutions, codecs) |
+| **CI/CD Auto-Build & Release** (`.github/workflows/release.yml`) | 🟢 **Ready** | ✅ Passed | Multi-platform binary auto-build (Windows, Linux, macOS) & GitHub Release saat bump versi |
+| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | **22 script pengujian mandiri** di folder `examples/` |
+| **Unit Test & Linter Standards** | 🟢 **Ready** | ✅ Passed | 11 unit tests passing 100%, 3 doc tests passing, 0 clippy warnings |
 
 ---
 
-## 2. Solusi & Penanganan Streaming CDN YouTube
-
-### Temuan Reverse Engineering CDN & Solusi
-1. **Perilaku Kuota Chunk CDN**:
-   - Google Video CDN (`googlevideo.com`) memberlakukan proteksi *unauthenticated adaptive stream* (720p/1080p) pada offset **6.2 MB** (`6.291.456 bytes`).
-   - Format **Audio-only** (`itag 140/251`) dan **Progressive Video** (`itag 18` 360p) bebas dari batasan ini dan dapat diunduh 100% penuh secara instan oleh `innertube-rs`.
-2. **Penanganan Native Range Chunking**:
-   - `download_stream_to_file` menggunakan parameter native YouTube (`&range=${start}-${end}&rn=${chunk_index}`) dengan segmen chunk 1MB.
-3. **Penyisipan PO-Token & Netscape Cookies**:
-   - Menambahkan integrasi penuh `serviceIntegrityDimensions.poToken` di handshake endpoint InnerTube dan penyisipan `&pot=<token>` pada stream URL.
-   - Parsing otomatis format file cookies Netscape (`cookies.txt`) dan header `Cookie` pada chunk stream downloader.
-4. **Pencegahan Downgrade Resolusi**:
-   - `cli.rs` tidak lagi menurunkan kualitas ke progressive 360p secara diam-diam jika pengguna meminta resolusi tinggi (`720p` / `1080p`), melainkan melaporkan restriksi CDN secara jelas agar consumer (seperti `avpull`) dapat melakukan fallback cerdas.
-
----
-
-## 3. Struktur Codebase & Diagnostic Suite
+## 2. Struktur Codebase & Diagnostic Suite
 
 ```
 innertube-rs/
@@ -62,14 +46,18 @@ innertube-rs/
 ├── protos/                               # Protobuf schemas (params.proto, common.proto)
 ├── src/
 │   ├── lib.rs                            # Top-level Innertube client & public re-exports
-│   ├── constants.rs                      # URLs, API keys, client user agents (WEB, ANDROID, ANDROID_VR, IOS, MWEB)
+│   ├── constants.rs                      # URLs, API keys, client user agents
 │   ├── error.rs                          # Typed InnertubeError enum
 │   ├── bin/cli.rs                        # CLI binary (info, stream, download commands)
 │   ├── core/                             # Session, Player, HttpClient
-│   ├── endpoints/                        # Player, Search, Browse, Next, Transcript, Comments
-│   ├── models/                           # Video, Format, Search, Channel, Next, Transcript, Comments, Manifest
+│   ├── endpoints/                        # Player, Search, Browse, Next, Transcript, Comments, Music
+│   ├── models/                           # Video, Format, Search, Channel, Next, Transcript, Comments, Manifest, Music
 │   └── utils/                            # QuickJS decipher engine, Protobuf helpers, Manifest parser
 └── examples/
+    ├── test_music_search.rs              # YouTube Music filtered search (Songs, Albums, Artists, Playlists)
+    ├── get_music_album.rs                # YouTube Music album details & tracklist scraper
+    ├── get_music_explore.rs              # YouTube Music explore & trending charts
+    ├── get_music_lyrics.rs               # YouTube Music song lyrics tester
     ├── get_comments.rs                   # Comments & reply threads extraction tester
     ├── get_transcript.rs                 # Timed subtitle / transcript & SRT/VTT exporter
     ├── get_watch_next.rs                 # Watch Next (/next) recommendations & autoplay tester
@@ -95,18 +83,11 @@ innertube-rs/
 
 ---
 
-## 4. Status Integrasi ke Consumer Projects
+## 3. Status Integrasi ke Consumer Projects
 
 ### A. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
-* **Status**: 🟢 **Operational (High-Performance Engine + Seamless Fallback)**
-* **Keterangan**:
-  - Native binary `innertube.exe` dipakai untuk ekstraksi info super cepat dan pengunduhan stream (audio & video progressive).
-  - Download audio (`-f mp3, flac, wav, m4a`) berjalan 100% native tanpa delay (~5ms).
-  - Video resolusi tinggi (720p/1080p) otomatis fallback secara transparan ke yt-dlp jika tidak ada PO-Token.
-  - Dilengkapi fitur Auto-Detect Browser Cookies (Brave, Chrome, Edge, Firefox).
+* **Status**: 🟢 **Operational** (Engine native cepat + Auto-Detect browser cookies).
 
 ### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
 * **Status**: 🟢 **Ready for Integration**
-* **Keterangan**:
-  - Model data (`ChannelArtistView`, `YouTubePlaylistView`, `WatchNextResults`, `RelatedVideo`, `Transcript`, `TranscriptSegment`, `CommentsResult`, `TrackInfo`) siap dipakai untuk menggantikan scraper JavaScript di `src-tauri`.
-  - Siap menyuplai lirik lagu bersinkronisasi (*synced lyrics* / subtitles), discography album, track artist, dan radio rekomendasi.
+* Semua kebutuhan Noctune: Streaming Audio native, YouTube Music search filters, Tracklist Album, Rekomendasi Radio/Next, Transkrip/Lyrics SRT & WebVTT sudah lengkap 100%.

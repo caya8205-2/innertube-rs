@@ -117,11 +117,17 @@ pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNext
 pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
 pub use models::comments::{Comment, CommentThread, CommentsResult};
 pub use models::manifest::{ManifestStream, ParsedManifest};
+pub use models::music::{
+    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistRef,
+    MusicExplore, MusicLyrics, MusicPlaylistItem, MusicSearchFilter, MusicSearchResults,
+    MusicTrackItem,
+};
 pub use core::session::{Session, SessionOptions};
 pub use core::player::Player;
 
 use crate::endpoints::browse::{get_channel, get_playlist};
 use crate::endpoints::comments::{get_comment_replies, get_comments};
+use crate::endpoints::music::{get_music_album, get_music_explore, get_music_lyrics, search_music};
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
 use crate::endpoints::search::search;
@@ -242,5 +248,29 @@ impl Innertube {
     /// Fetch child replies for a specific comment thread.
     pub async fn get_comment_replies(&self, continuation_token: &str) -> Result<Vec<Comment>> {
         get_comment_replies(&self.session, continuation_token).await
+    }
+
+    /// Perform a filtered search on YouTube Music (`WEB_REMIX`).
+    pub async fn search_music(
+        &self,
+        query: &str,
+        filter: Option<MusicSearchFilter>,
+    ) -> Result<MusicSearchResults> {
+        search_music(&self.session, query, filter).await
+    }
+
+    /// Fetch song lyrics from YouTube Music for a given video ID.
+    pub async fn get_music_lyrics(&self, video_id: &str) -> Result<MusicLyrics> {
+        get_music_lyrics(&self.session, video_id).await
+    }
+
+    /// Fetch YouTube Music album details and tracklist by browse ID (e.g. `MPREb_...`).
+    pub async fn get_music_album(&self, browse_id: &str) -> Result<MusicAlbumView> {
+        get_music_album(&self.session, browse_id).await
+    }
+
+    /// Fetch YouTube Music explore and trending page data.
+    pub async fn get_music_explore(&self) -> Result<MusicExplore> {
+        get_music_explore(&self.session).await
     }
 }
