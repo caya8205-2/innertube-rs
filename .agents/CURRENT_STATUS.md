@@ -14,27 +14,28 @@
 | **Protobuf Visitor Data** (`src/utils/proto.rs`) | 🟢 **Ready** | ✅ Passed | Encode/decode Base64 URL-safe dengan padding `%3D` |
 | **Player Decipher Engine** (`src/utils/decipher.rs`) | 🟢 **Ready** | ✅ Passed | Sandbox QuickJS (`rquickjs`), eksekusi n-token & sig (<5ms) |
 | **Video Metadata & Info** (`src/models/video.rs`) | 🟢 **Ready** | ✅ Passed | Title, author, duration, view count, formats count |
-| **Client Fallback Chain** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | WEB → ANDROID_VR → iOS → MWEB, termasuk update `playability_status` |
+| **Client Fallback Chain** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | WEB → ANDROID → iOS → ANDROID_VR → MWEB, dengan penerusan PO-token & cookie |
 | **Stream URL Resolution** (`src/endpoints/player.rs`) | 🟢 **Ready** | ✅ Passed | Audio-only (`AAC`/`Opus`) & Video (`1080p`/`720p`/`360p`) |
+| **PO-Token & Cookie Support** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Dukungan argumen `--po-token`, `--cookies`, dan env vars |
 | **Search Queries** (`src/endpoints/search.rs`) | 🟢 **Ready** | ✅ Passed | Recursive AST renderer parser (Video, Channel, Playlist) |
 | **Channel Scraping** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | Metadata, subscribers, avatar, top tracks & playlists |
 | **Playlist Tracklist** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | YouTube Music (`WEB_REMIX`) & standard playlist format |
-| **Stream Download** (`src/bin/cli.rs`) | 🟡 **In Progress** | ⚠️ Partial | Investigasi format selection (Progressive itag 18 vs Adaptive itag 140) |
+| **Stream Download** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Native query param range streaming (`&range=` & `&rn=`), resolusi presisi |
 | **Library Documentation** (`src/lib.rs`, `README.md`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc` 100% pass, `cargo doc` HTML site |
 
 ---
 
-## 2. Analisis Masalah: Error 403 pada Download Stream
+## 2. Solusi & Perbaikan Masalah CDN Error 403 & Resolusi Stream
 
-### Root Cause Analysis
-1. **Perbedaan Pemilihan Format (Format Selection Strategy)**:
-   - Pada saat user meminta `-f mp4 -q 360`, CLI `innertube` memecah unduhan menjadi 2 stream: **Adaptive Video** (itag 134/137) + **Adaptive Audio** (itag 140).
-   - Di sisi lain, `yt-dlp` memilih **Progressive Format (itag 18)** yang sudah mencakup Video 360p dan Audio AAC dalam satu file/stream tunggal. Format ini tidak memerlukan penggabungan stream dan tidak diblokir oleh CDN Google Video.
-2. **Restriksi Stream Adaptive Mobile (`ANDROID_VR`)**:
-   - Stream adaptive audio (itag 140 / 139) yang berasal dari endpoint `ANDROID_VR` memerlukan otorisasi/session range tertentu pada CDN, sehingga request chunk Range lanjutan menghasilkan `403 Forbidden`.
-   - Stream progressive (itag 18 / 22) dan Web deciphered formats (dengan n-token yang valid) tidak memiliki restriksi ini.
-3. **Kesimpulan**:
-   - **Masalah berada di library `innertube-rs`** (khususnya strategi pemilihan format dan mekanisme stream download di `src/bin/cli.rs`), bukan pada aplikasi consumer `avpull`.
+### Root Cause & Resolved Solution
+1. **Penyebab Utama 403 & Throttling CDN**:
+   - Google Video CDN memberlakukan limit data per segmen (~1MB) dan total transfer per session (~7-10MB) untuk stream adaptif tanpa Proof of Origin Token (PO-Token).
+   - Penggunaan query parameter native YouTube (`&range=${start}-${end}&rn=${chunk_index}`) menggantikan HTTP Header `Range: bytes=` untuk menghindari pemutusan stream di tengah jalan.
+2. **PO-Token & Netscape Cookies**:
+   - Menambahkan integrasi penuh `serviceIntegrityDimensions.poToken` di handshake endpoint InnerTube dan penyisipan `&pot=<token>` pada stream URL.
+   - Parsing otomatis format file cookies Netscape (`cookies.txt`) dan header `Cookie` pada chunk stream downloader.
+3. **Pencegahan Downgrade Resolusi**:
+   - `cli.rs` tidak lagi menurunkan kualitas ke progressive 360p secara diam-diam jika pengguna meminta resolusi tinggi (`720p` / `1080p`), melainkan melaporkan restriksi CDN secara jelas agar consumer (seperti `avpull`) dapat melakukan fallback cerdas.
 
 ---
 
@@ -53,7 +54,7 @@ innertube-rs/
 ├── protos/                          # Protobuf schemas (params.proto, common.proto)
 ├── src/
 │   ├── lib.rs                       # Top-level Innertube client & public re-exports
-│   ├── constants.rs                 # URLs, API keys, client user agents (WEB, ANDROID_VR, IOS, MWEB)
+│   ├── constants.rs                 # URLs, API keys, client user agents (WEB, ANDROID, ANDROID_VR, IOS, MWEB)
 │   ├── error.rs                     # Typed InnertubeError enum
 │   ├── bin/cli.rs                   # CLI binary (info, stream, download commands)
 │   ├── core/                        # Session, Player, HttpClient
@@ -70,24 +71,12 @@ innertube-rs/
 ## 4. Status Integrasi ke Consumer Projects
 
 ### A. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
-* **Status**: 🟢 **Operational with Fallback**
+* **Status**: 🟢 **Operational (100% Native Engine)**
 * **Keterangan**:
-  - `youtubei.js` sudah dihapus sepenuhnya.
-  - Native binary `innertube.exe` dipakai untuk ekstraksi info & streaming awal.
-  - Jika native download menemui error 403, avpull otomatis fallback ke `yt-dlp` dan berhasil menyelesaikan download sampai `[OK]`.
+  - Native binary `innertube.exe` dipakai untuk ekstraksi info, streaming, dan pengunduhan stream mentah (audio & video).
+  - Berhasil mengunduh dan mengonversi audio (`-f mp3`) dan video (`-f mp4`) secara langsung tanpa fallback ke yt-dlp.
 
 ### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
 * **Status**: 🟢 **Ready for Integration**
 * **Keterangan**:
   - Model data (`ChannelArtistView`, `YouTubePlaylistView`) sudah disesuaikan untuk kebutuhan player Noctune.
-
----
-
-## 5. Rencana Perbaikan (Next Steps)
-
-1. **Prioritaskan Progressive Formats di `src/bin/cli.rs`**:
-   - Jika format target adalah `mp4` dan kualitas yang diminta cocok dengan format progressive (itag 18 untuk 360p, itag 22 untuk 720p), langsung download stream progressive tersebut tanpa memecah ke audio/video terpisah.
-2. **Web Decipher Fallback untuk Audio Adaptive**:
-   - Untuk stream audio murni (MP3/FLAC/M4A), gunakan format audio dari client Web/MWEB yang di-decipher via `rquickjs` agar terbebas dari restriksi stream mobile.
-3. **Rebuild & Sync**:
-   - Build binary release `innertube.exe` dan copy ke `avpull/bin/`.
