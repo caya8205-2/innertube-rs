@@ -113,10 +113,12 @@ pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingF
 pub use models::video::{PlayerResponse, VideoDetails, StreamingData, PlayabilityStatus, Thumbnail};
 pub use models::search::{SearchResults, SearchResultItem, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};
 pub use models::channel::{ChannelArtistView, ChannelTrack, ChannelPlaylist, YouTubePlaylistView};
+pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use core::session::{Session, SessionOptions};
 pub use core::player::Player;
 
 use crate::endpoints::browse::{get_channel, get_playlist};
+use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
 use crate::endpoints::search::search;
 
@@ -184,5 +186,31 @@ impl Innertube {
     /// Fetch playlist tracklist by playlist ID.
     pub async fn get_playlist(&self, playlist_id: &str) -> Result<YouTubePlaylistView> {
         get_playlist(&self.session, playlist_id).await
+    }
+
+    /// Fetch watch next details including recommended/related videos, autoplay, and playlist queue.
+    pub async fn get_watch_next(&self, video_id: &str) -> Result<WatchNextResults> {
+        get_watch_next(&self.session, video_id, None, None, None).await
+    }
+
+    /// Fetch recommended related videos for a given video ID.
+    pub async fn get_related_videos(&self, video_id: &str) -> Result<Vec<RelatedVideo>> {
+        let next_res = self.get_watch_next(video_id).await?;
+        Ok(next_res.related_videos)
+    }
+
+    /// Fetch watch next details when playing within a playlist.
+    pub async fn get_playlist_watch_next(
+        &self,
+        video_id: &str,
+        playlist_id: &str,
+        playlist_index: Option<usize>,
+    ) -> Result<WatchNextResults> {
+        get_watch_next(&self.session, video_id, Some(playlist_id), playlist_index, None).await
+    }
+
+    /// Fetch continuation results for watch next recommendations using a continuation token.
+    pub async fn get_watch_next_continuation(&self, continuation_token: &str) -> Result<WatchNextResults> {
+        get_watch_next(&self.session, "", None, None, Some(continuation_token)).await
     }
 }

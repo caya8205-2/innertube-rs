@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.1.0` (Active Development — Full Test Suite, Stream Range & Fallback Optimization)  
+> **Status Repositori**: `v0.1.0` (Active Development — Full Test Suite, Stream Range & Watch Next Recommendations)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -20,8 +20,9 @@
 | **Search Queries** (`src/endpoints/search.rs`) | 🟢 **Ready** | ✅ Passed | Recursive AST renderer parser (Video, Channel, Playlist) |
 | **Channel Scraping** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | Metadata, subscribers, avatar, top tracks & playlists |
 | **Playlist Tracklist** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | YouTube Music (`WEB_REMIX`) & standard playlist format |
+| **Watch Next & Recommendations** (`src/endpoints/next.rs`) | 🟢 **Ready** | ✅ Passed | Rekomendasi video (`lockupViewModel` & `compactVideoRenderer`), autoplay queue, playlist panel, dan token continuation |
 | **Stream Download** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Native query param range streaming (`&range=` & `&rn=`), resolusi presisi |
-| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | 16 script pengujian mandiri untuk seluruh client dan mode CDN |
+| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | 17 script pengujian mandiri untuk seluruh client, rekomendasi, dan mode CDN |
 | **CI & Documentation** (`.github/workflows/`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc`, `cargo test`, dan `cargo clippy -D warnings` lulus 100% |
 
 ---
@@ -50,6 +51,7 @@ innertube-rs/
 │   ├── AGENTS.md                         # Panduan context agent & path downstream
 │   ├── CURRENT_STATUS.md                 # Status aktif project saat ini
 │   ├── PORTING_GUIDE.md                  # Panduan teknis porting TypeScript -> Rust
+│   ├── PORTING_STATUS.md                 # Paritas modul vs YouTube.js
 │   └── archived/
 │       └── PORTING_PLAN.md               # Arsip master plan porting (Phase 0–6)
 ├── Cargo.toml                            # Dependencies: tokio, reqwest, rquickjs, prost, serde
@@ -61,10 +63,11 @@ innertube-rs/
 │   ├── error.rs                          # Typed InnertubeError enum
 │   ├── bin/cli.rs                        # CLI binary (info, stream, download commands)
 │   ├── core/                             # Session, Player, HttpClient
-│   ├── endpoints/                        # Player (with fallback chain), Search, Browse
-│   ├── models/                           # Context, Video, Format, Search, Channel models
+│   ├── endpoints/                        # Player (with fallback chain), Search, Browse, Next
+│   ├── models/                           # Context, Video, Format, Search, Channel, Next models
 │   └── utils/                            # QuickJS decipher engine, Protobuf helpers
 └── examples/
+    ├── get_watch_next.rs                 # Watch Next (/next) recommendations & autoplay tester
     ├── test_clients.rs                   # Multi-client diagnostic tester (iOS, ANDROID, VR, MWEB, WEB)
     ├── test_cdn_modes.rs                 # CDN Range header vs query params vs full GET tester
     ├── test_mweb_stream.rs               # MWEB deciphered HD stream downloader
@@ -92,10 +95,12 @@ innertube-rs/
 * **Status**: 🟢 **Operational (High-Performance Engine + Seamless Fallback)**
 * **Keterangan**:
   - Native binary `innertube.exe` dipakai untuk ekstraksi info super cepat dan pengunduhan stream (audio & video progressive).
-  - Download audio (`-f mp3, flac, wav, m4a`) berjalan 100% native tanpa delay.
+  - Download audio (`-f mp3, flac, wav, m4a`) berjalan 100% native tanpa delay (~5ms).
   - Video resolusi tinggi (720p/1080p) otomatis fallback secara transparan ke yt-dlp jika tidak ada PO-Token.
+  - Dilengkapi fitur Auto-Detect Browser Cookies (Brave, Chrome, Edge, Firefox).
 
 ### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
 * **Status**: 🟢 **Ready for Integration**
 * **Keterangan**:
-  - Model data (`ChannelArtistView`, `YouTubePlaylistView`, `TrackInfo`) siap dipakai menggantikan scraper JavaScript sidecar di `noctune`.
+  - Model data (`ChannelArtistView`, `YouTubePlaylistView`, `WatchNextResults`, `RelatedVideo`, `TrackInfo`) siap dipakai untuk menggantikan scraper JavaScript di `src-tauri`.
+  - Endpoint `/next` dan `/browse` siap menyuplai discography album, track artist, dan antrean radio rekomendasi.
