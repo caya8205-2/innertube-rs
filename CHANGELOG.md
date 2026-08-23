@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2026-08-23)
+
+
+### Features
+
+* initial pure Rust implementation of InnerTube client ([b381379](https://github.com/caya8205-2/innertube-rs/commit/b3813793edbb3ecc86441ead3b86d02301a14560))
+
 ## [18.0.0](https://github.com/LuanRT/YouTube.js/compare/v17.2.0...v18.0.0) (2026-08-13)
 
 
