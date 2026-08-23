@@ -114,13 +114,18 @@ pub use models::video::{PlayerResponse, VideoDetails, StreamingData, Playability
 pub use models::search::{SearchResults, SearchResultItem, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};
 pub use models::channel::{ChannelArtistView, ChannelTrack, ChannelPlaylist, YouTubePlaylistView};
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
+pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
+pub use models::comments::{Comment, CommentThread, CommentsResult};
+pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use core::session::{Session, SessionOptions};
 pub use core::player::Player;
 
 use crate::endpoints::browse::{get_channel, get_playlist};
+use crate::endpoints::comments::{get_comment_replies, get_comments};
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
 use crate::endpoints::search::search;
+use crate::endpoints::transcript::{get_transcript, get_transcript_tracks};
 
 /// Main high-level Innertube client.
 ///
@@ -212,5 +217,30 @@ impl Innertube {
     /// Fetch continuation results for watch next recommendations using a continuation token.
     pub async fn get_watch_next_continuation(&self, continuation_token: &str) -> Result<WatchNextResults> {
         get_watch_next(&self.session, "", None, None, Some(continuation_token)).await
+    }
+
+    /// Fetch available caption tracks for a video.
+    pub async fn get_transcript_tracks(&self, video_id: &str) -> Result<Vec<TranscriptTrack>> {
+        get_transcript_tracks(&self.session, video_id).await
+    }
+
+    /// Fetch timed transcript/subtitles for a video in the specified language (or first available).
+    pub async fn get_transcript(&self, video_id: &str, lang: Option<&str>) -> Result<Transcript> {
+        get_transcript(&self.session, video_id, lang).await
+    }
+
+    /// Fetch top comment threads for a video ID or continuation token.
+    pub async fn get_comments(&self, video_id: &str) -> Result<CommentsResult> {
+        get_comments(&self.session, video_id, None).await
+    }
+
+    /// Fetch next page of comments using a continuation token.
+    pub async fn get_comments_continuation(&self, continuation_token: &str) -> Result<CommentsResult> {
+        get_comments(&self.session, "", Some(continuation_token)).await
+    }
+
+    /// Fetch child replies for a specific comment thread.
+    pub async fn get_comment_replies(&self, continuation_token: &str) -> Result<Vec<Comment>> {
+        get_comment_replies(&self.session, continuation_token).await
     }
 }

@@ -4,3 +4,6 @@ pub mod video;
 pub mod search;
 pub mod channel;
 pub mod next;
+pub mod transcript;
+pub mod manifest;
+pub mod comments;

@@ -60,4 +60,5 @@ pub struct PlayerResponse {
     pub playability_status: PlayabilityStatus,
     pub video_details: Option<VideoDetails>,
     pub streaming_data: Option<StreamingData>,
+    pub captions: Option<serde_json::Value>,
 }

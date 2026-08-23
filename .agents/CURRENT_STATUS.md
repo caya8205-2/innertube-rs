@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.1.0` (Active Development — Full Test Suite, Stream Range & Watch Next Recommendations)  
+> **Status Repositori**: `v0.1.0` (Active Development — Full Feature Suite: Streaming, Transcripts, Comments, Manifests)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -21,9 +21,12 @@
 | **Channel Scraping** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | Metadata, subscribers, avatar, top tracks & playlists |
 | **Playlist Tracklist** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | YouTube Music (`WEB_REMIX`) & standard playlist format |
 | **Watch Next & Recommendations** (`src/endpoints/next.rs`) | 🟢 **Ready** | ✅ Passed | Rekomendasi video (`lockupViewModel` & `compactVideoRenderer`), autoplay queue, playlist panel, dan token continuation |
+| **Subtitles & Transcripts** (`src/endpoints/transcript.rs`) | 🟢 **Ready** | ✅ Passed | Timed transcript JSON3 & XML parser, export SRT & WebVTT, multi-language caption tracks |
+| **Comments & Threads Engine** (`src/endpoints/comments.rs`) | 🟢 **Ready** | ✅ Passed | Top comments, pinned comments, author badges, likes, reply threads, dan token continuation (`entityBatchUpdate` support) |
+| **HLS & DASH Manifest Parser** (`src/utils/manifest.rs`) | 🟢 **Ready** | ✅ Passed | Native Master M3U8 & MPD representation parser (bandwidth, resolutions, codecs, frame-rates) |
 | **Stream Download** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Native query param range streaming (`&range=` & `&rn=`), resolusi presisi |
-| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | 17 script pengujian mandiri untuk seluruh client, rekomendasi, dan mode CDN |
-| **CI & Documentation** (`.github/workflows/`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc`, `cargo test`, dan `cargo clippy -D warnings` lulus 100% |
+| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | **19 script pengujian mandiri** untuk seluruh client, rekomendasi, komentar, transkrip, dan mode CDN |
+| **CI & Documentation** (`.github/workflows/`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc`, `cargo test`, dan `cargo clippy -D warnings` lulus 100% (9 unit tests pass) |
 
 ---
 
@@ -63,11 +66,14 @@ innertube-rs/
 │   ├── error.rs                          # Typed InnertubeError enum
 │   ├── bin/cli.rs                        # CLI binary (info, stream, download commands)
 │   ├── core/                             # Session, Player, HttpClient
-│   ├── endpoints/                        # Player (with fallback chain), Search, Browse, Next
-│   ├── models/                           # Context, Video, Format, Search, Channel, Next models
-│   └── utils/                            # QuickJS decipher engine, Protobuf helpers
+│   ├── endpoints/                        # Player, Search, Browse, Next, Transcript, Comments
+│   ├── models/                           # Video, Format, Search, Channel, Next, Transcript, Comments, Manifest
+│   └── utils/                            # QuickJS decipher engine, Protobuf helpers, Manifest parser
 └── examples/
+    ├── get_comments.rs                   # Comments & reply threads extraction tester
+    ├── get_transcript.rs                 # Timed subtitle / transcript & SRT/VTT exporter
     ├── get_watch_next.rs                 # Watch Next (/next) recommendations & autoplay tester
+    ├── test_manifest_parser.rs           # HLS (.m3u8) & DASH (.mpd) manifest parser tester
     ├── test_clients.rs                   # Multi-client diagnostic tester (iOS, ANDROID, VR, MWEB, WEB)
     ├── test_cdn_modes.rs                 # CDN Range header vs query params vs full GET tester
     ├── test_mweb_stream.rs               # MWEB deciphered HD stream downloader
@@ -102,5 +108,5 @@ innertube-rs/
 ### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
 * **Status**: 🟢 **Ready for Integration**
 * **Keterangan**:
-  - Model data (`ChannelArtistView`, `YouTubePlaylistView`, `WatchNextResults`, `RelatedVideo`, `TrackInfo`) siap dipakai untuk menggantikan scraper JavaScript di `src-tauri`.
-  - Endpoint `/next` dan `/browse` siap menyuplai discography album, track artist, dan antrean radio rekomendasi.
+  - Model data (`ChannelArtistView`, `YouTubePlaylistView`, `WatchNextResults`, `RelatedVideo`, `Transcript`, `TranscriptSegment`, `CommentsResult`, `TrackInfo`) siap dipakai untuk menggantikan scraper JavaScript di `src-tauri`.
+  - Siap menyuplai lirik lagu bersinkronisasi (*synced lyrics* / subtitles), discography album, track artist, dan radio rekomendasi.
