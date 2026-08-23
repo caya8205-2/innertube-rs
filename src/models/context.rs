@@ -27,6 +27,12 @@ pub struct ClientContext {
     pub client_form_factor: String,
     pub user_agent: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub android_sdk_version: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub time_zone: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub utc_offset_minutes: Option<i32>,

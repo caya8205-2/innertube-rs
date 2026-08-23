@@ -36,15 +36,34 @@ pub async fn fetch_player_response(
 
     let mut player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
-    // Check if adaptive formats have URLs. If not, fallback to iOS client for adaptive stream URLs
+    // Check if adaptive formats have URLs or ciphers. If not, fallback to ANDROID_VR, then MWEB, then iOS
     let needs_fallback = player_response.streaming_data.as_ref().is_none_or(|sd| {
         sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
     });
 
     if needs_fallback {
-        if let Ok(ios_response) = fetch_player_response_ios(session, video_id).await {
+        if let Ok(vr_response) = fetch_player_response_android_vr(session, video_id).await {
+            if let Some(vr_streaming) = vr_response.streaming_data {
+                if let Some(ref mut sd) = player_response.streaming_data {
+                    sd.formats = vr_streaming.formats;
+                    sd.adaptive_formats = vr_streaming.adaptive_formats;
+                } else {
+                    player_response.streaming_data = Some(vr_streaming);
+                }
+            }
+        } else if let Ok(mweb_response) = fetch_player_response_mweb(session, video_id, signature_timestamp).await {
+            if let Some(mweb_streaming) = mweb_response.streaming_data {
+                if let Some(ref mut sd) = player_response.streaming_data {
+                    sd.formats = mweb_streaming.formats;
+                    sd.adaptive_formats = mweb_streaming.adaptive_formats;
+                } else {
+                    player_response.streaming_data = Some(mweb_streaming);
+                }
+            }
+        } else if let Ok(ios_response) = fetch_player_response_ios(session, video_id).await {
             if let Some(ios_streaming) = ios_response.streaming_data {
                 if let Some(ref mut sd) = player_response.streaming_data {
+                    sd.formats = ios_streaming.formats;
                     sd.adaptive_formats = ios_streaming.adaptive_formats;
                 } else {
                     player_response.streaming_data = Some(ios_streaming);
@@ -64,13 +83,93 @@ pub async fn fetch_player_response(
     Ok(player_response)
 }
 
+/// Fallback player fetch using MWEB (Mobile Web) client reusing the session HTTP client and cookie jar.
+async fn fetch_player_response_mweb(
+    session: &Session,
+    video_id: &str,
+    signature_timestamp: Option<u32>,
+) -> Result<PlayerResponse> {
+    let mut mweb_context = session.context.clone();
+    mweb_context.client.client_name = clients::MWEB_NAME.to_string();
+    mweb_context.client.client_version = clients::MWEB_VERSION.to_string();
+    mweb_context.client.platform = "MOBILE".to_string();
+    mweb_context.client.user_agent = clients::MWEB_USER_AGENT.to_string();
+
+    let mut payload = json!({
+        "context": mweb_context,
+        "videoId": video_id,
+        "contentCheckOk": true,
+        "racyCheckOk": true
+    });
+
+    if let Some(sts) = signature_timestamp {
+        payload["playbackContext"] = json!({
+            "contentPlaybackContext": {
+                "signatureTimestamp": sts
+            }
+        });
+    }
+
+    let url = format!("{}/player?key={}", crate::constants::INNERTUBE_API_BASE_URL, session.api_key);
+    let resp = session.http_client
+        .post(&url)
+        .header("User-Agent", clients::MWEB_USER_AGENT)
+        .header("X-Youtube-Client-Name", "2")
+        .header("X-Youtube-Client-Version", clients::MWEB_VERSION)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(InnertubeError::Network)?;
+    let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
+
+    Ok(player_response)
+}
+
+/// Fallback player fetch using ANDROID_VR client to get direct, unthrottled stream URLs.
+async fn fetch_player_response_android_vr(
+    session: &Session,
+    video_id: &str,
+) -> Result<PlayerResponse> {
+    let mut vr_context = session.context.clone();
+    vr_context.client.client_name = clients::ANDROID_VR_NAME.to_string();
+    vr_context.client.client_version = clients::ANDROID_VR_VERSION.to_string();
+    vr_context.client.platform = "MOBILE".to_string();
+    vr_context.client.user_agent = clients::ANDROID_VR_USER_AGENT.to_string();
+    vr_context.client.device_make = Some("Oculus".to_string());
+    vr_context.client.device_model = Some("Quest 3".to_string());
+    vr_context.client.os_name = "Android".to_string();
+    vr_context.client.os_version = "12L".to_string();
+    vr_context.client.android_sdk_version = Some(32);
+
+    let payload = json!({
+        "context": vr_context,
+        "videoId": video_id,
+        "contentCheckOk": true,
+        "racyCheckOk": true
+    });
+
+    let url = format!("{}/player?key={}", crate::constants::INNERTUBE_API_BASE_URL, session.api_key);
+    let resp = session.http_client
+        .post(&url)
+        .header("User-Agent", clients::ANDROID_VR_USER_AGENT)
+        .header("X-Youtube-Client-Name", "81")
+        .header("X-Youtube-Client-Version", clients::ANDROID_VR_VERSION)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(InnertubeError::Network)?;
+    let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
+
+    Ok(player_response)
+}
+
 /// Fallback player fetch using iOS client to get direct stream URLs for all adaptive formats.
 async fn fetch_player_response_ios(
     _session: &Session,
     video_id: &str,
 ) -> Result<PlayerResponse> {
     let ios_options = SessionOptions {
-        client_name: Some("iOS".to_string()),
+        client_name: Some(clients::IOS_NAME.to_string()),
         client_version: Some(clients::IOS_VERSION.to_string()),
         device_category: Some("MOBILE".to_string()),
         user_agent: Some(clients::IOS_USER_AGENT.to_string()),
@@ -142,7 +241,11 @@ pub fn resolve_stream_url(
     if let Some((raw_url, sp, s)) = format.get_raw_cipher_url() {
         decipherer.apply_to_url(&raw_url, sp.as_deref(), s.as_deref())
     } else if let Some(ref url) = format.url {
-        decipherer.apply_to_url(url, None, None)
+        if url.contains("c=MWEB") || url.contains("c=WEB") {
+            decipherer.apply_to_url(url, None, None)
+        } else {
+            Ok(url.clone())
+        }
     } else {
         Err(InnertubeError::Format(
             "Format does not contain a valid URL or signature cipher".into(),

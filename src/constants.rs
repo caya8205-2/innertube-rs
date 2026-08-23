@@ -14,4 +14,13 @@ pub mod clients {
     pub const ANDROID_NAME: &str = "ANDROID";
     pub const ANDROID_VERSION: &str = "21.03.36";
     pub const ANDROID_USER_AGENT: &str = "com.google.android.youtube/21.03.36(Linux; U; Android 16; en_US; SM-S908E Build/TP1A.220624.014) gzip";
+
+    pub const MWEB_NAME: &str = "MWEB";
+    pub const MWEB_VERSION: &str = "2.20260205.04.01";
+    pub const MWEB_USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1";
+
+    pub const ANDROID_VR_NAME: &str = "ANDROID_VR";
+    pub const ANDROID_VR_VERSION: &str = "1.65.10";
+    pub const ANDROID_VR_USER_AGENT: &str = "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip";
 }
+

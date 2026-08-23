@@ -1,7 +1,9 @@
 use std::process::exit;
 use serde::Serialize;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 use innertube_rs::models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
-use innertube_rs::Innertube;
+use innertube_rs::{Innertube, SessionOptions};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,10 +29,11 @@ struct StreamFormatOutput {
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 {
-        eprintln!("Usage: innertube <command> <video_id_or_url> [--format <ext>] [--quality <q>]");
+        eprintln!("Usage: innertube <command> <video_id_or_url> [options]");
         eprintln!("Commands:");
-        eprintln!("  info <id>               Output video metadata as JSON");
-        eprintln!("  stream <id> [options]   Output resolved audio/video stream URLs as JSON");
+        eprintln!("  info <id>                                      Output video metadata as JSON");
+        eprintln!("  stream <id> [--format <ext>] [--quality <q>]   Output resolved stream URLs as JSON");
+        eprintln!("  download <id> [--output-audio <p>] [--output-video <p>] [--format <ext>]");
         exit(1);
     }
 
@@ -39,6 +42,8 @@ async fn main() {
 
     let mut target_format = "mp3".to_string();
     let mut _target_quality = "best".to_string();
+    let mut output_audio: Option<String> = None;
+    let mut output_video: Option<String> = None;
 
     let mut i = 3;
     while i < args.len() {
@@ -54,11 +59,32 @@ async fn main() {
                 i += 2;
                 continue;
             }
+        } else if args[i] == "--output-audio" {
+            if i + 1 < args.len() {
+                output_audio = Some(args[i + 1].clone());
+                i += 2;
+                continue;
+            }
+        } else if args[i] == "--output-video" {
+            if i + 1 < args.len() {
+                output_video = Some(args[i + 1].clone());
+                i += 2;
+                continue;
+            }
         }
         i += 1;
     }
 
-    let yt = match Innertube::new().await {
+    let options = SessionOptions {
+        client_name: Some(innertube_rs::constants::clients::ANDROID_VR_NAME.to_string()),
+        client_version: Some(innertube_rs::constants::clients::ANDROID_VR_VERSION.to_string()),
+        device_category: Some("MOBILE".to_string()),
+        user_agent: Some(innertube_rs::constants::clients::ANDROID_VR_USER_AGENT.to_string()),
+        generate_session_locally: Some(true),
+        ..Default::default()
+    };
+
+    let yt = match Innertube::with_options(options).await {
         Ok(client) => client,
         Err(e) => {
             eprintln!(r#"{{"error": "Failed to initialize Innertube: {}"}}"#, e);
@@ -95,23 +121,11 @@ async fn main() {
 
             let is_video_target = matches!(target_format.as_str(), "mp4" | "webm" | "mkv");
 
-            // 1. Select optimal audio format
+            // 1. Select optimal audio format (prioritize adaptive AAC itag 140)
             let audio_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
-                let mut candidates: Vec<&StreamingFormat> = sd.adaptive_formats.iter().filter(|f| f.is_audio_only()).collect();
-                if target_format == "mp4" || target_format == "m4a" || target_format == "aac" {
-                    // Prefer AAC for MP4 container
-                    candidates.sort_by_key(|f| {
-                        let is_aac = f.mime_type.contains("mp4a");
-                        (if is_aac { 0 } else { 1 }, std::cmp::Reverse(f.bitrate))
-                    });
-                } else {
-                    // Prefer Opus for webm / ogg / general
-                    candidates.sort_by_key(|f| {
-                        let is_opus = f.mime_type.contains("opus");
-                        (if is_opus { 0 } else { 1 }, std::cmp::Reverse(f.bitrate))
-                    });
-                }
-                candidates.first().copied()
+                sd.adaptive_formats.iter().find(|f| f.itag == 140 || f.mime_type.contains("mp4a"))
+                    .or_else(|| sd.adaptive_formats.iter().find(|f| f.is_audio_only()))
+                    .or_else(|| sd.formats.iter().find(|f| f.itag == 18 || f.is_audio_video()))
             });
 
             let audio_out = if let Some(fmt) = audio_fmt {
@@ -125,7 +139,6 @@ async fn main() {
                     Err(_) => None,
                 }
             } else {
-                // Fallback to format filter
                 let filter = FormatFilter {
                     format_type: FormatType::AudioOnly,
                     quality: QualityPreference::Highest,
@@ -144,12 +157,14 @@ async fn main() {
                 }
             };
 
-            // 2. Select optimal video format (if requested or available)
+            // 2. Select optimal video format
             let video_out = if is_video_target {
                 let video_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
                     let mut candidates: Vec<&StreamingFormat> = sd.adaptive_formats.iter().filter(|f| f.is_video_only()).collect();
+                    if candidates.is_empty() {
+                        candidates.extend(sd.formats.iter().filter(|f| f.is_audio_video() || f.is_video_only()));
+                    }
                     if target_format == "mp4" {
-                        // Prioritize AVC/H.264 for MP4 so ffmpeg can copy stream without transcoding
                         candidates.sort_by_key(|f| {
                             let is_avc = f.mime_type.contains("avc1") || f.mime_type.contains("h264");
                             let height = f.height.unwrap_or(0);
@@ -192,11 +207,168 @@ async fn main() {
 
             println!("{}", serde_json::to_string(&output).unwrap_or_default());
         }
+        "download" => {
+            let info = match yt.get_video_info(&video_id).await {
+                Ok(i) => i,
+                Err(e) => {
+                    eprintln!(r#"{{"error": "{}"}}"#, e);
+                    exit(1);
+                }
+            };
+
+            let title = info.video_details.as_ref().map(|d| d.title.clone()).unwrap_or_else(|| video_id.clone());
+            let author = info.video_details.as_ref().map(|d| d.author.clone()).unwrap_or_default();
+            let duration = info.video_details.as_ref()
+                .and_then(|d| d.length_seconds.parse::<u64>().ok())
+                .unwrap_or(0);
+
+            let is_video_target = matches!(target_format.as_str(), "mp4" | "webm" | "mkv");
+
+            // 1. Resolve Audio Format (prioritize adaptive AAC itag 140)
+            let audio_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
+                sd.adaptive_formats.iter().find(|f| f.itag == 140 || f.mime_type.contains("mp4a"))
+                    .or_else(|| sd.adaptive_formats.iter().find(|f| f.is_audio_only()))
+                    .or_else(|| sd.formats.iter().find(|f| f.itag == 18 || f.is_audio_video()))
+            });
+
+            let mut audio_mime = "audio/mp4".to_string();
+            if let Some(out_path) = output_audio {
+                if let Some(fmt) = audio_fmt {
+                    audio_mime = fmt.mime_type.clone();
+                    let url = match innertube_rs::endpoints::player::resolve_stream_url(fmt, &yt.player.decipherer) {
+                        Ok(u) => u,
+                        Err(e) => {
+                            eprintln!(r#"{{"error": "Failed to decipher audio URL: {}"}}"#, e);
+                            exit(1);
+                        }
+                    };
+                    let clen = fmt.content_length.as_ref().and_then(|s| s.parse::<u64>().ok());
+                    eprintln!("DEBUG AUDIO itag {}: URL={}", fmt.itag, &url[..std::cmp::min(150, url.len())]);
+                    if let Err(e) = download_stream_to_file(&yt.session.http_client, &url, clen, &out_path, "audio").await {
+                        eprintln!(r#"{{"error": "Failed to download audio stream: {}"}}"#, e);
+                        exit(1);
+                    }
+                }
+            }
+
+            // 2. Resolve Video Format (if requested)
+            let mut video_mime = "video/mp4".to_string();
+            if let Some(out_path) = output_video {
+                if is_video_target {
+                    let video_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
+                        let mut candidates: Vec<&StreamingFormat> = sd.adaptive_formats.iter().filter(|f| f.is_video_only()).collect();
+                        if candidates.is_empty() {
+                            candidates.extend(sd.formats.iter().filter(|f| f.is_audio_video() || f.is_video_only()));
+                        }
+                        if target_format == "mp4" {
+                            candidates.sort_by_key(|f| {
+                                let is_avc = f.mime_type.contains("avc1") || f.mime_type.contains("h264");
+                                let height = f.height.unwrap_or(0);
+                                (if is_avc { 0 } else { 1 }, std::cmp::Reverse(height), std::cmp::Reverse(f.bitrate))
+                            });
+                        } else {
+                            candidates.sort_by_key(|f| {
+                                let height = f.height.unwrap_or(0);
+                                (std::cmp::Reverse(height), std::cmp::Reverse(f.bitrate))
+                            });
+                        }
+                        candidates.first().copied()
+                    });
+
+                    if let Some(fmt) = video_fmt {
+                        video_mime = fmt.mime_type.clone();
+                        let url = match innertube_rs::endpoints::player::resolve_stream_url(fmt, &yt.player.decipherer) {
+                            Ok(u) => u,
+                            Err(e) => {
+                                eprintln!(r#"{{"error": "Failed to decipher video URL: {}"}}"#, e);
+                                exit(1);
+                            }
+                        };
+                        let clen = fmt.content_length.as_ref().and_then(|s| s.parse::<u64>().ok());
+                        if let Err(e) = download_stream_to_file(&yt.session.http_client, &url, clen, &out_path, "video").await {
+                            eprintln!(r#"{{"error": "Failed to download video stream: {}"}}"#, e);
+                            exit(1);
+                        }
+                    }
+                }
+            }
+
+            println!(
+                r#"{{"type":"done","title":{},"author":{},"duration":{},"audioMime":{},"videoMime":{}}}"#,
+                serde_json::to_string(&title).unwrap(),
+                serde_json::to_string(&author).unwrap(),
+                duration,
+                serde_json::to_string(&audio_mime).unwrap(),
+                serde_json::to_string(&video_mime).unwrap()
+            );
+        }
         _ => {
             eprintln!(r#"{{"error": "Unknown command: {}"}}"#, command);
             exit(1);
         }
     }
+}
+
+async fn download_stream_to_file(
+    client: &reqwest::Client,
+    url: &str,
+    content_length: Option<u64>,
+    out_path: &str,
+    stream_type: &str,
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let mut file = File::create(out_path).await?;
+    let total = content_length.unwrap_or(0);
+    let chunk_size = 1024 * 1024; // 1MB chunks
+    let mut downloaded: u64 = 0;
+
+    let ua = if url.contains("c=ANDROID_VR") {
+        innertube_rs::constants::clients::ANDROID_VR_USER_AGENT
+    } else if url.contains("c=MWEB") {
+        innertube_rs::constants::clients::MWEB_USER_AGENT
+    } else if url.contains("c=IOS") {
+        innertube_rs::constants::clients::IOS_USER_AGENT
+    } else {
+        innertube_rs::constants::DEFAULT_USER_AGENT
+    };
+
+    if total > chunk_size {
+        while downloaded < total {
+            let end = std::cmp::min(downloaded + chunk_size - 1, total - 1);
+            let mut resp = client
+                .get(url)
+                .header("User-Agent", ua)
+                .header("Range", format!("bytes={}-{}", downloaded, end))
+                .send()
+                .await?;
+
+            if !resp.status().is_success() && resp.status() != reqwest::StatusCode::PARTIAL_CONTENT {
+                return Err(format!("Stream range download failed: {}", resp.status()).into());
+            }
+
+            while let Some(chunk) = resp.chunk().await? {
+                file.write_all(&chunk).await?;
+                downloaded += chunk.len() as u64;
+                println!(r#"{{"type":"progress","stream":"{}","downloaded":{},"total":{}}}"#, stream_type, downloaded, total);
+            }
+        }
+    } else {
+        let req = client
+            .get(url)
+            .header("User-Agent", ua)
+            .header("Range", format!("bytes=0-{}", if total > 0 { total - 1 } else { 1048575 }));
+        let mut resp = req.send().await?;
+        if !resp.status().is_success() && resp.status() != reqwest::StatusCode::PARTIAL_CONTENT {
+            return Err(format!("Stream download failed: {}", resp.status()).into());
+        }
+        while let Some(chunk) = resp.chunk().await? {
+            file.write_all(&chunk).await?;
+            downloaded += chunk.len() as u64;
+            println!(r#"{{"type":"progress","stream":"{}","downloaded":{},"total":{}}}"#, stream_type, downloaded, if total > 0 { total } else { downloaded });
+        }
+    }
+
+    file.flush().await?;
+    Ok(())
 }
 
 fn clean_video_id(input: &str) -> String {

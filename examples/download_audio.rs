@@ -5,42 +5,46 @@ use innertube_rs::Innertube;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("=== Testing innertube-rs Audio Downloader ===");
-
-    println!("\n1. Initializing Innertube client...");
+    println!("=== Testing Chunk Size on pzyKjoElqxI ===");
     let yt = Innertube::new().await?;
-    println!("   >> Innertube client initialized!");
+    let video_id = "pzyKjoElqxI";
 
-    let video_id = "dQw4w9WgXcQ";
-
-    println!("\n2. Getting metadata and audio stream URL for video: {video_id}...");
     let audio_filter = FormatFilter {
         format_type: FormatType::AudioOnly,
         quality: QualityPreference::Highest,
-        container: Some("mp4".to_string()), // AAC / M4A audio
+        container: Some("mp4".to_string()),
     };
 
     let stream_url = yt.get_stream_url(video_id, &audio_filter).await?;
-    println!("   >> Resolved audio stream URL successfully!");
+    let info = yt.get_video_info(video_id).await?;
+    let fmt = innertube_rs::endpoints::player::select_format(&info, &audio_filter)?;
+    let total: u64 = fmt.content_length.as_ref().unwrap().parse()?;
+    println!("Total audio size: {} bytes ({:.2} MB)", total, total as f64 / 1_048_576.0);
 
-    println!("\n3. Downloading audio stream (first 512 KB chunk for test)...");
-    let resp = yt.session.http_client
-        .get(&stream_url)
-        .header("Range", "bytes=0-524287")
-        .send()
-        .await?;
+    let chunk_size: u64 = 1024 * 1024; // 1MB chunks
+    let mut downloaded: u64 = 0;
+    let mut file = File::create("target/pzyKjoElqxI_audio.m4a")?;
 
-    println!("   >> HTTP Status: {}", resp.status());
-    assert!(resp.status().is_success() || resp.status() == 206);
+    while downloaded < total {
+        let end = std::cmp::min(downloaded + chunk_size - 1, total - 1);
+        println!("Fetching range: bytes={}-{}...", downloaded, end);
+        let resp = yt.session.http_client
+            .get(&stream_url)
+            .header("Range", format!("bytes={}-{}", downloaded, end))
+            .send()
+            .await?;
 
-    let bytes = resp.bytes().await?;
-    println!("   >> Downloaded: {} bytes ({:.2} KB)", bytes.len(), bytes.len() as f64 / 1024.0);
+        println!("HTTP Status: {}", resp.status());
+        if !resp.status().is_success() && resp.status() != 206 {
+            panic!("Failed at range {}-{}: {}", downloaded, end, resp.status());
+        }
 
-    let output_path = "target/test_audio_sample.m4a";
-    let mut file = File::create(output_path)?;
-    file.write_all(&bytes)?;
-    println!("   >> Saved audio sample chunk to: {}", output_path);
+        let bytes = resp.bytes().await?;
+        file.write_all(&bytes)?;
+        downloaded += bytes.len() as u64;
+        println!("Progress: {:.1}% ({}/{} bytes)", (downloaded as f64 / total as f64) * 100.0, downloaded, total);
+    }
 
-    println!("\n=== AUDIO STREAM DOWNLOAD TEST SUCCEEDED 100%! ===");
+    println!("\n=== AUDIO DOWNLOAD 100% COMPLETE! File size: {} bytes ===", downloaded);
     Ok(())
 }

@@ -55,6 +55,7 @@ impl Session {
     /// Fetches initial config from YouTube's `sw.js_data` or falls back to local generation.
     pub async fn create(options: SessionOptions) -> Result<Self> {
         let http_client = reqwest::Client::builder()
+            .cookie_store(true)
             .gzip(true)
             .brotli(true)
             .build()
@@ -192,6 +193,9 @@ impl Session {
                 platform: options.device_category.clone().unwrap_or_else(|| "DESKTOP".to_string()).to_uppercase(),
                 client_form_factor: "UNKNOWN_FORM_FACTOR".to_string(),
                 user_agent: user_agent.to_string(),
+                android_sdk_version: None,
+                device_make: None,
+                device_model: None,
                 time_zone: client_tz,
                 utc_offset_minutes: Some(0),
             },
@@ -233,6 +237,9 @@ impl Session {
                 platform: options.device_category.clone().unwrap_or_else(|| "DESKTOP".to_string()).to_uppercase(),
                 client_form_factor: "UNKNOWN_FORM_FACTOR".to_string(),
                 user_agent: options.user_agent.clone().unwrap_or_else(|| DEFAULT_USER_AGENT.to_string()),
+                android_sdk_version: None,
+                device_make: None,
+                device_model: None,
                 time_zone: options.time_zone.clone().or_else(|| Some("UTC".to_string())),
                 utc_offset_minutes: Some(0),
             },
