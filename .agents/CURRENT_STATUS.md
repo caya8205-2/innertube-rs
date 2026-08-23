@@ -71,10 +71,11 @@ innertube-rs/
   - Model `ChannelArtistView` dan `YouTubePlaylistView` di `src/models/channel.rs` sudah disesuaikan dengan schema yang digunakan oleh Noctune.
 
 ### B. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
-* **Tujuan**: Menyediakan engine native untuk download video/audio tanpa dependensi `yt-dlp` / Node.js.
-* **Kesiapan**:
-  - `FormatFilter` mendukung pemilihan kualitas tertinggi (`AudioOnly`, `VideoOnly`, `AudioVideo`).
-  - Stream URL yang di-resolve siap diunduh secara multi-chunk (HTTP Range).
+* **Status**: 🟢 **Completed & Live Verified (100%)**
+* **Implementasi**:
+  - `youtubei.js` dihapus sepenuhnya dari `package.json`.
+  - Menggunakan native binary `innertube` (Rust) untuk metadata extraction dan stream deciphering.
+  - Berhasil teruji download MP3 & MP4 (1080p stream-copy muxing) dalam waktu ~10 detik.
 
 ---
 
