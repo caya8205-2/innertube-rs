@@ -37,7 +37,7 @@ pub async fn fetch_player_response(
     let mut player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
     // Check if adaptive formats have URLs. If not, fallback to iOS client for adaptive stream URLs
-    let needs_fallback = player_response.streaming_data.as_ref().map_or(true, |sd| {
+    let needs_fallback = player_response.streaming_data.as_ref().is_none_or(|sd| {
         sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
     });
 
@@ -69,12 +69,14 @@ async fn fetch_player_response_ios(
     _session: &Session,
     video_id: &str,
 ) -> Result<PlayerResponse> {
-    let mut ios_options = SessionOptions::default();
-    ios_options.client_name = Some("iOS".to_string());
-    ios_options.client_version = Some(clients::IOS_VERSION.to_string());
-    ios_options.device_category = Some("MOBILE".to_string());
-    ios_options.user_agent = Some(clients::IOS_USER_AGENT.to_string());
-    ios_options.generate_session_locally = Some(true);
+    let ios_options = SessionOptions {
+        client_name: Some("iOS".to_string()),
+        client_version: Some(clients::IOS_VERSION.to_string()),
+        device_category: Some("MOBILE".to_string()),
+        user_agent: Some(clients::IOS_USER_AGENT.to_string()),
+        generate_session_locally: Some(true),
+        ..Default::default()
+    };
 
     let ios_session = Session::create(ios_options).await?;
 

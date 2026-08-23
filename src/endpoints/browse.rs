@@ -166,7 +166,7 @@ pub async fn get_playlist(
         .pointer("/header/musicResponsiveHeaderRenderer/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
         .or_else(|| json_val.pointer("/header/playlistHeaderRenderer/playlistHeaderBanner/heroPlaylistThumbnailRenderer/thumbnail/thumbnails/0/url"))
         .and_then(Value::as_str)
-        .map(|s| clean_url(s));
+        .map(clean_url);
 
     let mut tracks = Vec::new();
     let mut seen_ids = HashSet::new();
