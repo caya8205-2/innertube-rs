@@ -1,0 +1,25 @@
+[package]
+name = "innertube-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["caya8205-2"]
+description = "A fast, lightweight Rust port of YouTube.js (InnerTube API client)"
+license = "MIT"
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json", "cookies", "gzip", "brotli", "rustls-tls"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+prost = "0.13"
+prost-types = "0.13"
+rand = "0.9"
+base64 = "0.22"
+regex = "1"
+rquickjs = { version = "0.9", features = ["parallel"] }
+url = "2"
+
+[build-dependencies]
+prost-build = "0.13"
+protoc-bin-vendored = "3"
