@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
-> **Terakhir Diperbarui**: 23 Agustus 2026  
-> **Status Repositori**: `v0.1.0` (Active Development — CDN Download & Format Selection)  
+> **Terakhir Diperbarui**: 24 Agustus 2026  
+> **Status Repositori**: `v0.1.0` (Active Development — Full Test Suite, Stream Range & Fallback Optimization)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -21,49 +21,67 @@
 | **Channel Scraping** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | Metadata, subscribers, avatar, top tracks & playlists |
 | **Playlist Tracklist** (`src/endpoints/browse.rs`) | 🟢 **Ready** | ✅ Passed | YouTube Music (`WEB_REMIX`) & standard playlist format |
 | **Stream Download** (`src/bin/cli.rs`) | 🟢 **Ready** | ✅ Passed | Native query param range streaming (`&range=` & `&rn=`), resolusi presisi |
-| **Library Documentation** (`src/lib.rs`, `README.md`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc` 100% pass, `cargo doc` HTML site |
+| **Diagnostic Test Suite** (`examples/`) | 🟢 **Ready** | ✅ Passed | 16 script pengujian mandiri untuk seluruh client dan mode CDN |
+| **CI & Documentation** (`.github/workflows/`) | 🟢 **Ready** | ✅ Passed | `cargo test --doc`, `cargo test`, dan `cargo clippy -D warnings` lulus 100% |
 
 ---
 
-## 2. Solusi & Perbaikan Masalah CDN Error 403 & Resolusi Stream
+## 2. Solusi & Penanganan Streaming CDN YouTube
 
-### Root Cause & Resolved Solution
-1. **Penyebab Utama 403 & Throttling CDN**:
-   - Google Video CDN memberlakukan limit data per segmen (~1MB) dan total transfer per session (~7-10MB) untuk stream adaptif tanpa Proof of Origin Token (PO-Token).
-   - Penggunaan query parameter native YouTube (`&range=${start}-${end}&rn=${chunk_index}`) menggantikan HTTP Header `Range: bytes=` untuk menghindari pemutusan stream di tengah jalan.
-2. **PO-Token & Netscape Cookies**:
+### Temuan Reverse Engineering CDN & Solusi
+1. **Perilaku Kuota Chunk CDN**:
+   - Google Video CDN (`googlevideo.com`) memberlakukan proteksi *unauthenticated adaptive stream* (720p/1080p) pada offset **6.2 MB** (`6.291.456 bytes`).
+   - Format **Audio-only** (`itag 140/251`) dan **Progressive Video** (`itag 18` 360p) bebas dari batasan ini dan dapat diunduh 100% penuh secara instan oleh `innertube-rs`.
+2. **Penanganan Native Range Chunking**:
+   - `download_stream_to_file` menggunakan parameter native YouTube (`&range=${start}-${end}&rn=${chunk_index}`) dengan segmen chunk 1MB.
+3. **Penyisipan PO-Token & Netscape Cookies**:
    - Menambahkan integrasi penuh `serviceIntegrityDimensions.poToken` di handshake endpoint InnerTube dan penyisipan `&pot=<token>` pada stream URL.
    - Parsing otomatis format file cookies Netscape (`cookies.txt`) dan header `Cookie` pada chunk stream downloader.
-3. **Pencegahan Downgrade Resolusi**:
+4. **Pencegahan Downgrade Resolusi**:
    - `cli.rs` tidak lagi menurunkan kualitas ke progressive 360p secara diam-diam jika pengguna meminta resolusi tinggi (`720p` / `1080p`), melainkan melaporkan restriksi CDN secara jelas agar consumer (seperti `avpull`) dapat melakukan fallback cerdas.
 
 ---
 
-## 3. Struktur Codebase
+## 3. Struktur Codebase & Diagnostic Suite
 
 ```
 innertube-rs/
 ├── .agents/
-│   ├── AGENTS.md                    # Panduan context agent & path downstream
-│   ├── CURRENT_STATUS.md            # Status aktif project saat ini
-│   ├── PORTING_GUIDE.md             # Panduan teknis porting TypeScript -> Rust
+│   ├── AGENTS.md                         # Panduan context agent & path downstream
+│   ├── CURRENT_STATUS.md                 # Status aktif project saat ini
+│   ├── PORTING_GUIDE.md                  # Panduan teknis porting TypeScript -> Rust
 │   └── archived/
-│       └── PORTING_PLAN.md          # Arsip master plan porting (Phase 0–6)
-├── Cargo.toml                       # Dependencies: tokio, reqwest, rquickjs, prost, serde
-├── build.rs                         # Protobuf build automation (protoc-bin-vendored)
-├── protos/                          # Protobuf schemas (params.proto, common.proto)
+│       └── PORTING_PLAN.md               # Arsip master plan porting (Phase 0–6)
+├── Cargo.toml                            # Dependencies: tokio, reqwest, rquickjs, prost, serde
+├── build.rs                              # Protobuf build automation (protoc-bin-vendored)
+├── protos/                               # Protobuf schemas (params.proto, common.proto)
 ├── src/
-│   ├── lib.rs                       # Top-level Innertube client & public re-exports
-│   ├── constants.rs                 # URLs, API keys, client user agents (WEB, ANDROID, ANDROID_VR, IOS, MWEB)
-│   ├── error.rs                     # Typed InnertubeError enum
-│   ├── bin/cli.rs                   # CLI binary (info, stream, download commands)
-│   ├── core/                        # Session, Player, HttpClient
-│   ├── endpoints/                   # Player (with fallback chain), Search, Browse
-│   ├── models/                      # Context, Video, Format, Search, Channel models
-│   └── utils/                       # QuickJS decipher engine, Protobuf helpers
+│   ├── lib.rs                            # Top-level Innertube client & public re-exports
+│   ├── constants.rs                      # URLs, API keys, client user agents (WEB, ANDROID, ANDROID_VR, IOS, MWEB)
+│   ├── error.rs                          # Typed InnertubeError enum
+│   ├── bin/cli.rs                        # CLI binary (info, stream, download commands)
+│   ├── core/                             # Session, Player, HttpClient
+│   ├── endpoints/                        # Player (with fallback chain), Search, Browse
+│   ├── models/                           # Context, Video, Format, Search, Channel models
+│   └── utils/                            # QuickJS decipher engine, Protobuf helpers
 └── examples/
-    ├── download_audio.rs            # Test audio stream range chunk download
-    └── test_playability.rs          # Diagnostic test for CDN download strategies
+    ├── test_clients.rs                   # Multi-client diagnostic tester (iOS, ANDROID, VR, MWEB, WEB)
+    ├── test_cdn_modes.rs                 # CDN Range header vs query params vs full GET tester
+    ├── test_mweb_stream.rs               # MWEB deciphered HD stream downloader
+    ├── test_ntoken_standalone.rs         # Standalone QuickJS decipher & n-token tester
+    ├── test_native_botguard.rs           # QuickJS BotGuard challenge VM executor
+    ├── test_native_botguard_full.rs      # Full 2-step BotGuard and Google GenerateIT tester
+    ├── test_android_vr_stream.rs         # ANDROID_VR direct stream URL tester
+    ├── test_android_testsuite.rs         # ANDROID_TESTSUITE endpoint tester
+    ├── test_tv_client.rs                 # TVHTML5 embedded player endpoint tester
+    ├── test_web_creator.rs               # WEB_CREATOR endpoint tester
+    ├── test_web_embedded.rs              # WEB_EMBEDDED_PLAYER endpoint tester
+    ├── test_cpn_streaming.rs             # Client Playback Nonce streaming tester
+    ├── test_hls.rs                       # HLS & DASH manifest tester
+    ├── test_http2_cdn.rs                 # HTTP/2 protocol CDN tester
+    ├── download_audio.rs                 # Native audio stream range chunk download
+    ├── get_video_info.rs                 # Video metadata and streamingData info
+    └── search_and_browse.rs              # Search and channel scraping example
 ```
 
 ---
@@ -71,12 +89,13 @@ innertube-rs/
 ## 4. Status Integrasi ke Consumer Projects
 
 ### A. avpull (`C:\Users\Caya\Desktop\Project\avpull`)
-* **Status**: 🟢 **Operational (100% Native Engine)**
+* **Status**: 🟢 **Operational (High-Performance Engine + Seamless Fallback)**
 * **Keterangan**:
-  - Native binary `innertube.exe` dipakai untuk ekstraksi info, streaming, dan pengunduhan stream mentah (audio & video).
-  - Berhasil mengunduh dan mengonversi audio (`-f mp3`) dan video (`-f mp4`) secara langsung tanpa fallback ke yt-dlp.
+  - Native binary `innertube.exe` dipakai untuk ekstraksi info super cepat dan pengunduhan stream (audio & video progressive).
+  - Download audio (`-f mp3, flac, wav, m4a`) berjalan 100% native tanpa delay.
+  - Video resolusi tinggi (720p/1080p) otomatis fallback secara transparan ke yt-dlp jika tidak ada PO-Token.
 
 ### B. Noctune (`C:\Users\Caya\Desktop\Project\music-player`)
 * **Status**: 🟢 **Ready for Integration**
 * **Keterangan**:
-  - Model data (`ChannelArtistView`, `YouTubePlaylistView`) sudah disesuaikan untuk kebutuhan player Noctune.
+  - Model data (`ChannelArtistView`, `YouTubePlaylistView`, `TrackInfo`) siap dipakai menggantikan scraper JavaScript sidecar di `noctune`.
