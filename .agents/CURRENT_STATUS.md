@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.1.0` (Active Development — Full Feature Suite: Streaming, Transcripts, Comments, Manifests)  
+> **Status Repositori**: `v0.2.0` (Active Development — Full Feature Suite: Streaming, Transcripts, Comments, Manifests)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
