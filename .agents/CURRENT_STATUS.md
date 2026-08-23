@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.2.0` (Active Development — Full YouTube & YouTube Music Suite)  
+> **Status Repositori**: `v0.3.0` (Active Development — Full YouTube & YouTube Music Suite)  
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
