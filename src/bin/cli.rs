@@ -112,9 +112,10 @@ async fn main() {
 
             let is_video_target = matches!(target_format.as_str(), "mp4" | "webm" | "mkv");
 
-            // 1. Select optimal audio format (prioritize adaptive AAC itag 140)
+            // 1. Select optimal audio format (prioritize adaptive AAC itag 140 for best quality)
             let audio_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
-                sd.adaptive_formats.iter().find(|f| f.itag == 140 || f.mime_type.contains("mp4a"))
+                sd.adaptive_formats.iter().find(|f| f.itag == 140)
+                    .or_else(|| sd.adaptive_formats.iter().find(|f| f.mime_type.contains("mp4a")))
                     .or_else(|| sd.adaptive_formats.iter().find(|f| f.is_audio_only()))
                     .or_else(|| sd.formats.iter().find(|f| f.itag == 18 || f.is_audio_video()))
             });
@@ -215,9 +216,10 @@ async fn main() {
 
             let is_video_target = matches!(target_format.as_str(), "mp4" | "webm" | "mkv");
 
-            // 1. Resolve Audio Format (prioritize adaptive AAC itag 140)
+            // 1. Resolve Audio Format (prioritize adaptive AAC itag 140 for best quality)
             let audio_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
-                sd.adaptive_formats.iter().find(|f| f.itag == 140 || f.mime_type.contains("mp4a"))
+                sd.adaptive_formats.iter().find(|f| f.itag == 140)
+                    .or_else(|| sd.adaptive_formats.iter().find(|f| f.mime_type.contains("mp4a")))
                     .or_else(|| sd.adaptive_formats.iter().find(|f| f.is_audio_only()))
                     .or_else(|| sd.formats.iter().find(|f| f.itag == 18 || f.is_audio_video()))
             });
@@ -234,7 +236,6 @@ async fn main() {
                         }
                     };
                     let clen = fmt.content_length.as_ref().and_then(|s| s.parse::<u64>().ok());
-                    eprintln!("DEBUG AUDIO itag {}: URL={}", fmt.itag, &url[..std::cmp::min(150, url.len())]);
                     if let Err(e) = download_stream_to_file(&yt.session.http_client, &url, clen, &out_path, "audio").await {
                         eprintln!(r#"{{"error": "Failed to download audio stream: {}"}}"#, e);
                         exit(1);
@@ -301,7 +302,7 @@ async fn main() {
 }
 
 async fn download_stream_to_file(
-    client: &reqwest::Client,
+    _client: &reqwest::Client,
     url: &str,
     content_length: Option<u64>,
     out_path: &str,
@@ -309,52 +310,57 @@ async fn download_stream_to_file(
 ) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut file = File::create(out_path).await?;
     let total = content_length.unwrap_or(0);
-    let chunk_size = 1024 * 1024; // 1MB chunks
     let mut downloaded: u64 = 0;
 
-    let ua = if url.contains("c=ANDROID_VR") {
-        innertube_rs::constants::clients::ANDROID_VR_USER_AGENT
-    } else if url.contains("c=MWEB") {
-        innertube_rs::constants::clients::MWEB_USER_AGENT
-    } else if url.contains("c=IOS") {
-        innertube_rs::constants::clients::IOS_USER_AGENT
-    } else {
-        innertube_rs::constants::DEFAULT_USER_AGENT
-    };
+    // Use Chrome UA for CDN download (matches yt-dlp behavior — CDN validates URL signature
+    // but doesn't require matching client UA for the download request itself)
+    let chrome_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
 
-    if total > chunk_size {
-        while downloaded < total {
-            let end = std::cmp::min(downloaded + chunk_size - 1, total - 1);
-            let mut resp = client
-                .get(url)
-                .header("User-Agent", ua)
-                .header("Range", format!("bytes={}-{}", downloaded, end))
-                .send()
-                .await?;
+    // Create a dedicated download client (separate cookie jar from session)
+    let dl_client = reqwest::Client::builder()
+        .user_agent(chrome_ua)
+        .build()?;
 
-            if !resp.status().is_success() && resp.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-                return Err(format!("Stream range download failed: {}", resp.status()).into());
-            }
+    // Use YouTube's chunked download pattern: append &range= and &rn= query params
+    // This is how yt-dlp downloads with http_chunk_size=10MB
+    let chunk_size: u64 = 10 * 1024 * 1024; // 10MB chunks (matching yt-dlp)
+    let mut rn: u64 = 0;
 
-            while let Some(chunk) = resp.chunk().await? {
-                file.write_all(&chunk).await?;
-                downloaded += chunk.len() as u64;
-                println!(r#"{{"type":"progress","stream":"{}","downloaded":{},"total":{}}}"#, stream_type, downloaded, total);
-            }
-        }
-    } else {
-        let req = client
-            .get(url)
-            .header("User-Agent", ua)
-            .header("Range", format!("bytes=0-{}", if total > 0 { total - 1 } else { 1048575 }));
-        let mut resp = req.send().await?;
+    while downloaded < total || (total == 0 && rn == 0) {
+        let end = if total > 0 {
+            std::cmp::min(downloaded + chunk_size - 1, total - 1)
+        } else {
+            downloaded + chunk_size - 1
+        };
+
+        let chunk_url = format!("{}&range={}-{}&rn={}", url, downloaded, end, rn);
+
+        let mut resp = dl_client
+            .get(&chunk_url)
+            .send()
+            .await?;
+
         if !resp.status().is_success() && resp.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-            return Err(format!("Stream download failed: {}", resp.status()).into());
+            return Err(format!("Stream download failed: {} (rn={}, range={}-{})", resp.status(), rn, downloaded, end).into());
         }
+
+        let mut chunk_bytes: u64 = 0;
         while let Some(chunk) = resp.chunk().await? {
             file.write_all(&chunk).await?;
+            chunk_bytes += chunk.len() as u64;
             downloaded += chunk.len() as u64;
-            println!(r#"{{"type":"progress","stream":"{}","downloaded":{},"total":{}}}"#, stream_type, downloaded, if total > 0 { total } else { downloaded });
+            // Emit progress roughly every 512KB to avoid flooding
+            if chunk_bytes % (512 * 1024) < chunk.len() as u64 || downloaded >= total {
+                let report_total = if total > 0 { total } else { downloaded };
+                println!(r#"{{"type":"progress","stream":"{}","downloaded":{},"total":{}}}"#, stream_type, downloaded, report_total);
+            }
+        }
+
+        rn += 1;
+
+        // If total is unknown and we got fewer bytes than chunk_size, we're done
+        if total == 0 && chunk_bytes < chunk_size {
+            break;
         }
     }
 
