@@ -1,0 +1,5 @@
+# Treat web frontend assets and documentation as vendored so repository remains 100% Rust
+site/** linguist-vendored
+web/** linguist-vendored
+docs/** linguist-documentation
+examples/** linguist-documentation

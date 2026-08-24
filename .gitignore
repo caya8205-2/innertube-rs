@@ -3,6 +3,12 @@
 **/*.rs.bk
 Cargo.lock
 
+# Web frontend artifacts
+site/node_modules/
+site/dist/
+web/node_modules/
+web/dist/
+
 # Media and temporary downloads
 *.mp4
 *.m4a

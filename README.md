@@ -5,23 +5,23 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml)
 
-A fast, lightweight, and asynchronous pure **Rust port of [YouTube.js (InnerTube)](https://github.com/LuanRT/YouTube.js)**.
+An asynchronous Rust client for YouTube's internal API (InnerTube), ported from [YouTube.js](https://github.com/LuanRT/YouTube.js).
 
-`innertube-rs` provides native Rust bindings for interacting with YouTube's private internal API (`/youtubei/v1`), including metadata extraction, signature deciphering, stream URL resolution, search, and channel/playlist scraping.
-
----
-
-## ✨ Features
-
-- ⚡ **Pure Rust & Async**: Built on `tokio` and `reqwest` for maximum concurrency and ultra-low memory footprint.
-- 🔓 **Embedded Decipher Engine**: Uses an embedded QuickJS sandbox (`rquickjs`) to execute YouTube's player decipher routines (`sig` decipher + `n-token` transformation) in `<5ms`.
-- 🎵 **Adaptive Stream Resolution**: Easily extract and filter direct audio-only (`Opus`, `AAC`) and video (`1080p`, `4K`) streams without external tools like `yt-dlp`.
-- 🔍 **Search & Scraping**: Full support for video/channel/playlist search and channel scraping compatible with modern YouTube schemas.
-- 📦 **Zero Runtime Overhead**: No Node.js runtime, no Python subprocesses, and no bloated sidecars.
+`innertube-rs` provides native Rust bindings for interacting with `/youtubei/v1`, including metadata extraction, signature deciphering, stream URL resolution, search, and channel/playlist scraping.
 
 ---
 
-## 📦 Installation
+## Features
+
+- **Embedded Decipher Engine**: Uses an embedded QuickJS runtime (`rquickjs`) to execute player decipher routines (`sig` decipher and `n-token` transformation) in memory.
+- **Async Runtime**: Built on `tokio` and `reqwest` with support for HTTP/2 multiplexing and native TLS.
+- **Stream Extraction**: Resolves direct HTTPS stream URLs with configurable filters for audio-only and video formats.
+- **InnerTube Endpoints**: Covers Player, Search, Browse (Channels, Playlists), YouTube Music, Comments, Live Chat, and Transcripts.
+- **No External Subprocesses**: Operates as a single native binary without Node.js runtimes, Python interpreters, or `yt-dlp` subprocesses.
+
+---
+
+## Installation
 
 Add `innertube-rs` to your `Cargo.toml`:
 
@@ -33,21 +33,19 @@ tokio = { version = "1", features = ["full"] }
 
 ---
 
-## 🚀 Usage
+## Usage
 
-### 1. Initialize Client & Fetch Video Info
+### 1. Fetch Video Metadata and Resolve Stream URLs
 
 ```rust
 use innertube_rs::{Innertube, FormatFilter, FormatType, QualityPreference};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize client (bootstraps session and decipher engine)
     let yt = Innertube::new().await?;
-
     let video_id = "dQw4w9WgXcQ";
 
-    // 1. Fetch metadata
+    // Fetch video metadata
     let info = yt.get_video_info(video_id).await?;
     if let Some(details) = info.video_details {
         println!("Title: {}", details.title);
@@ -55,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Duration: {}s", details.length_seconds);
     }
 
-    // 2. Resolve highest quality audio-only stream URL
+    // Resolve highest-quality audio stream
     let filter = FormatFilter {
         format_type: FormatType::AudioOnly,
         quality: QualityPreference::Highest,
@@ -63,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let stream_url = yt.get_stream_url(video_id, &filter).await?;
-    println!("Direct Audio Stream URL: {}", stream_url);
+    println!("Stream URL: {}", stream_url);
 
     Ok(())
 }
@@ -81,9 +79,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for item in results.items {
         match item {
-            SearchResultItem::Video(v) => println!("Video: {} (ID: {})", v.title, v.video_id),
-            SearchResultItem::Channel(c) => println!("Channel: {} (ID: {})", c.title, c.channel_id),
-            SearchResultItem::Playlist(p) => println!("Playlist: {} (ID: {})", p.title, p.playlist_id),
+            SearchResultItem::Video(v) => println!("Video: {} ({})", v.title, v.video_id),
+            SearchResultItem::Channel(c) => println!("Channel: {} ({})", c.title, c.channel_id),
+            SearchResultItem::Playlist(p) => println!("Playlist: {} ({})", p.title, p.playlist_id),
         }
     }
 
@@ -91,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### 3. Fetch Channel Profile & Playlist Tracklist
+### 3. Fetch Channel Profile and Playlist
 
 ```rust
 use innertube_rs::Innertube;
@@ -100,16 +98,15 @@ use innertube_rs::Innertube;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yt = Innertube::new().await?;
 
-    // Channel metadata & top tracks
+    // Channel metadata
     let channel = yt.get_channel("@RickAstleyYT").await?;
-    println!("Channel: {} (Followers: {:?})", channel.name, channel.followers);
-    println!("Top tracks count: {}", channel.top_tracks.len());
+    println!("Channel: {}", channel.name);
 
-    // Playlist tracks
+    // Playlist items
     let playlist = yt.get_playlist("PLlaN88a7y2_plecYoJxeQNnWiiN01LUcZ").await?;
     println!("Playlist: {}", playlist.title);
     for video in playlist.videos {
-        println!(" - {} by {:?}", video.title, video.author.map(|a| a.name));
+        println!(" - {}", video.title);
     }
 
     Ok(())
@@ -118,29 +115,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ---
 
-## 🏃 Examples
+## Examples
 
-Run any of the built-in examples directly:
+Run any of the included examples:
 
 ```bash
-# Test Session bootstrap & QuickJS decipher engine
-cargo run --example test_session
-
-# Fetch video metadata and resolve direct playable stream URLs
+# Fetch video metadata and resolve playable stream URLs
 cargo run --example get_video_info
 
-# Search and browse channels / playlists
+# Search YouTube
 cargo run --example search_and_browse
 
-# Download an audio stream chunk to a local file (.m4a)
+# Fetch YouTube Music artist data
+cargo run --example get_music_artist
+
+# Download audio stream to file
 cargo run --example download_audio
 ```
 
 ---
 
-## 📖 Generating Documentation
+## Documentation
 
-To build and view the local HTML documentation site:
+Full API reference is available at [docs.rs/innertube-rs](https://docs.rs/innertube-rs).
+
+To generate local documentation:
 
 ```bash
 cargo doc --no-deps --open
@@ -148,6 +147,6 @@ cargo doc --no-deps --open
 
 ---
 
-## 📄 License
+## License
 
 MIT License. See [LICENSE](LICENSE) for details.
