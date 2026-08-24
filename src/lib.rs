@@ -83,10 +83,10 @@
 //!     println!("Channel Name: {}", channel.name);
 //!     println!("Top tracks: {}", channel.top_tracks.len());
 //!
-//!     // Fetch playlist tracklist
+//!     // Fetch playlist videos
 //!     let playlist = yt.get_playlist("PLlaN88a7y2_plecYoJxeQNnWiiN01LUcZ").await?;
-//!     println!("Playlist Name: {}", playlist.name);
-//!     println!("Tracks: {}", playlist.tracks.len());
+//!     println!("Playlist Title: {}", playlist.title);
+//!     println!("Videos: {}", playlist.videos.len());
 //!
 //!     Ok(())
 //! }
