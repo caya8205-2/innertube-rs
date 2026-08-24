@@ -1,7 +1,9 @@
 # innertube-rs
 
-[![Rust](https://img.shields.io/badge/rust-2021%2B-blue.svg)](https://www.rust-lang.org)
+[![Crates.io](https://img.shields.io/crates/v/innertube-rs.svg)](https://crates.io/crates/innertube-rs)
+[![Documentation](https://docs.rs/innertube-rs/badge.svg)](https://docs.rs/innertube-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml)
 
 A fast, lightweight, and asynchronous pure **Rust port of [YouTube.js (InnerTube)](https://github.com/LuanRT/YouTube.js)**.
 
@@ -25,7 +27,7 @@ Add `innertube-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-innertube-rs = { git = "https://github.com/caya8205-2/innertube-rs" }
+innertube-rs = "0.5"
 tokio = { version = "1", features = ["full"] }
 ```
 
