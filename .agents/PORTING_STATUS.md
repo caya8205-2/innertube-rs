@@ -3,8 +3,8 @@
 > **Upstream Reference**: [LuanRT/YouTube.js (YouTubei.js)](https://github.com/LuanRT/YouTube.js)  
 > **Target Project**: `innertube-rs` (Pure Rust Port)  
 > **Last Updated**: August 24, 2026  
-> **Overall Porting Progress (Core Streaming & Media Engine)**: **100%**  
-> **Overall Porting Progress (Total YouTube.js Feature Parity)**: **~92% – 95%**
+> **Consumer & Streaming Parity**: **~95%**  
+> **Architectural Parity (Component Parser Engine)**: **~60%** (Transitioning to modular `src/parser/nodes/`)
 
 ---
 
@@ -27,8 +27,10 @@
 | `src/actions/` (Channels) | [`src/endpoints/channel.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/channel.rs) | 🟢 Complete | 95% | Channel tabs browser: Videos tab (uploads), Shorts tab (`shortsLockupViewModel`), and Channel About metadata. |
 | `src/actions/` (Transcript / Subtitles) | [`src/endpoints/transcript.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/transcript.rs) | 🟢 Complete | 95% | Subtitle track extraction, timed text parser (JSON3 and XML), export to SRT and WebVTT. |
 | `src/parser/` (Manifests) | [`src/utils/manifest.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/manifest.rs) | 🟢 Complete | 95% | Native parser for HLS (`.m3u8` master playlists) and DASH (`.mpd` representations). |
-| `src/parser/` (AST Models) | [`src/models/`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/models/) | 🟢 Complete (Core) | 90% | Strongly typed Serde models for essential InnerTube payloads. Polymorphic renderers are parsed on-demand. |
-| `src/core/OAuth2.ts` | `src/core/oauth.rs` | ⚪ Optional | 0% | TV/Device code OAuth2 login flow. |
+| `src/parser/` (Component Nodes) | `src/parser/nodes/` | 🟡 In Progress | 40% | Modular AST node extraction engine (`enum YTNode`) consolidating polymorphic renderers. |
+| `src/core/OAuth2.ts` | `src/core/oauth.rs` | 🔴 Unported (Reference Preserved) | 0% | TV/Device code OAuth2 login flow. |
+| `src/core/Actions.ts` | `src/core/actions.rs` | 🔴 Unported (Reference Preserved) | 0% | User mutation actions (Like, Subscribe, Comment, Playlist mutations). |
+| `src/parser/youtube/LiveChat.ts` | `src/endpoints/live_chat.rs` | 🔴 Unported (Reference Preserved) | 0% | Live chat event polling and parser. |
 
 ---
 
