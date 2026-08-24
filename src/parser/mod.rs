@@ -60,6 +60,8 @@ pub trait NodeListExt {
     fn find_comments(&self) -> Vec<&CommentThreadNode>;
     fn find_posts(&self) -> Vec<&PostNode>;
     fn find_continuation_token(&self) -> Option<String>;
+    fn find_shelves(&self) -> Vec<&ShelfNode>;
+    fn find_tabs(&self) -> Vec<&TabNode>;
 }
 
 impl NodeListExt for [YTNode] {
@@ -140,5 +142,23 @@ impl NodeListExt for [YTNode] {
             YTNode::Continuation(c) => Some(c.token.clone()),
             _ => None,
         })
+    }
+
+    fn find_shelves(&self) -> Vec<&ShelfNode> {
+        self.iter()
+            .filter_map(|n| match n {
+                YTNode::Shelf(s) => Some(s),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn find_tabs(&self) -> Vec<&TabNode> {
+        self.iter()
+            .filter_map(|n| match n {
+                YTNode::Tab(t) => Some(t),
+                _ => None,
+            })
+            .collect()
     }
 }

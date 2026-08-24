@@ -13,6 +13,9 @@ pub struct NavigationEndpointNode {
     pub browse: Option<BrowseEndpointNode>,
     pub reel_watch: Option<ReelWatchEndpointNode>,
     pub search: Option<SearchEndpointNode>,
+    pub like: Option<LikeEndpointNode>,
+    pub subscribe: Option<SubscribeEndpointNode>,
+    pub continuation: Option<ContinuationEndpointNode>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -42,6 +45,24 @@ pub struct ReelWatchEndpointNode {
 pub struct SearchEndpointNode {
     pub query: String,
     pub params: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct LikeEndpointNode {
+    pub target: String,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct SubscribeEndpointNode {
+    pub channel_ids: Vec<String>,
+    pub params: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ContinuationEndpointNode {
+    pub token: String,
+    pub request: Option<String>,
 }
 
 impl NavigationEndpointNode {
@@ -129,6 +150,38 @@ impl NavigationEndpointNode {
             }
         }
 
+        if let Some(l) = target.get("likeEndpoint") {
+            if let Some(target_id) = l.pointer("/target/videoId").or_else(|| l.pointer("/target/playlistId")).and_then(|t| t.as_str()) {
+                node.like = Some(LikeEndpointNode {
+                    target: target_id.to_string(),
+                    status: l.get("status").and_then(|s| s.as_str()).map(|s| s.to_string()),
+                });
+                matched = true;
+            }
+        }
+
+        if let Some(s) = target.get("subscribeEndpoint") {
+            let channel_ids = s.get("channelIds")
+                .and_then(|c| c.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                .unwrap_or_default();
+            node.subscribe = Some(SubscribeEndpointNode {
+                channel_ids,
+                params: s.get("params").and_then(|p| p.as_str()).map(|s| s.to_string()),
+            });
+            matched = true;
+        }
+
+        if let Some(c) = target.get("continuationCommand").or_else(|| target.get("continuationEndpoint")) {
+            if let Some(token) = c.get("token").and_then(|t| t.as_str()) {
+                node.continuation = Some(ContinuationEndpointNode {
+                    token: token.to_string(),
+                    request: c.get("request").and_then(|r| r.as_str()).map(|s| s.to_string()),
+                });
+                matched = true;
+            }
+        }
+
         if matched || node.endpoint_name.is_some() {
             Some(node)
         } else {
@@ -147,6 +200,9 @@ fn infer_api_path(endpoint_name: &str) -> Option<String> {
         "watchEndpoint" | "reelWatchEndpoint" => Some("/player".to_string()),
         "searchEndpoint" => Some("/search".to_string()),
         "watchPlaylistEndpoint" => Some("/next".to_string()),
+        "likeEndpoint" => Some("/like/like".to_string()),
+        "subscribeEndpoint" => Some("/subscription/subscribe".to_string()),
+        "unsubscribeEndpoint" => Some("/subscription/unsubscribe".to_string()),
         "liveChatItemContextMenuEndpoint" => Some("/live_chat/get_item_context_menu".to_string()),
         _ => None,
     }
@@ -170,5 +226,28 @@ mod tests {
         assert_eq!(node.api_path.as_deref(), Some("/browse"));
         assert_eq!(node.endpoint_name.as_deref(), Some("browseEndpoint"));
         assert_eq!(node.payload["browseId"], "UC_test");
+    }
+
+    #[test]
+    fn parses_like_and_continuation_endpoints() {
+        let like_node = NavigationEndpointNode::from_value(&json!({
+            "likeEndpoint": {
+                "status": "LIKE",
+                "target": { "videoId": "dQw4w9WgXcQ" }
+            }
+        }))
+        .expect("like fixture should parse");
+
+        assert_eq!(like_node.like.as_ref().map(|l| l.target.as_str()), Some("dQw4w9WgXcQ"));
+        assert_eq!(like_node.api_path.as_deref(), Some("/like/like"));
+
+        let cont_node = NavigationEndpointNode::from_value(&json!({
+            "continuationCommand": {
+                "token": "4qmFsgI0EhhGQ2..."
+            }
+        }))
+        .expect("continuation command fixture should parse");
+
+        assert_eq!(cont_node.continuation.as_ref().map(|c| c.token.as_str()), Some("4qmFsgI0EhhGQ2..."));
     }
 }

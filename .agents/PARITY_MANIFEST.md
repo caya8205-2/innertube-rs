@@ -14,25 +14,20 @@ tested equivalent parser path.
 
 ## Current evidence snapshot — 2026-08-25
 
-Implementation work has completed a first pass through plan items 2–6, but
-that is **not** completion evidence. Default validation currently passes 38
-unit/contract tests and Clippy. Eight live integration tests exist in
-`tests/live_integration.rs` and were executed in an explicit run with 8/8 passing
-(video info & stream URL, search filters, suggestions, comments, channel, YT Music,
-guide & hashtag feed, transcript). The parser registry is a 574-name inventory,
-not proof of 574 typed parser implementations.
+Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces) and Phase 2 (Feed<T> mixins & continuation paths) and initial Phase 3 AST node expansions.
+Default validation currently passes 42 unit/contract tests and Clippy with 0 warnings. Eight live integration tests exist in `tests/live_integration.rs` and were verified live against YouTube.
 
 ## Public `Innertube` API baseline
 
 | Legacy API | Rust status | Notes |
 |---|---|---|
-| `getInfo` | Partial | `get_video_info` returns raw player data; `get_basic_info` covers player-only compatibility with `VideoInfo`. |
-| `getBasicInfo` | Partial | Implemented via `get_basic_info` with `playbackContext`, `lactMilliseconds`, PO-Token forwarding, and `VideoInfo` container. |
-| `getShortsVideoInfo` | Partial | Implemented via `get_shorts_video_info` with `reelWatchEndpoint` and `ReelSequence` protobuf continuation semantics. |
+| `getInfo` | In progress | Implemented via `get_info` issuing parallel `/player` and `/next` requests, composing `PlayerResponse` + `WatchNextResults` + CPN with format selection and playback helpers. |
+| `getBasicInfo` | In progress | Implemented via `get_basic_info` with `playbackContext`, `lactMilliseconds`, PO-Token forwarding, and `VideoInfo` container. |
+| `getShortsVideoInfo` | In progress | Implemented via `get_shorts_video_info` with `reelWatchEndpoint` and `ReelSequence` protobuf continuation semantics. |
 | `search` | Partial | Query, continuation, typed `SearchFilters`, and `SearchFilter` protobuf encoding are implemented; legacy parsed feed behavior remains. |
 | `getSearchSuggestions` | Partial | InnerTube & suggestqueries endpoints, `previous_query` parameter, and session cookie forwarding are implemented. |
 | `getComments` | Partial | `GetCommentsSectionParams` protobuf continuation token, sort options, comment ID, and child replies are implemented. |
-| `getHomeFeed`, `getGuide`, `getHistory`, `getLibrary`, `getNotifications`, `getChannel`, `getPlaylist`, `getHashtag` | Partial | Feature paths exist but do not expose the legacy feed/parser contracts. |
+| `getHomeFeed`, `getGuide`, `getHistory`, `getLibrary`, `getNotifications`, `getChannel`, `getPlaylist`, `getHashtag` | In progress | Feature paths, `Feed<T>` pagination mixin, continuation token extraction, and sub-managers (`music`, `playlist`, `interact`, `account`, `kids`) are implemented. |
 | `getCourses`, `getSubscriptionsFeed`, `getChannelsFeed`, `getPlaylists` | Partial | Generic typed browse-feed wrappers exist; legacy feed behavior and authenticated live verification remain. |
 | `getUnseenNotificationsCount` | Partial | Legacy response layouts and zero fallback are covered; authenticated live verification remains. |
 | `getStreamingData` | Partial | Supports `get_streaming_data_with_options` with rich `FormatOptions` (itag, format type, codec, quality); full legacy parsed wrappers remain. |

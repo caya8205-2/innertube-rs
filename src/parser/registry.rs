@@ -714,7 +714,7 @@ impl ParserRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::Parser;
+    use crate::parser::{NodeListExt, Parser};
     use serde_json::json;
 
     #[test]
@@ -768,5 +768,69 @@ mod tests {
 
         let nodes = Parser::parse_tree(&fixture);
         assert!(!nodes.is_empty(), "Parser should find nodes in tree");
+        assert_eq!(nodes.find_videos().len(), 1);
+        assert_eq!(nodes.find_shorts().len(), 1);
+    }
+
+    #[test]
+    fn test_parser_parses_containers_and_shelves() {
+        let fixture = json!({
+            "sectionListRenderer": {
+                "contents": [
+                    {
+                        "itemSectionRenderer": {
+                            "targetId": "section-1",
+                            "contents": []
+                        }
+                    },
+                    {
+                        "shelfRenderer": {
+                            "title": { "simpleText": "Trending Now" },
+                            "content": {
+                                "verticalListRenderer": {
+                                    "items": []
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "richGridRenderer": {
+                            "contents": []
+                        }
+                    }
+                ]
+            }
+        });
+
+        let nodes = Parser::parse_tree(&fixture);
+        assert_eq!(nodes.find_shelves().len(), 1);
+        assert_eq!(nodes.find_shelves()[0].title, "Trending Now");
+    }
+
+    #[test]
+    fn test_parser_parses_live_chat_and_tabs() {
+        let fixture = json!({
+            "tabs": [
+                {
+                    "tabRenderer": {
+                        "title": "Videos",
+                        "selected": true,
+                        "endpoint": {
+                            "browseEndpoint": { "browseId": "UC_test", "params": "EgZ2aWRlb3M%3D" }
+                        }
+                    }
+                }
+            ],
+            "liveChatTextMessageRenderer": {
+                "id": "chat_msg_1",
+                "message": { "runs": [{ "text": "Hello stream!" }] },
+                "authorName": { "simpleText": "Viewer123" }
+            }
+        });
+
+        let nodes = Parser::parse_tree(&fixture);
+        assert_eq!(nodes.find_tabs().len(), 1);
+        assert_eq!(nodes.find_tabs()[0].title, "Videos");
+        assert!(nodes.find_tabs()[0].selected);
     }
 }

@@ -2,22 +2,25 @@ pub mod channel;
 pub mod comments;
 pub mod containers;
 pub mod continuation;
+pub mod livechat;
 pub mod misc;
 pub mod music;
 pub mod playlist;
 pub mod post;
 pub mod short;
 pub mod video;
-pub mod livechat;
 
 pub use channel::{ChannelCardNode, ChannelHeaderNode};
 pub use comments::{CommentNode, CommentThreadNode};
-pub use containers::TabNode;
+pub use containers::{
+    ItemSectionNode, RichGridNode, RichShelfNode, SectionListNode, ShelfNode, TabNode,
+};
 pub use continuation::ContinuationNode;
 pub use livechat::LiveChatMessageNode;
 pub use misc::{
-    AuthorNode, BrowseEndpointNode, NavigationEndpointNode, ReelWatchEndpointNode, TextNode,
-    TextRunNode, ThumbnailListNode, ThumbnailNode, WatchEndpointNode,
+    AuthorNode, BrowseEndpointNode, ContinuationEndpointNode, LikeEndpointNode,
+    NavigationEndpointNode, ReelWatchEndpointNode, SearchEndpointNode, SubscribeEndpointNode,
+    TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode, WatchEndpointNode,
 };
 pub use music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode};
 pub use playlist::{PlaylistNode, PlaylistVideoNode};
@@ -44,6 +47,13 @@ pub enum YTNode {
     CommentThread(CommentThreadNode),
     Post(PostNode),
     Continuation(ContinuationNode),
+    SectionList(SectionListNode),
+    ItemSection(ItemSectionNode),
+    RichGrid(RichGridNode),
+    Shelf(ShelfNode),
+    RichShelf(RichShelfNode),
+    Tab(TabNode),
+    LiveChat(LiveChatMessageNode),
 }
 
 impl YTNode {
@@ -54,7 +64,9 @@ impl YTNode {
         }
 
         // 1. Check for Continuation
-        if val.get("continuationItemRenderer").is_some() || val.get("continuationItemViewModel").is_some() {
+        if val.get("continuationItemRenderer").is_some()
+            || val.get("continuationItemViewModel").is_some()
+        {
             if let Some(c) = ContinuationNode::from_value(val) {
                 return Some(YTNode::Continuation(c));
             }
@@ -71,9 +83,7 @@ impl YTNode {
         }
 
         // 3. Check for Shorts Renderers
-        if val.get("reelItemRenderer").is_some()
-            || val.get("shortsLockupViewModel").is_some()
-        {
+        if val.get("reelItemRenderer").is_some() || val.get("shortsLockupViewModel").is_some() {
             if let Some(s) = ShortNode::from_value(val) {
                 return Some(YTNode::Short(s));
             }
@@ -81,8 +91,15 @@ impl YTNode {
 
         // 4. Check for lockupViewModel (Polymorphic: Video vs Short vs Playlist)
         if let Some(lvm) = val.get("lockupViewModel") {
-            let content_type = lvm.get("contentType").and_then(|c| c.as_str()).unwrap_or("");
-            if content_type.contains("SHORT") || lvm.pointer("/rendererContext/commandContext/onTap/innertubeCommand/reelWatchEndpoint").is_some() {
+            let content_type = lvm
+                .get("contentType")
+                .and_then(|c| c.as_str())
+                .unwrap_or("");
+            if content_type.contains("SHORT")
+                || lvm
+                    .pointer("/rendererContext/commandContext/onTap/innertubeCommand/reelWatchEndpoint")
+                    .is_some()
+            {
                 if let Some(s) = ShortNode::from_value(lvm) {
                     return Some(YTNode::Short(s));
                 }
@@ -103,7 +120,10 @@ impl YTNode {
                 return Some(YTNode::PlaylistVideo(pv));
             }
         }
-        if val.get("playlistRenderer").is_some() || val.get("gridPlaylistRenderer").is_some() || val.get("playlistHeaderRenderer").is_some() {
+        if val.get("playlistRenderer").is_some()
+            || val.get("gridPlaylistRenderer").is_some()
+            || val.get("playlistHeaderRenderer").is_some()
+        {
             if let Some(p) = PlaylistNode::from_value(val) {
                 return Some(YTNode::Playlist(p));
             }
@@ -115,7 +135,9 @@ impl YTNode {
                 return Some(YTNode::ChannelCard(c));
             }
         }
-        if val.get("c4TabbedHeaderRenderer").is_some() || val.get("pageHeaderRenderer").is_some() {
+        if val.get("c4TabbedHeaderRenderer").is_some()
+            || val.get("pageHeaderRenderer").is_some()
+        {
             if let Some(ch) = ChannelHeaderNode::from_value(val) {
                 return Some(YTNode::ChannelHeader(ch));
             }
@@ -158,6 +180,48 @@ impl YTNode {
         {
             if let Some(p) = PostNode::from_value(val) {
                 return Some(YTNode::Post(p));
+            }
+        }
+
+        // 10. Check for Containers & Layouts
+        if val.get("sectionListRenderer").is_some() {
+            if let Some(s) = SectionListNode::from_value(val) {
+                return Some(YTNode::SectionList(s));
+            }
+        }
+        if val.get("itemSectionRenderer").is_some() {
+            if let Some(i) = ItemSectionNode::from_value(val) {
+                return Some(YTNode::ItemSection(i));
+            }
+        }
+        if val.get("richGridRenderer").is_some() {
+            if let Some(r) = RichGridNode::from_value(val) {
+                return Some(YTNode::RichGrid(r));
+            }
+        }
+        if val.get("richShelfRenderer").is_some() {
+            if let Some(rs) = RichShelfNode::from_value(val) {
+                return Some(YTNode::RichShelf(rs));
+            }
+        }
+        if val.get("shelfRenderer").is_some() {
+            if let Some(s) = ShelfNode::from_value(val) {
+                return Some(YTNode::Shelf(s));
+            }
+        }
+        if val.get("tabRenderer").is_some() {
+            if let Some(t) = TabNode::from_value(val) {
+                return Some(YTNode::Tab(t));
+            }
+        }
+
+        // 11. Check for Live Chat
+        if val.get("liveChatTextMessageRenderer").is_some()
+            || val.get("liveChatPaidMessageRenderer").is_some()
+            || val.get("liveChatMembershipItemRenderer").is_some()
+        {
+            if let Some(lc) = LiveChatMessageNode::from_value(val) {
+                return Some(YTNode::LiveChat(lc));
             }
         }
 

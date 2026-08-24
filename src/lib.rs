@@ -110,6 +110,9 @@ use std::sync::Arc;
 
 // Re-exports for convenient top-level access
 pub use core::actions::Actions;
+pub use core::managers::{
+    AccountManager, InteractionManager, KidsManager, MusicManager, PlaylistManager,
+};
 pub use core::oauth::OAuth2;
 pub use core::player::Player;
 pub use core::session::{Session, SessionOptions};
@@ -125,7 +128,7 @@ pub use models::channel::{
     ChannelTrack, ChannelVideoItem, ChannelVideosResponse, YouTubePlaylistView,
 };
 pub use models::comments::{Comment, CommentThread, CommentsResult, PostCommentSort};
-pub use models::feed::{BrowseFeed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
+pub use models::feed::{BrowseFeed, Feed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
 pub use models::format::{
     DownloadOptions, DownloadRange, FormatFilter, FormatOptions, FormatType, QualityPreference,
     StreamingFormat,
@@ -234,6 +237,31 @@ impl Innertube {
         .await
     }
 
+    /// Fetch complete parsed video metadata, player response, and Watch Next results concurrently.
+    ///
+    /// Matches YouTube.js `Innertube.getInfo(video_id, options)` 1:1 by issuing parallel requests
+    /// to `/player` and `/next`.
+    pub async fn get_info(
+        &self,
+        video_id: &str,
+        options: Option<&GetVideoInfoOptions>,
+    ) -> Result<VideoInfo> {
+        let sig_ts = Some(self.player.decipherer.signature_timestamp);
+        let player_future = fetch_player_response_with_options(&self.session, video_id, sig_ts, options);
+        let next_future = get_watch_next(&self.session, video_id, None, None, None);
+
+        let (player_response, watch_next_res) = tokio::join!(player_future, next_future);
+        let player_response = player_response?;
+        let watch_next = watch_next_res.ok();
+        let cpn = crate::utils::proto::generate_random_string(16);
+
+        Ok(VideoInfo {
+            player_response,
+            watch_next,
+            cpn,
+        })
+    }
+
     /// Fetch player-only metadata and streaming formats for a video ID with options.
     pub async fn get_basic_info(
         &self,
@@ -250,6 +278,7 @@ impl Innertube {
         let cpn = crate::utils::proto::generate_random_string(16);
         Ok(VideoInfo {
             player_response,
+            watch_next: None,
             cpn,
         })
     }
@@ -831,5 +860,30 @@ impl Innertube {
     /// Return the number shown by YouTube's unread-notifications indicator.
     pub async fn get_unseen_notifications_count(&self) -> Result<u64> {
         get_unseen_notifications_count(&self.session).await
+    }
+
+    /// Access YouTube Music manager (`client.music()`).
+    pub fn music(&self) -> MusicManager<'_> {
+        MusicManager::new(&self.session)
+    }
+
+    /// Access playlist manager (`client.playlist()`).
+    pub fn playlist(&self) -> PlaylistManager<'_> {
+        PlaylistManager::new(&self.session)
+    }
+
+    /// Access interaction and mutation manager (`client.interact()`).
+    pub fn interact(&self) -> InteractionManager<'_> {
+        InteractionManager::new(&self.session)
+    }
+
+    /// Access account manager (`client.account()`).
+    pub fn account(&self) -> AccountManager<'_> {
+        AccountManager::new(&self.session)
+    }
+
+    /// Access YouTube Kids manager (`client.kids()`).
+    pub fn kids(&self) -> KidsManager<'_> {
+        KidsManager::new(&self.session)
     }
 }

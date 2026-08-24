@@ -78,6 +78,16 @@ pub async fn get_browse_feed(session: &Session, browse_id: &str) -> Result<Brows
     parse_browse_feed_response(browse_id, &raw)
 }
 
+/// Fetch continuation of a generic browse destination.
+pub async fn get_browse_continuation(session: &Session, continuation_token: &str) -> Result<BrowseFeed> {
+    let payload = json!({
+        "continuation": continuation_token,
+    });
+    let resp = session.post_innertube("/browse", payload).await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    parse_browse_feed_response("continuation", &raw)
+}
+
 // ---------------------------------------------------------------------------
 // Response Parsers
 // ---------------------------------------------------------------------------

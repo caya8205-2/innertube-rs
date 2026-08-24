@@ -50,15 +50,18 @@ Recent implementation batches:
 
 Current evidence is deliberately **not** a 100% parity claim:
 
-- `cargo test --all-targets` passes 38 non-network unit/contract tests.
+- `cargo test --all-targets` passes 42 non-network unit/contract tests.
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
 - Eight live integration tests in `tests/live_integration.rs` were executed with
   `cargo test --test live_integration -- --ignored` and passed 8/8 against the live
   YouTube API.
-- `src/parser/registry.rs` catalogs and categorizes 574 legacy class names. It
-  does not prove that all 574 classes are represented by typed Rust nodes or
-  tested equivalent parsing paths.
-- All public API rows and several core rows remain `Partial` or `In progress`
+- Phase 1 (`get_info` concurrent composition & sub-manager namespaces `music()`,
+  `playlist()`, `interact()`, `account()`, `kids()`) and Phase 2 (`Feed<T>` pagination mixin)
+  are implemented.
+- `src/parser/registry.rs` catalogs and categorizes 574 legacy class names, and
+  container AST nodes (`SectionList`, `ItemSection`, `RichGrid`, `Shelf`, `RichShelf`, `Tab`,
+  `LiveChat`) are parsed.
+- Public API rows and core rows reflect objective `In progress` or `Partial` status
   in `PARITY_MANIFEST.md`.
 
 The next agent must work from the manifest gaps, not repeat the implementation

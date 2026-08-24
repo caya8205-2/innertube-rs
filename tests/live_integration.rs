@@ -35,6 +35,15 @@ async fn test_live_video_info_and_stream_url() {
     );
     assert!(!basic.cpn.is_empty());
 
+    // Test get_info (concurrent player + watch_next)
+    let full_info = client
+        .get_info(video_id, None)
+        .await
+        .expect("Failed to fetch full video info");
+    assert_eq!(full_info.id(), Some(video_id));
+    assert!(full_info.watch_next.is_some());
+    assert!(!full_info.cpn.is_empty());
+
     // Test get_stream_url
     let filter = FormatFilter {
         format_type: FormatType::AudioOnly,
