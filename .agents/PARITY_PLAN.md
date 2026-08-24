@@ -36,25 +36,24 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-25
 
-The latest local commit is `c7cbb6e feat(parity): harden transport and port
-navigation/community APIs`. The following subsequent changes are intentionally
+The latest local commit is `fafedb2 feat(parity): add browse, streaming, and endpoint compatibility`. The following subsequent changes are intentionally
 uncommitted and must be preserved:
 
-- Generic browse feed wrappers for courses, subscriptions, channels, and
-  playlist aggregation.
-- `get_unseen_notifications_count` with both legacy response layouts.
-- `get_streaming_data`, `download`, raw `call`, and parsed navigation endpoint
-  call support.
-- Navigation endpoint payload/API-path retention.
-- Request-contract fixes for playlist removal and rating targets.
+- `get_basic_info` and `get_shorts_video_info` with `VideoInfo`, `ShortFormVideoInfo`, and `ReelSequence` protobuf encoding.
+- Typed `SearchFilters` with `SearchFilter` protobuf serialization for `/search`.
+- `get_search_suggestions_with_options` with `previous_query` and session cookies.
+- `get_comments_with_options` with `GetCommentsSectionParams` protobuf continuation tokens, sort options, and comment ID filtering.
+- `get_streaming_data_with_options` and `download_with_options` supporting rich `FormatOptions` and HTTP byte ranges (`DownloadRange`).
+- Fixture-based contract tests for all added protobuf encoders and format selections.
 - Manifest updates reflecting these additions.
 
-Touched files: `.agents/PARITY_MANIFEST.md`, `src/core/actions.rs`,
-`src/endpoints/account.rs`, `src/endpoints/feed.rs`, `src/lib.rs`,
-`src/models/feed.rs`, and `src/parser/nodes/misc/navigation.rs`.
+Touched files: `.agents/PARITY_MANIFEST.md`, `.agents/PARITY_PLAN.md`, `src/endpoints/comments.rs`,
+`src/endpoints/player.rs`, `src/endpoints/search.rs`, `src/endpoints/suggestions.rs`, `src/lib.rs`,
+`src/models/comments.rs`, `src/models/format.rs`, `src/models/search.rs`, `src/models/video.rs`,
+and `src/utils/proto.rs`.
 
-Last local validation: `cargo test --all-targets` passed 26 tests;
-`cargo clippy --all-targets -- -D warnings` and `git diff --check` passed.
+Last local validation: `cargo test --all-targets` passed 34 tests;
+`cargo clippy --all-targets -- -D warnings` and `cargo check --examples` passed.
 The current worktree is not yet a full-parity implementation.
 
 ## Handoff instructions

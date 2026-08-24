@@ -62,3 +62,38 @@ pub struct PlayerResponse {
     pub streaming_data: Option<StreamingData>,
     pub captions: Option<serde_json::Value>,
 }
+
+/// Options for fetching video player data.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetVideoInfoOptions {
+    /// InnerTube client name override (e.g. "ANDROID", "IOS", "WEB").
+    pub client: Option<String>,
+    /// Proof of Origin token (PO-Token) bound to this video.
+    pub po_token: Option<String>,
+}
+
+/// High-level parsed video info matching YouTube.js VideoInfo / MediaInfo container.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoInfo {
+    /// The underlying player response.
+    pub player_response: PlayerResponse,
+    /// Client Playback Nonce (CPN) generated for this playback session.
+    pub cpn: String,
+}
+
+/// High-level Shorts video metadata and reel sequence navigation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShortFormVideoInfo {
+    /// The player response for the short.
+    pub player_response: PlayerResponse,
+    /// Client Playback Nonce (CPN) generated for this short.
+    pub cpn: String,
+    /// Watch next feed items / reel sequence entries.
+    #[serde(default)]
+    pub watch_next_feed: Vec<serde_json::Value>,
+    /// Continuation sequence parameter for the next batch of shorts.
+    pub continuation_token: Option<String>,
+}

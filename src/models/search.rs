@@ -42,6 +42,70 @@ pub enum SearchResultItem {
     Playlist(SearchPlaylistItem),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SearchPrioritize {
+    Relevance,
+    Popularity,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UploadDateFilter {
+    All,
+    Today,
+    Week,
+    Month,
+    Year,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SearchTypeFilter {
+    All,
+    Video,
+    Shorts,
+    Channel,
+    Playlist,
+    Movie,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DurationFilter {
+    All,
+    OverTwentyMins,
+    UnderThreeMins,
+    ThreeToTwentyMins,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FeatureFilter {
+    Hd,
+    Subtitles,
+    CreativeCommons,
+    Feature3d,
+    Live,
+    Purchased,
+    Feature4k,
+    Feature360,
+    Location,
+    Hdr,
+    Vr180,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SearchFilters {
+    pub prioritize: Option<SearchPrioritize>,
+    pub upload_date: Option<UploadDateFilter>,
+    pub search_type: Option<SearchTypeFilter>,
+    pub duration: Option<DurationFilter>,
+    #[serde(default)]
+    pub features: Vec<FeatureFilter>,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchResults {

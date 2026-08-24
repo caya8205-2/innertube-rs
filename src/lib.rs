@@ -124,7 +124,10 @@ pub use models::channel::{
 };
 pub use models::comments::{Comment, CommentThread, CommentsResult, PostCommentSort};
 pub use models::feed::{BrowseFeed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
-pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
+pub use models::format::{
+    DownloadOptions, DownloadRange, FormatFilter, FormatOptions, FormatType, QualityPreference,
+    StreamingFormat,
+};
 pub use models::guide::{GuideItem, GuideResponse, GuideSection};
 pub use models::live_chat::{
     LiveChatMembership, LiveChatMessage, LiveChatResponse, LiveChatSuperChat, LiveChatTextMessage,
@@ -142,12 +145,15 @@ pub use models::post::{
     CommunityPoll, CommunityPost, CommunityPostsResponse, PollChoice, PostImage,
 };
 pub use models::search::{
-    SearchChannelItem, SearchPlaylistItem, SearchResultItem, SearchResults, SearchVideoItem,
+    DurationFilter, FeatureFilter, SearchChannelItem, SearchFilters, SearchPlaylistItem,
+    SearchPrioritize, SearchResultItem, SearchResults, SearchTypeFilter, SearchVideoItem,
+    UploadDateFilter,
 };
 pub use models::suggestions::{SearchSuggestion, SearchSuggestionsResult};
 pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
 pub use models::video::{
-    PlayabilityStatus, PlayerResponse, StreamingData, Thumbnail, VideoDetails,
+    GetVideoInfoOptions, PlayabilityStatus, PlayerResponse, ShortFormVideoInfo, StreamingData,
+    Thumbnail, VideoDetails, VideoInfo,
 };
 pub use parser::{NavigationEndpointNode, NodeListExt, Parser, YTNode};
 
@@ -159,7 +165,9 @@ use crate::endpoints::browse::get_channel;
 use crate::endpoints::channel::{
     get_channel_about, get_channel_community, get_channel_shorts, get_channel_videos,
 };
-use crate::endpoints::comments::{get_comment_replies, get_comments};
+use crate::endpoints::comments::{
+    get_comment_replies, get_comments, get_comments_with_options,
+};
 use crate::endpoints::feed::{
     get_browse_feed, get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending,
 };
@@ -171,11 +179,14 @@ use crate::endpoints::music::{
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
-use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
+use crate::endpoints::player::{
+    fetch_player_response, fetch_player_response_with_options, fetch_shorts_video_info,
+    resolve_stream_url, select_format, select_format_with_options,
+};
 use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
 use crate::endpoints::post::{get_post, get_post_comments};
-use crate::endpoints::search::search;
-use crate::endpoints::suggestions::get_search_suggestions;
+use crate::endpoints::search::{search, search_with_filters};
+use crate::endpoints::suggestions::{get_search_suggestions, get_search_suggestions_with_options};
 use crate::endpoints::transcript::{get_transcript, get_transcript_tracks};
 
 /// Main high-level Innertube client.
@@ -219,6 +230,35 @@ impl Innertube {
         .await
     }
 
+    /// Fetch player-only metadata and streaming formats for a video ID with options.
+    pub async fn get_basic_info(
+        &self,
+        video_id: &str,
+        options: Option<&GetVideoInfoOptions>,
+    ) -> Result<VideoInfo> {
+        let player_response = fetch_player_response_with_options(
+            &self.session,
+            video_id,
+            Some(self.player.decipherer.signature_timestamp),
+            options,
+        )
+        .await?;
+        let cpn = crate::utils::proto::generate_random_string(16);
+        Ok(VideoInfo {
+            player_response,
+            cpn,
+        })
+    }
+
+    /// Fetch Shorts video metadata and reel watch sequence navigation.
+    pub async fn get_shorts_video_info(
+        &self,
+        video_id: &str,
+        client: Option<&str>,
+    ) -> Result<ShortFormVideoInfo> {
+        fetch_shorts_video_info(&self.session, video_id, client).await
+    }
+
     /// Retrieve a decrypted, playable streaming URL matching the specified filter.
     ///
     /// Automatically applies signature deciphering and n-token transformations to ensure
@@ -237,6 +277,26 @@ impl Innertube {
     ) -> Result<StreamingFormat> {
         let player_res = self.get_video_info(video_id).await?;
         let mut format = select_format(&player_res, filter)?.clone();
+        format.url = Some(resolve_stream_url(&format, &self.player.decipherer)?);
+        format.signature_cipher = None;
+        format.cipher = None;
+        Ok(format)
+    }
+
+    /// Retrieve the selected stream format matching rich `FormatOptions` with deciphered URL.
+    pub async fn get_streaming_data_with_options(
+        &self,
+        video_id: &str,
+        options: &FormatOptions,
+    ) -> Result<StreamingFormat> {
+        let player_res = fetch_player_response_with_options(
+            &self.session,
+            video_id,
+            Some(self.player.decipherer.signature_timestamp),
+            None,
+        )
+        .await?;
+        let mut format = select_format_with_options(&player_res, options)?.clone();
         format.url = Some(resolve_stream_url(&format, &self.player.decipherer)?);
         format.signature_cipher = None;
         format.cipher = None;
@@ -263,6 +323,26 @@ impl Innertube {
             .send()
             .await
             .map_err(InnertubeError::Network)?;
+        Session::ensure_success("stream download", response).await
+    }
+
+    /// Open the selected media stream with download options including byte ranges.
+    pub async fn download_with_options(
+        &self,
+        video_id: &str,
+        options: &DownloadOptions,
+    ) -> Result<reqwest::Response> {
+        let format = self
+            .get_streaming_data_with_options(video_id, &options.format_options)
+            .await?;
+        let url = format.url.ok_or_else(|| {
+            InnertubeError::Format("Resolved stream format did not contain a URL".to_string())
+        })?;
+        let mut req = self.session.http_client.get(url);
+        if let Some(range) = options.range {
+            req = req.header("Range", format!("bytes={}-{}", range.start, range.end));
+        }
+        let response = req.send().await.map_err(InnertubeError::Network)?;
         Session::ensure_success("stream download", response).await
     }
 
@@ -304,6 +384,16 @@ impl Innertube {
         search(&self.session, query, continuation_token).await
     }
 
+    /// Execute a search query with optional filters and continuation token.
+    pub async fn search_with_filters(
+        &self,
+        query: &str,
+        filters: Option<&SearchFilters>,
+        continuation_token: Option<&str>,
+    ) -> Result<SearchResults> {
+        search_with_filters(&self.session, query, filters, continuation_token).await
+    }
+
     /// Fetch channel profile, videos, and playlists by channel ID or handle (e.g. `@RickAstleyYT` or `UC...`).
     pub async fn get_channel(&self, channel_id_or_handle: &str) -> Result<ChannelArtistView> {
         get_channel(&self.session, channel_id_or_handle).await
@@ -316,6 +406,16 @@ impl Innertube {
         is_music: bool,
     ) -> Result<SearchSuggestionsResult> {
         get_search_suggestions(&self.session, query, is_music).await
+    }
+
+    /// Fetch search autocomplete suggestions with optional previous query support.
+    pub async fn get_search_suggestions_with_options(
+        &self,
+        query: &str,
+        previous_query: Option<&str>,
+        is_music: bool,
+    ) -> Result<SearchSuggestionsResult> {
+        get_search_suggestions_with_options(&self.session, query, previous_query, is_music).await
     }
 
     /// Fetch full YouTube playlist metadata and videos.
@@ -412,6 +512,18 @@ impl Innertube {
     /// Fetch top comment threads for a video ID or continuation token.
     pub async fn get_comments(&self, video_id: &str) -> Result<CommentsResult> {
         get_comments(&self.session, video_id, None).await
+    }
+
+    /// Fetch comments with sort option, specific comment ID, or continuation token.
+    pub async fn get_comments_with_options(
+        &self,
+        video_id: &str,
+        sort_by: Option<PostCommentSort>,
+        comment_id: Option<&str>,
+        continuation_token: Option<&str>,
+    ) -> Result<CommentsResult> {
+        get_comments_with_options(&self.session, video_id, sort_by, comment_id, continuation_token)
+            .await
     }
 
     /// Fetch next page of comments using a continuation token.

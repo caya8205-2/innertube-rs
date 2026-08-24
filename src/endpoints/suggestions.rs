@@ -6,10 +6,11 @@ use crate::core::session::Session;
 use crate::error::Result;
 use crate::models::suggestions::SearchSuggestionsResult;
 
-/// Fetch search autocomplete suggestions for YouTube or YouTube Music.
-pub async fn get_search_suggestions(
+/// Fetch search autocomplete suggestions for YouTube or YouTube Music with optional previous_query.
+pub async fn get_search_suggestions_with_options(
     session: &Session,
     query: &str,
+    previous_query: Option<&str>,
     is_music: bool,
 ) -> Result<SearchSuggestionsResult> {
     if is_music {
@@ -30,7 +31,9 @@ pub async fn get_search_suggestions(
                     if let Some(items) = sug_sec.get("contents").and_then(|i| i.as_array()) {
                         for item in items {
                             if let Some(ssr) = item.get("searchSuggestionRenderer") {
-                                if let Some(runs) = ssr.pointer("/suggestion/runs").and_then(|r| r.as_array()) {
+                                if let Some(runs) =
+                                    ssr.pointer("/suggestion/runs").and_then(|r| r.as_array())
+                                {
                                     let full_text: String = runs
                                         .iter()
                                         .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
@@ -40,7 +43,9 @@ pub async fn get_search_suggestions(
                                     }
                                 }
                             } else if let Some(history) = item.get("historySuggestionRenderer") {
-                                if let Some(runs) = history.pointer("/suggestion/runs").and_then(|r| r.as_array()) {
+                                if let Some(runs) =
+                                    history.pointer("/suggestion/runs").and_then(|r| r.as_array())
+                                {
                                     let full_text: String = runs
                                         .iter()
                                         .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
@@ -67,21 +72,33 @@ pub async fn get_search_suggestions(
         let base_url = "https://suggestqueries-clients6.youtube.com/complete/search";
 
         let mut headers = HeaderMap::new();
-        headers.insert(
-            "Referer",
-            "https://www.youtube.com/".parse().unwrap(),
-        );
+        headers.insert("Referer", "https://www.youtube.com/".parse().unwrap());
+        if let Some(ref cookie) = session.cookie {
+            if let Ok(c_val) = cookie.parse() {
+                headers.insert("Cookie", c_val);
+            }
+        }
+
+        let mut query_params = vec![
+            ("client", "youtube".to_string()),
+            ("gs_ri", "youtube".to_string()),
+            ("gs_id", "0".to_string()),
+            ("cp", "0".to_string()),
+            ("ds", "yt".to_string()),
+            ("sugexp", "yt-control-0".to_string()),
+            ("hl", session.context.client.hl.clone()),
+            ("gl", session.context.client.gl.clone()),
+            ("q", query.to_string()),
+        ];
+
+        if let Some(pq) = previous_query {
+            query_params.push(("pq", pq.to_string()));
+        }
 
         let resp: reqwest::Response = client
             .get(base_url)
             .headers(headers)
-            .query(&[
-                ("client", "youtube"),
-                ("ds", "yt"),
-                ("q", query),
-                ("hl", "en"),
-                ("gl", "US"),
-            ])
+            .query(&query_params)
             .send()
             .await?;
 
@@ -94,6 +111,15 @@ pub async fn get_search_suggestions(
             suggestions,
         })
     }
+}
+
+/// Fetch search autocomplete suggestions for YouTube or YouTube Music.
+pub async fn get_search_suggestions(
+    session: &Session,
+    query: &str,
+    is_music: bool,
+) -> Result<SearchSuggestionsResult> {
+    get_search_suggestions_with_options(session, query, None, is_music).await
 }
 
 /// Parse Google suggestqueries response format: `["query", [["sug1", 0], ["sug2", 0]]]`.

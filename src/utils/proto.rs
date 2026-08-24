@@ -5,10 +5,15 @@ use rand::Rng;
 
 use crate::error::{InnertubeError, Result};
 use crate::models::comments::PostCommentSort;
+use crate::models::search::{
+    DurationFilter, FeatureFilter, SearchFilters, SearchPrioritize, SearchTypeFilter,
+    UploadDateFilter,
+};
 use crate::proto::misc::{
     community_post_comments_param, community_post_comments_param_container, community_post_params,
-    create_comment_params, CommunityPostCommentsParam, CommunityPostCommentsParamContainer,
-    CommunityPostParams, CreateCommentParams, VisitorData,
+    create_comment_params, get_comments_section_params, reel_sequence, search_filter,
+    CommunityPostCommentsParam, CommunityPostCommentsParamContainer, CommunityPostParams,
+    CreateCommentParams, GetCommentsSectionParams, ReelSequence, SearchFilter, VisitorData,
 };
 
 /// Encode random visitor ID & timestamp into VisitorData protobuf,
@@ -131,6 +136,141 @@ pub fn encode_community_post_comments_continuation(
     Ok(url::form_urlencoded::byte_serialize(continuation.as_bytes()).collect())
 }
 
+/// Encode `SearchFilters` into URL-encoded base64 `SearchFilter` protobuf params.
+pub fn encode_search_filters(filters: &SearchFilters) -> Result<String> {
+    let mut proto_filter = SearchFilter::default();
+
+    if let Some(p) = filters.prioritize {
+        proto_filter.prioritize = Some(match p {
+            SearchPrioritize::Relevance => search_filter::Prioritize::Relevance as i32,
+            SearchPrioritize::Popularity => search_filter::Prioritize::Popularity as i32,
+        });
+    }
+
+    let mut proto_filters = search_filter::Filters::default();
+    let mut has_sub_filters = false;
+
+    if let Some(upload_date) = filters.upload_date {
+        proto_filters.upload_date = Some(match upload_date {
+            UploadDateFilter::All => search_filter::filters::UploadDate::AnyDate as i32,
+            UploadDateFilter::Today => search_filter::filters::UploadDate::Today as i32,
+            UploadDateFilter::Week => search_filter::filters::UploadDate::Week as i32,
+            UploadDateFilter::Month => search_filter::filters::UploadDate::Month as i32,
+            UploadDateFilter::Year => search_filter::filters::UploadDate::Year as i32,
+        });
+        has_sub_filters = true;
+    }
+
+    if let Some(search_type) = filters.search_type {
+        proto_filters.r#type = Some(match search_type {
+            SearchTypeFilter::All => search_filter::filters::SearchType::AnyType as i32,
+            SearchTypeFilter::Video => search_filter::filters::SearchType::Video as i32,
+            SearchTypeFilter::Shorts => search_filter::filters::SearchType::Shorts as i32,
+            SearchTypeFilter::Channel => search_filter::filters::SearchType::Channel as i32,
+            SearchTypeFilter::Playlist => search_filter::filters::SearchType::Playlist as i32,
+            SearchTypeFilter::Movie => search_filter::filters::SearchType::Movie as i32,
+        });
+        has_sub_filters = true;
+    }
+
+    if let Some(duration) = filters.duration {
+        proto_filters.duration = Some(match duration {
+            DurationFilter::All => search_filter::filters::Duration::AnyDuration as i32,
+            DurationFilter::OverTwentyMins => {
+                search_filter::filters::Duration::OverTwentyMins as i32
+            }
+            DurationFilter::UnderThreeMins => {
+                search_filter::filters::Duration::UnderThreeMins as i32
+            }
+            DurationFilter::ThreeToTwentyMins => {
+                search_filter::filters::Duration::ThreeToTwentyMins as i32
+            }
+        });
+        has_sub_filters = true;
+    }
+
+    for feature in &filters.features {
+        has_sub_filters = true;
+        match feature {
+            FeatureFilter::Hd => proto_filters.features_hd = Some(true),
+            FeatureFilter::Subtitles => proto_filters.features_subtitles = Some(true),
+            FeatureFilter::CreativeCommons => proto_filters.features_creative_commons = Some(true),
+            FeatureFilter::Feature3d => proto_filters.features_3d = Some(true),
+            FeatureFilter::Live => proto_filters.features_live = Some(true),
+            FeatureFilter::Purchased => proto_filters.features_purchased = Some(true),
+            FeatureFilter::Feature4k => proto_filters.features_4k = Some(true),
+            FeatureFilter::Feature360 => proto_filters.features_360 = Some(true),
+            FeatureFilter::Location => proto_filters.features_location = Some(true),
+            FeatureFilter::Hdr => proto_filters.features_hdr = Some(true),
+            FeatureFilter::Vr180 => proto_filters.features_vr180 = Some(true),
+        }
+    }
+
+    if has_sub_filters {
+        proto_filter.filters = Some(proto_filters);
+    }
+
+    let mut buf = Vec::with_capacity(proto_filter.encoded_len());
+    proto_filter.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode search filter: {err}"))
+    })?;
+
+    let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
+/// Encode `GetCommentsSectionParams` into URL-encoded base64 continuation token.
+pub fn encode_comments_section_params(
+    video_id: &str,
+    sort: PostCommentSort,
+    comment_id: Option<&str>,
+) -> Result<String> {
+    let params = GetCommentsSectionParams {
+        ctx: Some(get_comments_section_params::Context {
+            video_id: video_id.to_string(),
+        }),
+        unk_param: 6,
+        params: Some(get_comments_section_params::Params {
+            unk_token: None,
+            opts: Some(get_comments_section_params::params::Options {
+                video_id: video_id.to_string(),
+                sort_by: sort.proto_value(),
+                r#type: 2,
+                comment_id: comment_id.map(|s| s.to_string()),
+            }),
+            replies_opts: None,
+            page: None,
+            target: "comments-section".to_string(),
+        }),
+    };
+
+    let mut buf = Vec::with_capacity(params.encoded_len());
+    params.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode comments section params: {err}"))
+    })?;
+
+    let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
+/// Encode `ReelSequence` into URL-encoded base64 sequenceParams.
+pub fn encode_reel_sequence_params(short_id: &str) -> Result<String> {
+    let params = ReelSequence {
+        short_id: short_id.to_string(),
+        params: Some(reel_sequence::Params { number: 5 }),
+        feature_2: 25,
+        feature_3: 0,
+    };
+
+    let mut buf = Vec::with_capacity(params.encoded_len());
+    params.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode reel sequence params: {err}"))
+    })?;
+
+    let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
 /// Generate random alphanumeric string of given length.
 pub fn generate_random_string(length: usize) -> String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -198,5 +338,82 @@ mod tests {
         assert_eq!(field.post_id, "UgkxMjM0NTY3ODkw");
         assert_eq!(field.ucid1, "UC_test");
         assert_eq!(field.ucid2, "UC_test");
+    }
+
+    #[test]
+    fn test_search_filters_encode_match_legacy_contract() {
+        let filters = SearchFilters {
+            prioritize: Some(SearchPrioritize::Popularity),
+            upload_date: Some(UploadDateFilter::Today),
+            search_type: Some(SearchTypeFilter::Video),
+            duration: Some(DurationFilter::UnderThreeMins),
+            features: vec![FeatureFilter::Hd, FeatureFilter::Subtitles],
+        };
+        let encoded = encode_search_filters(&filters).expect("search filters should encode");
+        let query = format!("value={encoded}");
+        let base64: String = url::form_urlencoded::parse(query.as_bytes())
+            .next()
+            .map(|(_, value)| value.into_owned())
+            .expect("URI component should decode");
+        let bytes = STANDARD.decode(base64).expect("base64 should decode");
+        let decoded = SearchFilter::decode(bytes.as_slice()).expect("protobuf should decode");
+
+        assert_eq!(decoded.prioritize, Some(3));
+        let sub = decoded.filters.expect("sub-filters should be present");
+        assert_eq!(sub.upload_date, Some(2));
+        assert_eq!(sub.r#type, Some(1));
+        assert_eq!(sub.duration, Some(4));
+        assert_eq!(sub.features_hd, Some(true));
+        assert_eq!(sub.features_subtitles, Some(true));
+        assert_eq!(sub.features_4k, None);
+    }
+
+    #[test]
+    fn test_comments_section_params_encode_match_legacy_contract() {
+        let encoded = encode_comments_section_params(
+            "dQw4w9WgXcQ",
+            PostCommentSort::NewestFirst,
+            Some("comment_123"),
+        )
+        .expect("comments section params should encode");
+        let query = format!("value={encoded}");
+        let base64: String = url::form_urlencoded::parse(query.as_bytes())
+            .next()
+            .map(|(_, value)| value.into_owned())
+            .expect("URI component should decode");
+        let bytes = STANDARD.decode(base64).expect("base64 should decode");
+        let decoded =
+            GetCommentsSectionParams::decode(bytes.as_slice()).expect("protobuf should decode");
+
+        assert_eq!(
+            decoded.ctx.map(|ctx| ctx.video_id),
+            Some("dQw4w9WgXcQ".to_string())
+        );
+        assert_eq!(decoded.unk_param, 6);
+        let params = decoded.params.expect("params should be present");
+        assert_eq!(params.target, "comments-section");
+        let opts = params.opts.expect("opts should be present");
+        assert_eq!(opts.video_id, "dQw4w9WgXcQ");
+        assert_eq!(opts.sort_by, 1);
+        assert_eq!(opts.r#type, 2);
+        assert_eq!(opts.comment_id, Some("comment_123".to_string()));
+    }
+
+    #[test]
+    fn test_reel_sequence_encode_match_legacy_contract() {
+        let encoded =
+            encode_reel_sequence_params("short_video_id").expect("reel sequence should encode");
+        let query = format!("value={encoded}");
+        let base64: String = url::form_urlencoded::parse(query.as_bytes())
+            .next()
+            .map(|(_, value)| value.into_owned())
+            .expect("URI component should decode");
+        let bytes = STANDARD.decode(base64).expect("base64 should decode");
+        let decoded = ReelSequence::decode(bytes.as_slice()).expect("protobuf should decode");
+
+        assert_eq!(decoded.short_id, "short_video_id");
+        assert_eq!(decoded.params.map(|params| params.number), Some(5));
+        assert_eq!(decoded.feature_2, 25);
+        assert_eq!(decoded.feature_3, 0);
     }
 }

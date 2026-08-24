@@ -16,17 +16,17 @@ tested equivalent parser path.
 
 | Legacy API | Rust status | Notes |
 |---|---|---|
-| `getInfo` | Partial | `get_video_info` returns raw player data, not the complete legacy `VideoInfo` composition. |
-| `getBasicInfo` | Missing | Needs a player-only compatibility result. |
-| `getShortsVideoInfo` | Missing | Needs Shorts client/request semantics. |
-| `search` | Partial | Query and continuation exist; legacy filters and parsed feed behavior do not. |
-| `getSearchSuggestions` | Partial | No `previous_query` contract. |
-| `getComments` | Partial | Legacy sort/comment-id arguments and continuation semantics differ. |
+| `getInfo` | Partial | `get_video_info` returns raw player data; `get_basic_info` covers player-only compatibility with `VideoInfo`. |
+| `getBasicInfo` | Partial | Implemented via `get_basic_info` with `playbackContext`, `lactMilliseconds`, PO-Token forwarding, and `VideoInfo` container. |
+| `getShortsVideoInfo` | Partial | Implemented via `get_shorts_video_info` with `reelWatchEndpoint` and `ReelSequence` protobuf continuation semantics. |
+| `search` | Partial | Query, continuation, typed `SearchFilters`, and `SearchFilter` protobuf encoding are implemented; legacy parsed feed behavior remains. |
+| `getSearchSuggestions` | Partial | InnerTube & suggestqueries endpoints, `previous_query` parameter, and session cookie forwarding are implemented. |
+| `getComments` | Partial | `GetCommentsSectionParams` protobuf continuation token, sort options, comment ID, and child replies are implemented. |
 | `getHomeFeed`, `getGuide`, `getHistory`, `getLibrary`, `getNotifications`, `getChannel`, `getPlaylist`, `getHashtag` | Partial | Feature paths exist but do not expose the legacy feed/parser contracts. |
 | `getCourses`, `getSubscriptionsFeed`, `getChannelsFeed`, `getPlaylists` | Partial | Generic typed browse-feed wrappers exist; legacy feed behavior and authenticated live verification remain. |
 | `getUnseenNotificationsCount` | Partial | Legacy response layouts and zero fallback are covered; authenticated live verification remains. |
-| `getStreamingData` | Partial | Returns a selected format with deciphered URL; legacy format options remain incomplete. |
-| `download` | Partial | Returns a streaming `reqwest::Response`; legacy range and option contracts remain incomplete. |
+| `getStreamingData` | Partial | Supports `get_streaming_data_with_options` with rich `FormatOptions` (itag, format type, codec, quality); full legacy parsed wrappers remain. |
+| `download` | Partial | Supports `download_with_options` with HTTP byte ranges (`DownloadRange`) and stream response. |
 | `resolveURL`, `getPost` | Partial | Rust equivalents cover the typed navigation/post-detail path; generic legacy endpoint metadata and feed behavior remain. |
 | `getPostComments` | Partial | Community Post continuation protobuf and parsed comment response are implemented; generic legacy `Comments` feed behavior remains. |
 | `getAttestationChallenge` | Partial | Request contract is implemented; typed challenge parsing and BotGuard integration remain. |

@@ -58,7 +58,8 @@ impl StreamingFormat {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FormatType {
     AudioOnly,
     VideoOnly,
@@ -66,13 +67,15 @@ pub enum FormatType {
     Any,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum QualityPreference {
     Highest,
     Lowest,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub struct FormatFilter {
     pub format_type: FormatType,
     pub quality: QualityPreference,
@@ -87,4 +90,33 @@ impl Default for FormatFilter {
             container: None,
         }
     }
+}
+
+/// Byte range for downloading a specific segment of a media stream.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DownloadRange {
+    pub start: u64,
+    pub end: u64,
+}
+
+/// Rich format options matching YouTube.js FormatOptions.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FormatOptions {
+    pub client: Option<String>,
+    pub po_token: Option<String>,
+    pub itag: Option<u32>,
+    pub quality: Option<String>,
+    pub format_type: Option<FormatType>,
+    pub format: Option<String>,
+    pub codec: Option<String>,
+}
+
+/// Download options matching YouTube.js DownloadOptions.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadOptions {
+    #[serde(flatten)]
+    pub format_options: FormatOptions,
+    pub range: Option<DownloadRange>,
 }

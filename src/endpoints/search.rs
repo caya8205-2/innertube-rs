@@ -1,19 +1,29 @@
 use serde_json::{json, Value};
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
-use crate::models::search::{SearchResultItem, SearchResults, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};
+use crate::models::search::{
+    SearchChannelItem, SearchFilters, SearchPlaylistItem, SearchResultItem, SearchResults,
+    SearchVideoItem,
+};
 use crate::models::video::Thumbnail;
 use crate::parser::{NodeListExt, Parser, YTNode};
+use crate::utils::proto::encode_search_filters;
 
-/// Execute a search query against `/youtubei/v1/search`.
-pub async fn search(
+/// Execute a search query with optional filters and continuation token.
+pub async fn search_with_filters(
     session: &Session,
     query: &str,
+    filters: Option<&SearchFilters>,
     continuation_token: Option<&str>,
 ) -> Result<SearchResults> {
     let mut payload = json!({
         "query": query
     });
+
+    if let Some(f) = filters {
+        let params = encode_search_filters(f)?;
+        payload["params"] = json!(params);
+    }
 
     if let Some(token) = continuation_token {
         payload["continuation"] = json!(token);
@@ -87,4 +97,35 @@ pub async fn search(
         items,
         continuation_token,
     })
+}
+
+/// Execute a basic search query against `/youtubei/v1/search`.
+pub async fn search(
+    session: &Session,
+    query: &str,
+    continuation_token: Option<&str>,
+) -> Result<SearchResults> {
+    search_with_filters(session, query, None, continuation_token).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::search::{
+        DurationFilter, FeatureFilter, SearchPrioritize, SearchTypeFilter, UploadDateFilter,
+    };
+
+    #[test]
+    fn test_search_filters_payload_construction() {
+        let filters = SearchFilters {
+            prioritize: Some(SearchPrioritize::Relevance),
+            upload_date: Some(UploadDateFilter::Week),
+            search_type: Some(SearchTypeFilter::Playlist),
+            duration: Some(DurationFilter::OverTwentyMins),
+            features: vec![FeatureFilter::Feature4k],
+        };
+
+        let encoded = encode_search_filters(&filters).expect("should encode");
+        assert!(!encoded.is_empty());
+    }
 }

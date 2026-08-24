@@ -2,31 +2,47 @@ use std::collections::HashMap;
 use serde_json::{json, Value};
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
-use crate::models::comments::{Comment, CommentThread, CommentsResult};
+use crate::models::comments::{Comment, CommentThread, CommentsResult, PostCommentSort};
 use crate::parser::nodes::comments::CommentNode;
 use crate::parser::nodes::misc::text::TextNode;
 use crate::parser::{NodeListExt, Parser, YTNode};
+use crate::utils::proto::encode_comments_section_params;
 
-/// Fetch comments for a video ID or continuation token.
-pub async fn get_comments(
+/// Fetch comments for a video with sort option, specific comment ID, or continuation token.
+pub async fn get_comments_with_options(
     session: &Session,
     video_id: &str,
+    sort_by: Option<PostCommentSort>,
+    comment_id: Option<&str>,
     continuation_token: Option<&str>,
 ) -> Result<CommentsResult> {
     let continuation = match continuation_token {
         Some(t) => t.to_string(),
         None => {
-            // Step 1: Query /next to get initial comment section continuation token
-            let initial_payload = json!({
-                "videoId": video_id,
-                "contentCheckOk": true,
-                "racyCheckOk": true
-            });
-            let resp = session.post_innertube("/next", initial_payload).await?;
-            let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
-            extract_comment_continuation_token(&raw).ok_or_else(|| {
-                InnertubeError::Other(format!("Comments are disabled or not available for video: {}", video_id))
-            })?
+            // Encode protobuf continuation token matching YouTube.js
+            match encode_comments_section_params(
+                video_id,
+                sort_by.unwrap_or_default(),
+                comment_id,
+            ) {
+                Ok(token) => token,
+                Err(_) => {
+                    // Fallback to querying /next to get initial comment section continuation token
+                    let initial_payload = json!({
+                        "videoId": video_id,
+                        "contentCheckOk": true,
+                        "racyCheckOk": true
+                    });
+                    let resp = session.post_innertube("/next", initial_payload).await?;
+                    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+                    extract_comment_continuation_token(&raw).ok_or_else(|| {
+                        InnertubeError::Other(format!(
+                            "Comments are disabled or not available for video: {}",
+                            video_id
+                        ))
+                    })?
+                }
+            }
         }
     };
 
@@ -41,6 +57,15 @@ pub async fn get_comments(
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_comments_response(&raw)
+}
+
+/// Fetch comments for a video ID or continuation token.
+pub async fn get_comments(
+    session: &Session,
+    video_id: &str,
+    continuation_token: Option<&str>,
+) -> Result<CommentsResult> {
+    get_comments_with_options(session, video_id, None, None, continuation_token).await
 }
 
 /// Fetch child comment replies using a reply continuation token.
@@ -309,5 +334,18 @@ fn parse_like_count(text: &str) -> Option<u64> {
         Some((num * 1_000_000.0) as u64)
     } else {
         clean.replace(',', "").parse().ok()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_like_count_cases() {
+        assert_eq!(parse_like_count("1.2K"), Some(1200));
+        assert_eq!(parse_like_count("3.5M"), Some(3500000));
+        assert_eq!(parse_like_count("450"), Some(450));
+        assert_eq!(parse_like_count("1,234"), Some(1234));
     }
 }
