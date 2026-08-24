@@ -51,7 +51,7 @@ impl ThumbnailListNode {
         }
 
         // Sort largest width first (matching YouTube.js behavior)
-        list.sort_by(|a, b| b.width.unwrap_or(0).cmp(&a.width.unwrap_or(0)));
+        list.sort_by_key(|a| std::cmp::Reverse(a.width.unwrap_or(0)));
 
         Self { thumbnails: list }
     }

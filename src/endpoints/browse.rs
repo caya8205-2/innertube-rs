@@ -153,33 +153,29 @@ pub async fn get_youtube_playlist(
 
     for node in &parsed_tree {
         match node {
-            YTNode::PlaylistVideo(pv) => {
-                if seen_ids.insert(pv.id.clone()) {
-                    tracks.push(ChannelTrack {
-                        id: format!("youtube:{}", pv.id),
-                        title: pv.title.clone(),
-                        artist: pv.author.as_ref().map(|a| a.name.clone()).unwrap_or_else(|| "Unknown".to_string()),
-                        artist_id: pv.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
-                        album: playlist_name.clone(),
-                        duration: pv.duration_ms.map(|d| (d / 1000) as u32).unwrap_or(180),
-                        thumbnail: pv.thumbnails.best_url().unwrap_or("").to_string(),
-                        youtube_id: pv.id.clone(),
-                    });
-                }
+            YTNode::PlaylistVideo(pv) if seen_ids.insert(pv.id.clone()) => {
+                tracks.push(ChannelTrack {
+                    id: format!("youtube:{}", pv.id),
+                    title: pv.title.clone(),
+                    artist: pv.author.as_ref().map(|a| a.name.clone()).unwrap_or_else(|| "Unknown".to_string()),
+                    artist_id: pv.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
+                    album: playlist_name.clone(),
+                    duration: pv.duration_ms.map(|d| (d / 1000) as u32).unwrap_or(180),
+                    thumbnail: pv.thumbnails.best_url().unwrap_or("").to_string(),
+                    youtube_id: pv.id.clone(),
+                });
             }
-            YTNode::Video(v) => {
-                if seen_ids.insert(v.id.clone()) {
-                    tracks.push(ChannelTrack {
-                        id: format!("youtube:{}", v.id),
-                        title: v.title.clone(),
-                        artist: v.author.as_ref().map(|a| a.name.clone()).unwrap_or_else(|| "Unknown".to_string()),
-                        artist_id: v.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
-                        album: playlist_name.clone(),
-                        duration: v.duration_ms.map(|d| (d / 1000) as u32).unwrap_or(180),
-                        thumbnail: v.thumbnails.best_url().unwrap_or("").to_string(),
-                        youtube_id: v.id.clone(),
-                    });
-                }
+            YTNode::Video(v) if seen_ids.insert(v.id.clone()) => {
+                tracks.push(ChannelTrack {
+                    id: format!("youtube:{}", v.id),
+                    title: v.title.clone(),
+                    artist: v.author.as_ref().map(|a| a.name.clone()).unwrap_or_else(|| "Unknown".to_string()),
+                    artist_id: v.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
+                    album: playlist_name.clone(),
+                    duration: v.duration_ms.map(|d| (d / 1000) as u32).unwrap_or(180),
+                    thumbnail: v.thumbnails.best_url().unwrap_or("").to_string(),
+                    youtube_id: v.id.clone(),
+                });
             }
             _ => {}
         }
