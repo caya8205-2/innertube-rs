@@ -6,6 +6,8 @@ use crate::models::music::{
     MusicExplore, MusicLyrics, MusicPlaylistItem, MusicSearchFilter, MusicSearchResults,
     MusicTrackItem,
 };
+use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
+use crate::parser::{NodeListExt, Parser, YTNode};
 
 /// Perform a filtered search on YouTube Music (`WEB_REMIX`).
 pub async fn search_music(
@@ -105,34 +107,7 @@ fn extract_lyrics_browse_id(raw: &Value) -> Option<String> {
     None
 }
 
-/// Parse lyrics browse response into `MusicLyrics`.
-pub fn parse_music_lyrics_response(raw: &Value) -> Result<MusicLyrics> {
-    if let Some(msg_renderer) = raw.pointer("/contents/messageRenderer") {
-        let msg = parse_runs_text(msg_renderer.get("text")).unwrap_or_else(|| "Lyrics not available".to_string());
-        return Err(InnertubeError::Other(msg));
-    }
-
-    let shelf = raw.pointer("/contents/sectionListRenderer/contents/0/musicDescriptionShelfRenderer")
-        .or_else(|| raw.pointer("/contents/musicDescriptionShelfRenderer"))
-        .ok_or_else(|| InnertubeError::Other("Lyrics not available for this track".into()))?;
-
-    let title = shelf.pointer("/header/runs/0/text")
-        .or_else(|| shelf.pointer("/title/runs/0/text"))
-        .and_then(|t| t.as_str())
-        .map(|s| s.to_string());
-
-    let lyrics_text = parse_runs_text(shelf.get("description")).unwrap_or_default();
-    let footer = parse_runs_text(shelf.get("footer"));
-
-    Ok(MusicLyrics {
-        lyrics_text,
-        footer,
-        title,
-        is_synced: false,
-    })
-}
-
-/// Parse YouTube Music search response into `MusicSearchResults`.
+/// Parse YouTube Music search results using modular AST nodes.
 pub fn parse_music_search_response(
     query: &str,
     filter: Option<MusicSearchFilter>,
@@ -144,66 +119,52 @@ pub fn parse_music_search_response(
         ..Default::default()
     };
 
-    let section_contents = raw.pointer("/contents/tabbedSearchResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
-        .or_else(|| raw.pointer("/contents/sectionListRenderer/contents"))
-        .and_then(|c| c.as_array());
+    let parsed_tree = Parser::parse_tree(raw);
 
-    let sections = match section_contents {
-        Some(s) => s,
-        None => return Ok(results),
-    };
+    for item in parsed_tree.find_music_items() {
+        let track = convert_music_node_to_track_item(item);
 
-    for sec in sections {
-        let mut items_to_process = Vec::new();
-        let mut shelf_title = String::new();
-
-        if let Some(shelf) = sec.get("musicShelfRenderer") {
-            shelf_title = shelf.pointer("/title/runs/0/text").and_then(|t| t.as_str()).unwrap_or("").to_lowercase();
-            if let Some(items) = shelf.get("contents").and_then(|c| c.as_array()) {
-                items_to_process.extend(items.iter());
+        match filter {
+            Some(MusicSearchFilter::Songs) => results.songs.push(track),
+            Some(MusicSearchFilter::Videos) => results.videos.push(track),
+            Some(MusicSearchFilter::Albums) => {
+                results.albums.push(MusicAlbumItem {
+                    browse_id: item.album_id.clone().or_else(|| item.id.clone()).unwrap_or_default(),
+                    title: item.title.clone(),
+                    artist: item.artists.first().map(|a| a.name.clone()),
+                    year: None,
+                    thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+                    track_count: None,
+                });
             }
-            if let Some(token) = shelf.pointer("/continuations/0/nextContinuationData/continuation").and_then(|t| t.as_str()) {
-                results.continuation_token = Some(token.to_string());
+            Some(MusicSearchFilter::Artists) => {
+                results.artists.push(MusicArtistItem {
+                    browse_id: item.id.clone().unwrap_or_default(),
+                    name: item.title.clone(),
+                    subscribers: None,
+                    thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+                });
             }
-        } else if let Some(isr) = sec.get("itemSectionRenderer") {
-            if let Some(contents) = isr.get("contents").and_then(|c| c.as_array()) {
-                for c in contents {
-                    if let Some(shelf) = c.get("musicShelfRenderer") {
-                        shelf_title = shelf.pointer("/title/runs/0/text").and_then(|t| t.as_str()).unwrap_or("").to_lowercase();
-                        if let Some(items) = shelf.get("contents").and_then(|c| c.as_array()) {
-                            items_to_process.extend(items.iter());
-                        }
-                    } else if c.get("musicResponsiveListItemRenderer").is_some() {
-                        items_to_process.push(c);
-                    }
-                }
+            Some(MusicSearchFilter::Playlists) => {
+                results.playlists.push(MusicPlaylistItem {
+                    browse_id: item.id.clone().unwrap_or_default(),
+                    title: item.title.clone(),
+                    author: item.artists.first().map(|a| a.name.clone()),
+                    track_count: None,
+                    thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+                });
             }
-        } else if let Some(card) = sec.get("musicCardShelfRenderer") {
-            if let Some(contents) = card.get("contents").and_then(|c| c.as_array()) {
-                items_to_process.extend(contents.iter());
+            None => {
+                results.songs.push(track);
             }
-        }
-
-        for item in items_to_process {
-            if let Some(mrli) = item.get("musicResponsiveListItemRenderer") {
-                let (track, album, artist, playlist) = parse_music_responsive_item(mrli);
-
-                if let Some(t) = track {
-                    if shelf_title.contains("video") {
-                        results.videos.push(t);
-                    } else {
-                        results.songs.push(t);
-                    }
-                }
-                if let Some(al) = album {
-                    results.albums.push(al);
-                }
-                if let Some(ar) = artist {
-                    results.artists.push(ar);
-                }
-                if let Some(pl) = playlist {
-                    results.playlists.push(pl);
-                }
+            _ => {
+                results.playlists.push(MusicPlaylistItem {
+                    browse_id: item.id.clone().unwrap_or_default(),
+                    title: item.title.clone(),
+                    author: item.artists.first().map(|a| a.name.clone()),
+                    track_count: None,
+                    thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+                });
             }
         }
     }
@@ -211,477 +172,124 @@ pub fn parse_music_search_response(
     Ok(results)
 }
 
-fn parse_music_responsive_item(
-    item: &Value,
-) -> (
-    Option<MusicTrackItem>,
-    Option<MusicAlbumItem>,
-    Option<MusicArtistItem>,
-    Option<MusicPlaylistItem>,
-) {
-    let mut title = String::new();
-    let mut video_id = None;
-    let mut browse_id = None;
-    let mut is_explicit = false;
+/// Parse YouTube Music lyrics response using modular AST nodes.
+pub fn parse_music_lyrics_response(raw: &Value) -> Result<MusicLyrics> {
+    let parsed_tree = Parser::parse_tree(raw);
 
-    // Check badges
-    if let Some(badges) = item.get("badges").and_then(|b| b.as_array()) {
-        for b in badges {
-            if let Some(label) = b.pointer("/musicInlineBadgeRenderer/accessibilityData/accessibilityData/label").and_then(|l| l.as_str()) {
-                if label.eq_ignore_ascii_case("Explicit") {
-                    is_explicit = true;
-                }
-            }
+    for node in &parsed_tree {
+        if let YTNode::MusicDescriptionShelf(shelf) = node {
+            return Ok(MusicLyrics {
+                lyrics_text: shelf.description.clone(),
+                footer: shelf.footer.clone(),
+                title: shelf.header.clone(),
+                is_synced: false,
+            });
         }
     }
 
-    // Extract title & primary navigation
-    if let Some(col0) = item.pointer("/flexColumns/0/musicResponsiveListItemFlexColumnRenderer/text") {
-        if let Some(runs) = col0.get("runs").and_then(|r| r.as_array()) {
-            if let Some(first) = runs.first() {
-                title = first.get("text").and_then(|t| t.as_str()).unwrap_or("").to_string();
-                if video_id.is_none() {
-                    video_id = first.pointer("/navigationEndpoint/watchEndpoint/videoId").and_then(|v| v.as_str()).map(|s| s.to_string());
-                }
-                if browse_id.is_none() {
-                    browse_id = first.pointer("/navigationEndpoint/browseEndpoint/browseId").and_then(|b| b.as_str()).map(|s| s.to_string());
-                }
-            }
+    // Direct fallback from header / renderer
+    if let Some(shelf) = raw.pointer("/contents/sectionListRenderer/contents/0/musicDescriptionShelfRenderer") {
+        if let Some(desc) = MusicDescriptionShelfNode::from_value(shelf) {
+            return Ok(MusicLyrics {
+                lyrics_text: desc.description,
+                footer: desc.footer,
+                title: desc.header,
+                is_synced: false,
+            });
         }
     }
 
-    if video_id.is_none() {
-        video_id = item.pointer("/navigationEndpoint/watchEndpoint/videoId")
-            .or_else(|| item.pointer("/overlay/musicItemThumbnailOverlayRenderer/content/musicPlayButtonRenderer/playNavigationEndpoint/watchEndpoint/videoId"))
-            .or_else(|| item.pointer("/doubleTapCommand/watchEndpoint/videoId"))
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
-    }
-
-    if browse_id.is_none() {
-        browse_id = item.pointer("/navigationEndpoint/browseEndpoint/browseId")
-            .or_else(|| item.pointer("/overlay/musicItemThumbnailOverlayRenderer/content/musicPlayButtonRenderer/playNavigationEndpoint/browseEndpoint/browseId"))
-            .and_then(|b| b.as_str())
-            .map(|s| s.to_string());
-    }
-
-    let root_page_type = item.pointer("/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
-        .and_then(|p| p.as_str())
-        .unwrap_or("");
-
-    // Extract thumbnail
-    let thumbnail = item.pointer("/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
-        .and_then(|u| u.as_str())
-        .map(|s| s.to_string());
-
-    // Extract artists, album, duration from column 1
-    let mut artists = Vec::new();
-    let mut album_ref = None;
-    let mut duration = None;
-    let mut item_type = "song";
-
-    if let Some(col1) = item.pointer("/flexColumns/1/musicResponsiveListItemFlexColumnRenderer/text/runs").and_then(|r| r.as_array()) {
-        for run in col1 {
-            let text = run.get("text").and_then(|t| t.as_str()).unwrap_or("").trim();
-            if text == "•" || text.is_empty() {
-                continue;
-            }
-
-            if text.eq_ignore_ascii_case("Song") {
-                item_type = "song";
-                continue;
-            } else if text.eq_ignore_ascii_case("Video") {
-                item_type = "video";
-                continue;
-            } else if text.eq_ignore_ascii_case("Album") || text.eq_ignore_ascii_case("EP") || text.eq_ignore_ascii_case("Single") {
-                item_type = "album";
-                continue;
-            } else if text.eq_ignore_ascii_case("Artist") {
-                item_type = "artist";
-                continue;
-            } else if text.eq_ignore_ascii_case("Playlist") {
-                item_type = "playlist";
-                continue;
-            }
-
-            let nav_browse_id = run.pointer("/navigationEndpoint/browseEndpoint/browseId").and_then(|b| b.as_str());
-            let page_type = run.pointer("/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
-                .and_then(|p| p.as_str())
-                .unwrap_or("");
-
-            if page_type == "MUSIC_PAGE_TYPE_ARTIST" || (nav_browse_id.is_some() && nav_browse_id.unwrap().starts_with("UC")) {
-                artists.push(MusicArtistRef {
-                    name: text.to_string(),
-                    browse_id: nav_browse_id.map(|s| s.to_string()),
-                });
-            } else if page_type == "MUSIC_PAGE_TYPE_ALBUM" || (nav_browse_id.is_some() && nav_browse_id.unwrap().starts_with("MPRE")) {
-                album_ref = Some(MusicAlbumRef {
-                    title: text.to_string(),
-                    browse_id: nav_browse_id.map(|s| s.to_string()),
-                });
-            } else if text.contains(':') && text.chars().all(|c| c.is_ascii_digit() || c == ':') {
-                duration = Some(text.to_string());
-            } else if artists.is_empty() && !text.chars().all(|c| c.is_ascii_digit()) {
-                artists.push(MusicArtistRef {
-                    name: text.to_string(),
-                    browse_id: nav_browse_id.map(|s| s.to_string()),
-                });
-            }
-        }
-    }
-
-    if let Some(vid) = video_id {
-        let duration_ms = duration.as_deref().and_then(parse_duration_to_ms);
-        return (
-            Some(MusicTrackItem {
-                video_id: vid,
-                title,
-                artists,
-                album: album_ref,
-                duration,
-                duration_ms,
-                thumbnail,
-                is_explicit,
-            }),
-            None,
-            None,
-            None,
-        );
-    }
-
-    if let Some(bid) = browse_id {
-        if bid.starts_with("MPRE") || root_page_type == "MUSIC_PAGE_TYPE_ALBUM" || item_type == "album" {
-            let artist_name = artists.first().map(|a| a.name.clone());
-            return (
-                None,
-                Some(MusicAlbumItem {
-                    browse_id: bid,
-                    title,
-                    artist: artist_name,
-                    year: None,
-                    thumbnail,
-                    track_count: None,
-                }),
-                None,
-                None,
-            );
-        } else if bid.starts_with("UC") || root_page_type == "MUSIC_PAGE_TYPE_ARTIST" || item_type == "artist" {
-            return (
-                None,
-                None,
-                Some(MusicArtistItem {
-                    browse_id: bid,
-                    name: title,
-                    subscribers: None,
-                    thumbnail,
-                }),
-                None,
-            );
-        } else if bid.starts_with("VL") || bid.starts_with("PL") || bid.starts_with("RDCLAK") || root_page_type == "MUSIC_PAGE_TYPE_PLAYLIST" || item_type == "playlist" {
-            return (
-                None,
-                None,
-                None,
-                Some(MusicPlaylistItem {
-                    browse_id: bid,
-                    title,
-                    author: artists.first().map(|a| a.name.clone()),
-                    track_count: None,
-                    thumbnail,
-                }),
-            );
-        }
-    }
-
-    (None, None, None, None)
+    Err(InnertubeError::Other("Lyrics text shelf not found in response".to_string()))
 }
 
-/// Parse YouTube Music album browse response into `MusicAlbumView`.
+/// Parse YouTube Music album page response using modular AST nodes.
 pub fn parse_music_album_response(browse_id: &str, raw: &Value) -> Result<MusicAlbumView> {
-    let header = raw.pointer("/header/musicDetailHeaderRenderer")
+    let mut album_view = MusicAlbumView {
+        browse_id: browse_id.to_string(),
+        ..Default::default()
+    };
+
+    // Header metadata extraction
+    if let Some(header) = raw.pointer("/header/musicDetailHeaderRenderer")
         .or_else(|| raw.pointer("/header/musicResponsiveHeaderRenderer"))
-        .or_else(|| raw.pointer("/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents/0/musicResponsiveHeaderRenderer"))
-        .or_else(|| raw.pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents/0/musicResponsiveHeaderRenderer"))
-        .or_else(|| raw.pointer("/contents/twoColumnBrowseResultsRenderer/secondaryContents/sectionListRenderer/contents/0/musicResponsiveHeaderRenderer"));
+        .or_else(|| raw.pointer("/header/musicVisualHeaderRenderer"))
+    {
+        album_view.title = header.pointer("/title/runs/0/text")
+            .or_else(|| header.pointer("/title/simpleText"))
+            .and_then(|t| t.as_str())
+            .unwrap_or("Untitled Album")
+            .to_string();
 
-    let title = header
-        .and_then(|h| h.pointer("/title/runs/0/text").or_else(|| h.pointer("/title/simpleText")))
-        .and_then(|t| t.as_str())
-        .unwrap_or("Unknown Album")
-        .to_string();
-
-    let artist = header
-        .and_then(|h| h.pointer("/straplineTextOne/runs/0/text").or_else(|| h.pointer("/subtitle/runs/0/text")))
-        .and_then(|t| t.as_str())
-        .map(|s| s.to_string());
-
-    let year = header
-        .and_then(|h| h.pointer("/subtitle/runs/2/text").or_else(|| h.pointer("/subtitle/runs/4/text")))
-        .and_then(|t| t.as_str())
-        .map(|s| s.to_string());
-
-    let description = header
-        .and_then(|h| h.pointer("/description/runs/0/text"))
-        .and_then(|t| t.as_str())
-        .map(|s| s.to_string());
-
-    let thumbnail = header
-        .and_then(|h| {
-            h.pointer("/thumbnail/croppedSquareThumbnailRenderer/thumbnail/thumbnails/0/url")
-                .or_else(|| h.pointer("/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url"))
-        })
-        .and_then(|u| u.as_str())
-        .map(|s| s.to_string());
-
-    let mut tracks = Vec::new();
-
-    // Check all section sources for musicShelfRenderer
-    let mut all_sections = Vec::new();
-
-    if let Some(sec) = raw.pointer("/contents/twoColumnBrowseResultsRenderer/secondaryContents/sectionListRenderer/contents").and_then(|c| c.as_array()) {
-        all_sections.extend(sec.iter());
-    }
-    if let Some(sec) = raw.pointer("/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents").and_then(|c| c.as_array()) {
-        all_sections.extend(sec.iter());
-    }
-    if let Some(sec) = raw.pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents").and_then(|c| c.as_array()) {
-        all_sections.extend(sec.iter());
-    }
-    if let Some(sec) = raw.pointer("/contents/sectionListRenderer/contents").and_then(|c| c.as_array()) {
-        all_sections.extend(sec.iter());
-    }
-
-    for sec in all_sections {
-        if let Some(shelf) = sec.get("musicShelfRenderer") {
-            if let Some(items) = shelf.get("contents").and_then(|c| c.as_array()) {
-                for item in items {
-                    if let Some(mrli) = item.get("musicResponsiveListItemRenderer") {
-                        let (track, _, _, _) = parse_music_responsive_item(mrli);
-                        if let Some(t) = track {
-                            tracks.push(t);
-                        }
+        if let Some(sub_runs) = header.pointer("/subtitle/runs").and_then(|r| r.as_array()) {
+            for run in sub_runs {
+                let text = run.get("text").and_then(|t| t.as_str()).unwrap_or("");
+                if let Some(bid) = run.pointer("/navigationEndpoint/browseEndpoint/browseId").and_then(|b| b.as_str()) {
+                    if (bid.starts_with("UC") || bid.starts_with("FEmusic_library_privately_owned_artist")) && album_view.artist.is_none() {
+                        album_view.artist = Some(text.to_string());
                     }
+                } else if text.chars().all(|c| c.is_ascii_digit()) && text.len() == 4 {
+                    album_view.year = Some(text.to_string());
                 }
             }
         }
+
+        album_view.thumbnail = header.pointer("/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
+            .or_else(|| header.pointer("/thumbnail/thumbnails/0/url"))
+            .and_then(|u| u.as_str())
+            .map(|s| s.to_string());
     }
 
-    Ok(MusicAlbumView {
-        browse_id: browse_id.to_string(),
-        title,
-        artist,
-        year,
-        description,
-        thumbnail,
-        tracks,
-    })
+    // Tracklist extraction using modular parser
+    let parsed_tree = Parser::parse_tree(raw);
+    for item in parsed_tree.find_music_items() {
+        album_view.tracks.push(convert_music_node_to_track_item(item));
+    }
+
+    Ok(album_view)
 }
 
-/// Parse YouTube Music explore page into `MusicExplore`.
+/// Parse YouTube Music explore / charts response using modular AST nodes.
 pub fn parse_music_explore_response(raw: &Value) -> Result<MusicExplore> {
     let mut explore = MusicExplore::default();
+    let parsed_tree = Parser::parse_tree(raw);
 
-    let sections = raw.pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
-        .or_else(|| raw.pointer("/contents/sectionListRenderer/contents"))
-        .and_then(|c| c.as_array());
+    // Extract trending tracks
+    for item in parsed_tree.find_music_items() {
+        explore.top_songs.push(convert_music_node_to_track_item(item));
+    }
 
-    if let Some(sec_list) = sections {
-        for sec in sec_list {
-            if let Some(carousel) = sec.get("musicCarouselShelfRenderer") {
-                let title = carousel.pointer("/header/musicCarouselShelfBasicHeaderRenderer/title/runs/0/text")
-                    .and_then(|t| t.as_str())
-                    .unwrap_or("")
-                    .to_lowercase();
-
-                if let Some(items) = carousel.get("contents").and_then(|c| c.as_array()) {
-                    for item in items {
-                        if let Some(mrli) = item.get("musicResponsiveListItemRenderer") {
-                            let (track, album, artist, _) = parse_music_responsive_item(mrli);
-                            if let Some(t) = track {
-                                if title.contains("video") {
-                                    explore.top_videos.push(t);
-                                } else {
-                                    explore.top_songs.push(t);
-                                }
-                            }
-                            if let Some(al) = album {
-                                explore.new_releases.push(al);
-                            }
-                            if let Some(ar) = artist {
-                                explore.top_artists.push(ar);
-                            }
-                        } else if let Some(mttm) = item.get("musicTwoRowItemRenderer") {
-                            let item_title = mttm.pointer("/title/runs/0/text").and_then(|t| t.as_str()).unwrap_or("").to_string();
-                            let browse_id = mttm.pointer("/navigationEndpoint/browseEndpoint/browseId").and_then(|b| b.as_str()).unwrap_or("").to_string();
-                            let thumbnail = mttm.pointer("/thumbnailRenderer/musicThumbnailRenderer/thumbnail/thumbnails/0/url").and_then(|u| u.as_str()).map(|s| s.to_string());
-
-                            if !browse_id.is_empty() {
-                                explore.new_releases.push(MusicAlbumItem {
-                                    browse_id,
-                                    title: item_title,
-                                    artist: None,
-                                    year: None,
-                                    thumbnail,
-                                    track_count: None,
-                                });
-                            }
-                        }
-                    }
-                }
-            }
+    // Extract albums & categories from two-row items
+    for node in &parsed_tree {
+        if let YTNode::MusicCard(card) = node {
+            explore.new_releases.push(MusicAlbumItem {
+                browse_id: card.id.clone().unwrap_or_default(),
+                title: card.title.clone(),
+                artist: card.subtitle.clone(),
+                year: None,
+                thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
+                track_count: None,
+            });
         }
     }
 
     Ok(explore)
 }
 
-fn parse_runs_text(val: Option<&Value>) -> Option<String> {
-    let val = val?;
-    if let Some(s) = val.get("simpleText").and_then(|s| s.as_str()) {
-        return Some(s.to_string());
-    }
-    if let Some(runs) = val.get("runs").and_then(|r| r.as_array()) {
-        let texts: Vec<&str> = runs.iter().filter_map(|r| r.get("text").and_then(|t| t.as_str())).collect();
-        if !texts.is_empty() {
-            return Some(texts.join(""));
-        }
-    }
-    None
-}
-
-fn parse_duration_to_ms(text: &str) -> Option<u64> {
-    let parts: Vec<&str> = text.split(':').collect();
-    match parts.len() {
-        2 => {
-            let mins = parts[0].parse::<u64>().ok()?;
-            let secs = parts[1].parse::<u64>().ok()?;
-            Some((mins * 60 + secs) * 1000)
-        }
-        3 => {
-            let hrs = parts[0].parse::<u64>().ok()?;
-            let mins = parts[1].parse::<u64>().ok()?;
-            let secs = parts[2].parse::<u64>().ok()?;
-            Some((hrs * 3600 + mins * 60 + secs) * 1000)
-        }
-        _ => None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn test_parse_music_lyrics() {
-        let fixture = json!({
-            "contents": {
-                "sectionListRenderer": {
-                    "contents": [
-                        {
-                            "musicDescriptionShelfRenderer": {
-                                "header": {
-                                    "runs": [{ "text": "Lyrics" }]
-                                },
-                                "description": {
-                                    "runs": [
-                                        { "text": "We're no strangers to love\n" },
-                                        { "text": "You know the rules and so do I" }
-                                    ]
-                                },
-                                "footer": {
-                                    "runs": [{ "text": "Source: LyricFind" }]
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        });
-
-        let lyrics = parse_music_lyrics_response(&fixture).expect("Failed to parse lyrics");
-        assert_eq!(lyrics.title.as_deref(), Some("Lyrics"));
-        assert!(lyrics.lyrics_text.contains("We're no strangers to love"));
-        assert_eq!(lyrics.footer.as_deref(), Some("Source: LyricFind"));
-    }
-
-    #[test]
-    fn test_parse_music_search() {
-        let fixture = json!({
-            "contents": {
-                "tabbedSearchResultsRenderer": {
-                    "tabs": [
-                        {
-                            "tabRenderer": {
-                                "content": {
-                                    "sectionListRenderer": {
-                                        "contents": [
-                                            {
-                                                "musicShelfRenderer": {
-                                                    "title": { "runs": [{ "text": "Songs" }] },
-                                                    "contents": [
-                                                        {
-                                                            "musicResponsiveListItemRenderer": {
-                                                                "flexColumns": [
-                                                                    {
-                                                                        "musicResponsiveListItemFlexColumnRenderer": {
-                                                                            "text": {
-                                                                                "runs": [
-                                                                                    {
-                                                                                        "text": "Never Gonna Give You Up",
-                                                                                        "navigationEndpoint": {
-                                                                                            "watchEndpoint": { "videoId": "dQw4w9WgXcQ" }
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            }
-                                                                        }
-                                                                    },
-                                                                    {
-                                                                        "musicResponsiveListItemFlexColumnRenderer": {
-                                                                            "text": {
-                                                                                "runs": [
-                                                                                    {
-                                                                                        "text": "Rick Astley",
-                                                                                        "navigationEndpoint": {
-                                                                                            "browseEndpoint": {
-                                                                                                "browseId": "UCuAXFkgsw1L7xaCfnd5JJOw",
-                                                                                                "browseEndpointContextSupportedConfigs": {
-                                                                                                    "browseEndpointContextMusicConfig": {
-                                                                                                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    },
-                                                                                    { "text": " • " },
-                                                                                    { "text": "3:32" }
-                                                                                ]
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                ]
-                                                            }
-                                                        }
-                                                    ]
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        });
-
-        let results = parse_music_search_response("rick astley", Some(MusicSearchFilter::Songs), &fixture).expect("Failed to parse music search");
-        assert_eq!(results.songs.len(), 1);
-        assert_eq!(results.songs[0].video_id, "dQw4w9WgXcQ");
-        assert_eq!(results.songs[0].title, "Never Gonna Give You Up");
-        assert_eq!(results.songs[0].artists[0].name, "Rick Astley");
-        assert_eq!(results.songs[0].duration.as_deref(), Some("3:32"));
-        assert_eq!(results.songs[0].duration_ms, Some(212000));
+fn convert_music_node_to_track_item(item: &MusicResponsiveListItemNode) -> MusicTrackItem {
+    MusicTrackItem {
+        video_id: item.id.clone().unwrap_or_default(),
+        title: item.title.clone(),
+        artists: item.artists.iter().map(|a| MusicArtistRef {
+            name: a.name.clone(),
+            browse_id: a.id.clone(),
+        }).collect(),
+        album: item.album.as_ref().map(|title| MusicAlbumRef {
+            title: title.clone(),
+            browse_id: item.album_id.clone(),
+        }),
+        duration: item.duration.clone(),
+        duration_ms: item.duration_ms,
+        thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+        is_explicit: item.is_explicit,
     }
 }

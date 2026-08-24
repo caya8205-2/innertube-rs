@@ -101,6 +101,7 @@ pub mod proto {
 pub mod error;
 pub mod constants;
 pub mod models;
+pub mod parser;
 pub mod core;
 pub mod utils;
 pub mod endpoints;
@@ -109,6 +110,7 @@ use std::sync::Arc;
 
 // Re-exports for convenient top-level access
 pub use error::{InnertubeError, Result};
+pub use parser::{NodeListExt, Parser, YTNode};
 pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
 pub use models::video::{PlayerResponse, VideoDetails, StreamingData, PlayabilityStatus, Thumbnail};
 pub use models::search::{SearchResults, SearchResultItem, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};

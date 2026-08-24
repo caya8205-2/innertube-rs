@@ -1,8 +1,10 @@
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::collections::HashSet;
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::channel::{ChannelArtistView, ChannelPlaylist, ChannelTrack, YouTubePlaylistView};
+use crate::parser::nodes::channel::ChannelHeaderNode;
+use crate::parser::{NodeListExt, Parser, YTNode};
 
 /// Fetch channel data (avatar, subscriber count, top tracks, and playlists).
 pub async fn get_channel(
@@ -52,22 +54,28 @@ pub async fn get_channel(
     for html in [&home_html, &videos_html, &releases_html] {
         if let Some(json_data) = extract_yt_initial_data(html) {
             if channel_name.is_empty() {
-                if let Some(meta_name) = json_data.pointer("/metadata/channelMetadataRenderer/title").and_then(Value::as_str) {
-                    channel_name = meta_name.to_string();
-                }
-                if avatar.is_none() {
-                    if let Some(thumb) = json_data.pointer("/metadata/channelMetadataRenderer/avatar/thumbnails/0/url").and_then(Value::as_str) {
-                        avatar = Some(clean_url(thumb));
+                if let Some(header) = ChannelHeaderNode::from_value(&json_data) {
+                    if !header.title.is_empty() && header.title != "Unknown Channel" {
+                        channel_name = header.title;
                     }
-                }
-                if subscribers.is_none() {
-                    if let Some(subs) = json_data.pointer("/header/pageHeaderRenderer/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/1/metadataParts/0/text/content").and_then(Value::as_str) {
-                        subscribers = Some(subs.to_string());
-                    }
+                    avatar = header.avatar.best_url().map(|s| s.to_string());
+                    subscribers = header.subscriber_count;
                 }
             }
 
-            parse_channel_node(&json_data, &mut videos, &mut playlists, &mut seen_vids, &mut seen_pls);
+            let parsed_tree = Parser::parse_tree(&json_data);
+            for v in parsed_tree.find_videos() {
+                if seen_vids.insert(v.id.clone()) {
+                    let thumb = v.thumbnails.best_url().unwrap_or("").to_string();
+                    videos.push((v.title.clone(), v.id.clone(), thumb));
+                }
+            }
+            for p in parsed_tree.find_playlists() {
+                if !p.id.is_empty() && seen_pls.insert(p.id.clone()) {
+                    let thumb = p.thumbnails.best_url().unwrap_or("").to_string();
+                    playlists.push((p.title.clone(), p.id.clone(), thumb));
+                }
+            }
         }
     }
 
@@ -114,67 +122,71 @@ pub async fn get_channel(
     })
 }
 
-/// Fetch playlist tracklist using `/youtubei/v1/browse` with YouTube Music context.
-pub async fn get_playlist(
+/// Fetch playlist details from standard YouTube playlist page (`/playlist?list=...`).
+pub async fn get_youtube_playlist(
     session: &Session,
     playlist_id: &str,
 ) -> Result<YouTubePlaylistView> {
-    let clean_pid = playlist_id
-        .trim_start_matches("ytplaylist:")
-        .trim_start_matches("youtube:")
-        .trim();
+    let clean_id = playlist_id.trim_start_matches("playlist:").trim();
+    let url = format!("https://www.youtube.com/playlist?list={clean_id}");
 
-    let browse_id = if clean_pid.starts_with("VL") {
-        clean_pid.to_string()
-    } else {
-        format!("VL{clean_pid}")
-    };
+    let resp = session.http_client.get(&url).send().await.map_err(InnertubeError::Network)?;
+    let html = resp.text().await.map_err(InnertubeError::Network)?;
 
-    let payload = json!({
-        "context": {
-            "client": {
-                "clientName": "WEB_REMIX",
-                "clientVersion": "1.20250219.01.00",
-                "hl": "en",
-                "gl": "US"
-            }
-        },
-        "browseId": browse_id
-    });
+    let json_data = extract_yt_initial_data(&html).ok_or_else(|| {
+        InnertubeError::Other(format!("Failed to extract ytInitialData from playlist: {}", clean_id))
+    })?;
 
-    let resp = session.post_innertube("/browse", payload).await?;
-
-    if !resp.status().is_success() {
-        return Err(InnertubeError::Api {
-            status: resp.status().to_string(),
-            message: format!("Browse endpoint returned HTTP {}", resp.status()),
-        });
-    }
-
-    let json_val: Value = resp.json().await.map_err(InnertubeError::Network)?;
-
-    let playlist_name = json_val
-        .pointer("/header/musicResponsiveHeaderRenderer/title/runs/0/text")
-        .or_else(|| json_val.pointer("/header/musicHeaderRenderer/title/runs/0/text"))
-        .or_else(|| json_val.pointer("/metadata/playlistMetadataRenderer/title"))
-        .or_else(|| json_val.pointer("/header/playlistHeaderRenderer/title/simpleText"))
-        .and_then(Value::as_str)
-        .unwrap_or("Unknown Playlist")
-        .to_string();
-
-    let playlist_image = json_val
-        .pointer("/header/musicResponsiveHeaderRenderer/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
-        .or_else(|| json_val.pointer("/header/playlistHeaderRenderer/playlistHeaderBanner/heroPlaylistThumbnailRenderer/thumbnail/thumbnails/0/url"))
-        .and_then(Value::as_str)
-        .map(clean_url);
-
+    let parsed_tree = Parser::parse_tree(&json_data);
     let mut tracks = Vec::new();
     let mut seen_ids = HashSet::new();
 
-    parse_playlist_tracks(&json_val, &mut tracks, &mut seen_ids);
+    let mut playlist_name = "YouTube Playlist".to_string();
+    let mut playlist_image = None;
+
+    if let Some(p) = parsed_tree.find_playlists().first() {
+        if !p.title.is_empty() {
+            playlist_name = p.title.clone();
+        }
+        playlist_image = p.thumbnails.best_url().map(|s| s.to_string());
+    }
+
+    for node in &parsed_tree {
+        match node {
+            YTNode::PlaylistVideo(pv) => {
+                if seen_ids.insert(pv.id.clone()) {
+                    tracks.push(ChannelTrack {
+                        id: format!("youtube:{}", pv.id),
+                        title: pv.title.clone(),
+                        artist: pv.author.as_ref().map(|a| a.name.clone()).unwrap_or_else(|| "Unknown".to_string()),
+                        artist_id: pv.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
+                        album: playlist_name.clone(),
+                        duration: pv.duration_ms.map(|d| (d / 1000) as u32).unwrap_or(180),
+                        thumbnail: pv.thumbnails.best_url().unwrap_or("").to_string(),
+                        youtube_id: pv.id.clone(),
+                    });
+                }
+            }
+            YTNode::Video(v) => {
+                if seen_ids.insert(v.id.clone()) {
+                    tracks.push(ChannelTrack {
+                        id: format!("youtube:{}", v.id),
+                        title: v.title.clone(),
+                        artist: v.author.as_ref().map(|a| a.name.clone()).unwrap_or_else(|| "Unknown".to_string()),
+                        artist_id: v.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
+                        album: playlist_name.clone(),
+                        duration: v.duration_ms.map(|d| (d / 1000) as u32).unwrap_or(180),
+                        thumbnail: v.thumbnails.best_url().unwrap_or("").to_string(),
+                        youtube_id: v.id.clone(),
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
 
     Ok(YouTubePlaylistView {
-        id: clean_pid.to_string(),
+        id: clean_id.to_string(),
         name: playlist_name,
         image: playlist_image,
         tracks,
@@ -182,162 +194,22 @@ pub async fn get_playlist(
 }
 
 fn extract_yt_initial_data(html: &str) -> Option<Value> {
-    let patterns = ["var ytInitialData = ", "window[\"ytInitialData\"] = "];
-    for pat in patterns {
-        if let Some(start_idx) = html.find(pat) {
-            let json_part = &html[start_idx + pat.len()..];
-            let end_idx = json_part
-                .find(";</script>")
-                .or_else(|| json_part.find(";\n"))
-                .or_else(|| json_part.find(";var "))
-                .or_else(|| json_part.find(";window"))
-                .unwrap_or(json_part.len());
+    let marker = "var ytInitialData = ";
+    let alt_marker = "window[\"ytInitialData\"] = ";
 
-            let clean_json = json_part[..end_idx].trim().trim_end_matches(';');
-            if let Ok(val) = serde_json::from_str::<Value>(clean_json) {
-                return Some(val);
-            }
-        }
-    }
-    None
-}
-
-fn clean_url(url_str: &str) -> String {
-    let u = url_str.trim();
-    if u.starts_with("//") {
-        format!("https:{u}")
+    let (start_idx, skip_len) = if let Some(idx) = html.find(marker) {
+        (idx, marker.len())
+    } else if let Some(idx) = html.find(alt_marker) {
+        (idx, alt_marker.len())
     } else {
-        u.to_string()
-    }
-}
+        return None;
+    };
 
-fn parse_channel_node(
-    value: &Value,
-    videos: &mut Vec<(String, String, String)>,
-    playlists: &mut Vec<(String, String, String)>,
-    seen_vids: &mut HashSet<String>,
-    seen_pls: &mut HashSet<String>,
-) {
-    if let Some(arr) = value.as_array() {
-        for v in arr {
-            parse_channel_node(v, videos, playlists, seen_vids, seen_pls);
-        }
-    } else if let Some(obj) = value.as_object() {
-        if let Some(lvm) = obj.get("lockupViewModel") {
-            let content_id = lvm.get("contentId").and_then(Value::as_str).unwrap_or("");
-            let title = lvm.pointer("/metadata/lockupMetadataViewModel/title/content").and_then(Value::as_str).unwrap_or("");
+    let start = start_idx + skip_len;
+    let remainder = &html[start..];
 
-            if content_id.len() == 11 && !title.is_empty() && !seen_vids.contains(content_id) {
-                let thumb = lvm.pointer("/contentImage/thumbnailViewModel/image/sources/0/url").and_then(Value::as_str).unwrap_or("");
-                seen_vids.insert(content_id.to_string());
-                videos.push((title.to_string(), content_id.to_string(), clean_url(thumb)));
-            } else if !content_id.is_empty() && content_id.len() != 11 && !title.is_empty() {
-                let clean_p_id = content_id.trim_start_matches("VL").to_string();
-                if !seen_pls.contains(&clean_p_id) {
-                    let thumb = lvm.pointer("/contentImage/collectionThumbnailViewModel/primaryThumbnail/thumbnailViewModel/image/sources/0/url").and_then(Value::as_str).unwrap_or("");
-                    seen_pls.insert(clean_p_id.clone());
-                    playlists.push((title.to_string(), clean_p_id, clean_url(thumb)));
-                }
-            }
-        }
+    let end = remainder.find(";</script>").or_else(|| remainder.find(";\n"))?;
+    let json_str = &remainder[..end];
 
-        if let Some(vr) = obj.get("videoRenderer") {
-            let v_id = vr.get("videoId").and_then(Value::as_str).unwrap_or("");
-            let title = vr.pointer("/title/runs/0/text").and_then(Value::as_str).unwrap_or("");
-            let thumb = vr.pointer("/thumbnail/thumbnails/0/url").and_then(Value::as_str).unwrap_or("");
-            if !v_id.is_empty() && v_id.len() == 11 && !title.is_empty() && !seen_vids.contains(v_id) {
-                seen_vids.insert(v_id.to_string());
-                videos.push((title.to_string(), v_id.to_string(), clean_url(thumb)));
-            }
-        }
-
-        for (_, v) in obj {
-            parse_channel_node(v, videos, playlists, seen_vids, seen_pls);
-        }
-    }
-}
-
-fn parse_playlist_tracks(
-    value: &Value,
-    tracks: &mut Vec<ChannelTrack>,
-    seen_ids: &mut HashSet<String>,
-) {
-    if let Some(arr) = value.as_array() {
-        for v in arr {
-            parse_playlist_tracks(v, tracks, seen_ids);
-        }
-    } else if let Some(obj) = value.as_object() {
-        if let Some(item) = obj.get("musicResponsiveListItemRenderer") {
-            let video_id = item
-                .pointer("/overlay/musicItemThumbnailOverlayRenderer/content/musicPlayButtonRenderer/playNavigationEndpoint/watchEndpoint/videoId")
-                .or_else(|| item.pointer("/playlistItemData/videoId"))
-                .and_then(Value::as_str)
-                .unwrap_or("");
-
-            let title = item
-                .pointer("/flexColumns/0/musicResponsiveListItemFlexColumnRenderer/text/runs/0/text")
-                .and_then(Value::as_str)
-                .unwrap_or("Unknown Track");
-
-            let artist = item
-                .pointer("/flexColumns/1/musicResponsiveListItemFlexColumnRenderer/text/runs/0/text")
-                .and_then(Value::as_str)
-                .unwrap_or("Unknown Artist");
-
-            let thumbnail = item
-                .pointer("/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
-                .and_then(Value::as_str)
-                .map(clean_url)
-                .unwrap_or_default();
-
-            if !video_id.is_empty() && !seen_ids.contains(video_id) {
-                seen_ids.insert(video_id.to_string());
-                tracks.push(ChannelTrack {
-                    id: format!("youtube:{video_id}"),
-                    title: title.to_string(),
-                    artist: artist.to_string(),
-                    artist_id: "ytplaylist".to_string(),
-                    album: String::new(),
-                    duration: 180,
-                    thumbnail,
-                    youtube_id: video_id.to_string(),
-                });
-            }
-        }
-
-        if let Some(item) = obj.get("playlistVideoRenderer").or_else(|| obj.get("playlistPanelVideoRenderer")) {
-            let video_id = item.get("videoId").and_then(Value::as_str).unwrap_or("");
-            let title = item.pointer("/title/runs/0/text")
-                .or_else(|| item.pointer("/title/simpleText"))
-                .and_then(Value::as_str)
-                .unwrap_or("Unknown Track");
-
-            let artist = item.pointer("/shortBylineText/runs/0/text")
-                .and_then(Value::as_str)
-                .unwrap_or("Unknown Artist");
-
-            let thumbnail = item.pointer("/thumbnail/thumbnails/0/url")
-                .and_then(Value::as_str)
-                .map(clean_url)
-                .unwrap_or_default();
-
-            if !video_id.is_empty() && !seen_ids.contains(video_id) {
-                seen_ids.insert(video_id.to_string());
-                tracks.push(ChannelTrack {
-                    id: format!("youtube:{video_id}"),
-                    title: title.to_string(),
-                    artist: artist.to_string(),
-                    artist_id: "ytplaylist".to_string(),
-                    album: String::new(),
-                    duration: 180,
-                    thumbnail,
-                    youtube_id: video_id.to_string(),
-                });
-            }
-        }
-
-        for (_, v) in obj {
-            parse_playlist_tracks(v, tracks, seen_ids);
-        }
-    }
+    serde_json::from_str(json_str).ok()
 }

@@ -3,6 +3,7 @@ use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::search::{SearchResultItem, SearchResults, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};
 use crate::models::video::Thumbnail;
+use crate::parser::{NodeListExt, Parser, YTNode};
 
 /// Execute a search query against `/youtubei/v1/search`.
 pub async fn search(
@@ -28,173 +29,62 @@ pub async fn search(
     }
 
     let val: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    let parsed_tree = Parser::parse_tree(&val);
     let mut items = Vec::new();
-    let mut next_continuation = None;
 
-    // Traverse response AST recursively to collect videoRenderer, channelRenderer, playlistRenderer, lockupViewModel
-    parse_search_nodes(&val, &mut items, &mut next_continuation);
+    for node in &parsed_tree {
+        match node {
+            YTNode::Video(v) => {
+                items.push(SearchResultItem::Video(SearchVideoItem {
+                    video_id: v.id.clone(),
+                    title: v.title.clone(),
+                    author: v.author.as_ref().map(|a| a.name.clone()).unwrap_or_default(),
+                    channel_id: v.author.as_ref().and_then(|a| a.id.clone()).unwrap_or_default(),
+                    duration: v.duration.clone(),
+                    view_count: v.view_count.clone(),
+                    published_time: v.published_time.clone(),
+                    thumbnails: v.thumbnails.thumbnails.iter().map(|t| Thumbnail {
+                        url: t.url.clone(),
+                        width: t.width.unwrap_or(0),
+                        height: t.height.unwrap_or(0),
+                    }).collect(),
+                }));
+            }
+            YTNode::ChannelCard(c) => {
+                items.push(SearchResultItem::Channel(SearchChannelItem {
+                    channel_id: c.id.clone(),
+                    title: c.title.clone(),
+                    subscriber_count: c.subscriber_count.clone(),
+                    video_count: c.video_count.clone(),
+                    thumbnails: c.avatar.thumbnails.iter().map(|t| Thumbnail {
+                        url: t.url.clone(),
+                        width: t.width.unwrap_or(0),
+                        height: t.height.unwrap_or(0),
+                    }).collect(),
+                }));
+            }
+            YTNode::Playlist(p) => {
+                items.push(SearchResultItem::Playlist(SearchPlaylistItem {
+                    playlist_id: p.id.clone(),
+                    title: p.title.clone(),
+                    author: p.author.as_ref().map(|a| a.name.clone()).unwrap_or_default(),
+                    video_count: p.video_count.map(|c| format!("{} videos", c)),
+                    thumbnails: p.thumbnails.thumbnails.iter().map(|t| Thumbnail {
+                        url: t.url.clone(),
+                        width: t.width.unwrap_or(0),
+                        height: t.height.unwrap_or(0),
+                    }).collect(),
+                }));
+            }
+            _ => {}
+        }
+    }
+
+    let continuation_token = parsed_tree.find_continuation_token();
 
     Ok(SearchResults {
         query: query.to_string(),
         items,
-        continuation_token: next_continuation,
+        continuation_token,
     })
-}
-
-fn parse_search_nodes(
-    value: &Value,
-    items: &mut Vec<SearchResultItem>,
-    continuation: &mut Option<String>,
-) {
-    if let Some(arr) = value.as_array() {
-        for v in arr {
-            parse_search_nodes(v, items, continuation);
-        }
-    } else if let Some(obj) = value.as_object() {
-        // 1. videoRenderer
-        if let Some(vr) = obj.get("videoRenderer") {
-            if let Some(video_id) = vr.get("videoId").and_then(Value::as_str) {
-                let title = vr.pointer("/title/runs/0/text")
-                    .or_else(|| vr.pointer("/title/simpleText"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-
-                let author = vr.pointer("/ownerText/runs/0/text")
-                    .or_else(|| vr.pointer("/longBylineText/runs/0/text"))
-                    .or_else(|| vr.pointer("/shortBylineText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-
-                let channel_id = vr.pointer("/ownerText/runs/0/navigationEndpoint/browseEndpoint/browseId")
-                    .or_else(|| vr.pointer("/longBylineText/runs/0/navigationEndpoint/browseEndpoint/browseId"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-
-                let duration = vr.pointer("/lengthText/simpleText")
-                    .or_else(|| vr.pointer("/lengthText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .map(String::from);
-
-                let view_count = vr.pointer("/viewCountText/simpleText")
-                    .or_else(|| vr.pointer("/viewCountText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .map(String::from);
-
-                let published_time = vr.pointer("/publishedTimeText/simpleText")
-                    .or_else(|| vr.pointer("/publishedTimeText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .map(String::from);
-
-                let thumbnails = extract_thumbnails(vr.pointer("/thumbnail/thumbnails"));
-
-                items.push(SearchResultItem::Video(SearchVideoItem {
-                    video_id: video_id.to_string(),
-                    title,
-                    author,
-                    channel_id,
-                    duration,
-                    view_count,
-                    published_time,
-                    thumbnails,
-                }));
-            }
-        }
-
-        // 2. channelRenderer
-        if let Some(cr) = obj.get("channelRenderer") {
-            if let Some(channel_id) = cr.get("channelId").and_then(Value::as_str) {
-                let title = cr.pointer("/title/simpleText")
-                    .or_else(|| cr.pointer("/title/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-
-                let subscriber_count = cr.pointer("/subscriberCountText/simpleText")
-                    .or_else(|| cr.pointer("/subscriberCountText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .map(String::from);
-
-                let video_count = cr.pointer("/videoCountText/runs/0/text")
-                    .and_then(Value::as_str)
-                    .map(String::from);
-
-                let thumbnails = extract_thumbnails(cr.pointer("/thumbnail/thumbnails"));
-
-                items.push(SearchResultItem::Channel(SearchChannelItem {
-                    channel_id: channel_id.to_string(),
-                    title,
-                    subscriber_count,
-                    video_count,
-                    thumbnails,
-                }));
-            }
-        }
-
-        // 3. playlistRenderer
-        if let Some(pr) = obj.get("playlistRenderer") {
-            if let Some(playlist_id) = pr.get("playlistId").and_then(Value::as_str) {
-                let title = pr.pointer("/title/simpleText")
-                    .or_else(|| pr.pointer("/title/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-
-                let author = pr.pointer("/longBylineText/runs/0/text")
-                    .or_else(|| pr.pointer("/shortBylineText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_string();
-
-                let video_count = pr.pointer("/videoCount")
-                    .or_else(|| pr.pointer("/videoCountText/runs/0/text"))
-                    .and_then(Value::as_str)
-                    .map(String::from);
-
-                let thumbnails = extract_thumbnails(pr.pointer("/thumbnails/0/thumbnails"));
-
-                items.push(SearchResultItem::Playlist(SearchPlaylistItem {
-                    playlist_id: playlist_id.to_string(),
-                    title,
-                    author,
-                    video_count,
-                    thumbnails,
-                }));
-            }
-        }
-
-        // 4. continuation
-        if let Some(tok) = value.pointer("/continuationItemRenderer/continuationEndpoint/continuationCommand/token")
-            .and_then(Value::as_str)
-        {
-            *continuation = Some(tok.to_string());
-        }
-
-        // Recurse into children
-        for (_, v) in obj {
-            parse_search_nodes(v, items, continuation);
-        }
-    }
-}
-
-fn extract_thumbnails(val: Option<&Value>) -> Vec<Thumbnail> {
-    let mut res = Vec::new();
-    if let Some(arr) = val.and_then(Value::as_array) {
-        for t in arr {
-            if let (Some(url), Some(width), Some(height)) = (
-                t.get("url").and_then(Value::as_str),
-                t.get("width").and_then(Value::as_u64),
-                t.get("height").and_then(Value::as_u64),
-            ) {
-                res.push(Thumbnail {
-                    url: url.to_string(),
-                    width: width as u32,
-                    height: height as u32,
-                });
-            }
-        }
-    }
-    res
 }
