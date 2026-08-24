@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 25 Agustus 2026
-> **Status Repositori**: `v0.5.0` (**Full-parity audit and implementation in progress; see `PARITY_PLAN.md` and `PARITY_MANIFEST.md`**)
+> **Status Repositori**: `v0.6.0` (**Full-parity audit and implementation in progress; see `PARITY_PLAN.md` and `PARITY_MANIFEST.md`**)
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---
@@ -11,11 +11,11 @@
 The active compatibility target is `reference-youtubejs` commit `85473772ce9a9238091636fc2cb7ea3c331ea88d`.
 
 Read `PARITY_PLAN.md` for the work plan and checkpoints. Read `PARITY_MANIFEST.md` for the authoritative baseline.
-At this checkpoint, `cargo test --all-targets` passes 38 unit and contract
-tests. Eight opt-in live integration tests exist in `tests/live_integration.rs`
-but are ignored and have not been executed here. All 574 legacy parser classes
-are cataloged in `src/parser/registry.rs`; cataloging is not typed parser
-coverage or a full-parity claim.
+At this checkpoint:
+- `cargo test --all-targets` passes 43 unit and contract tests with 0 clippy warnings.
+- 10 opt-in live integration tests exist in `tests/live_integration.rs` and were executed with 10/10 passing against the live YouTube network.
+- `VideoInfo` concurrent composition (`get_info`), modular sub-managers (`client.music()`, `client.playlist()`, `client.interact()`, `client.actions()`, `client.account()`, `client.kids()`), `Feed<T>` mixin, generic action dispatcher (`Actions.execute`), and typed AST nodes (Buttons, Menus, Overlays, Containers) are implemented.
+- 574 legacy parser classes are cataloged in `src/parser/registry.rs`. Full parity exit audit is in progress.
 
 ---
 

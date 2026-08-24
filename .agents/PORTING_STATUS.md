@@ -2,12 +2,14 @@
 
 > **Upstream Reference**: [LuanRT/YouTube.js (YouTubei.js)](https://github.com/LuanRT/YouTube.js)  
 > **Target Project**: `innertube-rs` (Pure Rust Port)  
-> **Last Updated**: August 24, 2026  
-> **Overall Porting Progress**: **Full-parity audit and implementation in progress; see `.agents/PARITY_MANIFEST.md`.**
+> **Last Updated**: August 25, 2026  
+> **Overall Porting Progress**: **Full-parity audit and implementation in progress; see `.agents/PARITY_MANIFEST.md` for authoritative completion status.**
 
 ---
 
-## 1. Module-by-Module Porting Status
+## 1. Module-by-Module Porting Status (Historical Reference)
+
+> **Notice**: The table below is a historical milestone reference. Real parity exit status is governed solely by [`.agents/PARITY_MANIFEST.md`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/.agents/PARITY_MANIFEST.md).
 
 | YouTube.js (JS/TS) Module | Rust Equivalent (`innertube-rs`) | Status | Parity % | Description & Implementation Details |
 |---|---|:---:|:---:|---|

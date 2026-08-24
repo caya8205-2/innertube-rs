@@ -36,17 +36,16 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-25
 
-The current HEAD is `7d01b05 test(parity): add opt-in live integration test
-suite`. Inspect `git status --short` before acting; documentation corrections
-may be present after this checkpoint.
+The current HEAD is `6cc9d02 chore(release): bump version to 0.6.0 and add crates.io publish job to CI workflow`.
+Inspect `git status --short` before acting.
 
 Recent implementation batches:
 
-- `afa934f`: basic-info, Shorts, search-filter, comment, and streaming option
-  contracts.
-- `e10de98`: playlist and interaction-manager operations plus a 574-name
-  parser inventory.
-- `7d01b05`: eight opt-in live integration tests.
+- `fb29a3f`: docs sync and opt-in live integration test suite.
+- `ac155f2`: VideoInfo concurrent composition, sub-manager namespaces (`music`, `playlist`, `interact`, `account`, `kids`), Feed mixins, and container AST nodes.
+- `58a0afa`: Button, Menu, Overlay AST node expansions and `Actions.execute` dispatcher.
+- `a021912`: Live integration tests expanded to 10 endpoints (10/10 passing).
+- `6cc9d02`: Version bump to 0.6.0 and CI publish workflow for crates.io.
 
 Current evidence is deliberately **not** a 100% parity claim:
 
