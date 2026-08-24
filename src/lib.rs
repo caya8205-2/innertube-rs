@@ -123,7 +123,7 @@ pub use models::channel::{
     ChannelTrack, ChannelVideoItem, ChannelVideosResponse, YouTubePlaylistView,
 };
 pub use models::comments::{Comment, CommentThread, CommentsResult, PostCommentSort};
-pub use models::feed::{FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
+pub use models::feed::{BrowseFeed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
 pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
 pub use models::guide::{GuideItem, GuideResponse, GuideSection};
 pub use models::live_chat::{
@@ -151,7 +151,9 @@ pub use models::video::{
 };
 pub use parser::{NavigationEndpointNode, NodeListExt, Parser, YTNode};
 
-use crate::endpoints::account::{get_history, get_library, get_notifications};
+use crate::endpoints::account::{
+    get_history, get_library, get_notifications, get_unseen_notifications_count,
+};
 use crate::endpoints::attestation::get_attestation_challenge;
 use crate::endpoints::browse::get_channel;
 use crate::endpoints::channel::{
@@ -159,7 +161,7 @@ use crate::endpoints::channel::{
 };
 use crate::endpoints::comments::{get_comment_replies, get_comments};
 use crate::endpoints::feed::{
-    get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending,
+    get_browse_feed, get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending,
 };
 use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
@@ -225,6 +227,72 @@ impl Innertube {
         let player_res = self.get_video_info(video_id).await?;
         let format = select_format(&player_res, filter)?;
         resolve_stream_url(format, &self.player.decipherer)
+    }
+
+    /// Retrieve the selected stream format with its deciphered, playable URL.
+    pub async fn get_streaming_data(
+        &self,
+        video_id: &str,
+        filter: &FormatFilter,
+    ) -> Result<StreamingFormat> {
+        let player_res = self.get_video_info(video_id).await?;
+        let mut format = select_format(&player_res, filter)?.clone();
+        format.url = Some(resolve_stream_url(&format, &self.player.decipherer)?);
+        format.signature_cipher = None;
+        format.cipher = None;
+        Ok(format)
+    }
+
+    /// Open the selected media stream for incremental consumption.
+    ///
+    /// The returned `reqwest::Response` is the Rust equivalent of the legacy
+    /// readable stream; callers can consume it with `bytes_stream()`.
+    pub async fn download(
+        &self,
+        video_id: &str,
+        filter: &FormatFilter,
+    ) -> Result<reqwest::Response> {
+        let format = self.get_streaming_data(video_id, filter).await?;
+        let url = format.url.ok_or_else(|| {
+            InnertubeError::Format("Resolved stream format did not contain a URL".to_string())
+        })?;
+        let response = self
+            .session
+            .http_client
+            .get(url)
+            .send()
+            .await
+            .map_err(InnertubeError::Network)?;
+        Session::ensure_success("stream download", response).await
+    }
+
+    /// Call an InnerTube endpoint with a caller-supplied JSON payload.
+    ///
+    /// This is the raw compatibility escape hatch for legacy `call()` users;
+    /// typed endpoint wrappers should be preferred whenever available.
+    pub async fn call(&self, endpoint: &str, payload: serde_json::Value) -> Result<serde_json::Value> {
+        let response = self.session.post_innertube(endpoint, payload).await?;
+        response.json().await.map_err(InnertubeError::Network)
+    }
+
+    /// Call a parsed legacy `NavigationEndpoint`, optionally extending its payload.
+    pub async fn call_navigation_endpoint(
+        &self,
+        endpoint: &NavigationEndpointNode,
+        extra_payload: serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let path = endpoint.api_path.as_deref().ok_or_else(|| {
+            InnertubeError::NotFound("Navigation endpoint does not define an InnerTube API path".to_string())
+        })?;
+        let mut payload = endpoint.payload.clone();
+        let payload_object = payload.as_object_mut().ok_or_else(|| {
+            InnertubeError::Format("Navigation endpoint payload is not a JSON object".to_string())
+        })?;
+        let extra_object = extra_payload.as_object().ok_or_else(|| {
+            InnertubeError::Format("Navigation endpoint extra payload is not a JSON object".to_string())
+        })?;
+        payload_object.extend(extra_object.clone());
+        self.call(path, payload).await
     }
 
     /// Execute a search query for videos, channels, and playlists.
@@ -413,6 +481,26 @@ impl Innertube {
         get_hashtag_feed(&self.session, tag).await
     }
 
+    /// Fetch the Courses browse destination (`FEcourses_destination`).
+    pub async fn get_courses(&self) -> Result<BrowseFeed> {
+        get_browse_feed(&self.session, "FEcourses_destination").await
+    }
+
+    /// Fetch the subscriptions browse destination (`FEsubscriptions`).
+    pub async fn get_subscriptions_feed(&self) -> Result<BrowseFeed> {
+        get_browse_feed(&self.session, "FEsubscriptions").await
+    }
+
+    /// Fetch the subscribed channels browse destination (`FEchannels`).
+    pub async fn get_channels_feed(&self) -> Result<BrowseFeed> {
+        get_browse_feed(&self.session, "FEchannels").await
+    }
+
+    /// Fetch the authenticated playlist aggregation destination (`FEplaylist_aggregation`).
+    pub async fn get_playlists(&self) -> Result<BrowseFeed> {
+        get_browse_feed(&self.session, "FEplaylist_aggregation").await
+    }
+
     /// Resolve a YouTube URL to its InnerTube navigation endpoint.
     pub async fn resolve_url(&self, url: &str) -> Result<NavigationEndpointNode> {
         resolve_url(&self.session, url).await
@@ -573,5 +661,10 @@ impl Innertube {
     /// Fetch account notifications.
     pub async fn get_notifications(&self) -> Result<AccountNotificationsResponse> {
         get_notifications(&self.session).await
+    }
+
+    /// Return the number shown by YouTube's unread-notifications indicator.
+    pub async fn get_unseen_notifications_count(&self) -> Result<u64> {
+        get_unseen_notifications_count(&self.session).await
     }
 }

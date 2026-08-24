@@ -18,11 +18,11 @@
 
 ### A. Scope & Focus
 1. **Strict Request Scope:** Only touch, create, or refactor code explicitly requested. Do not perform unsolicited broad architectural refactors or "cleanups".
-2. **Incremental & Pragmatic Porting:** We do **not** need 100% feature parity with `YouTube.js` on day one. Focus first on core needs:
-   - Session & InnerTube context creation
-   - Video metadata & stream URL extraction (deciphering signatures / n-tokens)
-   - Channel & playlist scraping
-   - Search functionality
+2. **Current Full-Parity Mission:** The project now requires 100% proven
+   parity with the local `reference-youtubejs` branch. Read
+   `PARITY_PLAN.md` and `PARITY_MANIFEST.md` before changing code. Do not
+   claim completion based on core-use-case coverage, similarly named methods,
+   or historical feature matrices.
 3. **Preserve Reference Integrity:** The existing JS/TS files in this repository serve as the upstream reference implementation. Do not delete or mangle reference code unless explicitly instructed to clean up.
 4. **Idiomatic Rust Over Direct Translation:** Do not blindly translate JavaScript's dynamic typing / loose objects into complex `serde_json::Value` hell. Design clean, strongly typed Rust structs and enums with `serde` wherever feasible, falling back to dynamic parsing only where YouTube schemas are highly polymorphic.
 

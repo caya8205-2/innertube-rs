@@ -12,11 +12,7 @@ impl Actions {
     /// Like a YouTube video (`POST /like/like`).
     pub async fn like(session: &Session, video_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "target": {
-                "videoId": video_id
-            }
-        });
+        let payload = rating_payload(video_id);
 
         let resp = session.post_innertube("/like/like", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
@@ -32,11 +28,7 @@ impl Actions {
     /// Dislike a YouTube video (`POST /like/dislike`).
     pub async fn dislike(session: &Session, video_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "target": {
-                "videoId": video_id
-            }
-        });
+        let payload = rating_payload(video_id);
 
         let resp = session.post_innertube("/like/dislike", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
@@ -52,11 +44,7 @@ impl Actions {
     /// Remove like or dislike rating from a video (`POST /like/removelike`).
     pub async fn remove_rating(session: &Session, video_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "target": {
-                "videoId": video_id
-            }
-        });
+        let payload = rating_payload(video_id);
 
         let resp = session.post_innertube("/like/removelike", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
@@ -201,15 +189,7 @@ impl Actions {
         set_video_ids: &[&str],
     ) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let actions: Vec<Value> = set_video_ids
-            .iter()
-            .map(|set_id| {
-                json!({
-                    "action": "ACTION_REMOVE_VIDEO_BY_SET_ITEM_ID",
-                    "setVideoId": set_id
-                })
-            })
-            .collect();
+        let actions = remove_playlist_actions(set_video_ids);
 
         let payload = json!({
             "playlistId": playlist_id,
@@ -256,5 +236,42 @@ impl Actions {
             success,
             comment_id,
         })
+    }
+}
+
+fn remove_playlist_actions(set_video_ids: &[&str]) -> Vec<Value> {
+    set_video_ids
+        .iter()
+        .map(|set_id| {
+            json!({
+                "action": "ACTION_REMOVE_VIDEO",
+                "setVideoId": set_id
+            })
+        })
+        .collect()
+}
+
+fn rating_payload(video_id: &str) -> Value {
+    json!({ "target": video_id })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn playlist_removal_actions_match_legacy_protocol() {
+        assert_eq!(
+            remove_playlist_actions(&["set-video-a", "set-video-b"]),
+            vec![
+                json!({ "action": "ACTION_REMOVE_VIDEO", "setVideoId": "set-video-a" }),
+                json!({ "action": "ACTION_REMOVE_VIDEO", "setVideoId": "set-video-b" }),
+            ]
+        );
+    }
+
+    #[test]
+    fn rating_target_matches_legacy_like_endpoint_request() {
+        assert_eq!(rating_payload("dQw4w9WgXcQ"), json!({ "target": "dQw4w9WgXcQ" }));
     }
 }

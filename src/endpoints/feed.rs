@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
-use crate::models::feed::{FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
+use crate::models::feed::{BrowseFeed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
 use crate::parser::nodes::misc::text::TextNode;
 use crate::parser::{NodeListExt, Parser};
 
@@ -69,6 +69,15 @@ pub async fn get_hashtag_feed(session: &Session, tag: &str) -> Result<HashtagFee
     parse_hashtag_response(clean_tag, &raw)
 }
 
+/// Fetch a generic browse destination and retain its typed media collections.
+pub async fn get_browse_feed(session: &Session, browse_id: &str) -> Result<BrowseFeed> {
+    let response = session
+        .post_innertube("/browse", json!({ "browseId": browse_id }))
+        .await?;
+    let raw: Value = response.json().await.map_err(InnertubeError::Network)?;
+    parse_browse_feed_response(browse_id, &raw)
+}
+
 // ---------------------------------------------------------------------------
 // Response Parsers
 // ---------------------------------------------------------------------------
@@ -112,6 +121,18 @@ pub fn parse_home_feed_response(raw: &Value) -> Result<HomeFeed> {
         filter_chips,
         videos,
         continuation_token,
+    })
+}
+
+/// Parse a generic browse response for account and discovery feed destinations.
+pub fn parse_browse_feed_response(browse_id: &str, raw: &Value) -> Result<BrowseFeed> {
+    let tree = Parser::parse_tree(raw);
+    Ok(BrowseFeed {
+        browse_id: browse_id.to_string(),
+        videos: tree.find_videos().into_iter().cloned().collect(),
+        channels: tree.find_channels().into_iter().cloned().collect(),
+        playlists: tree.find_playlists().into_iter().cloned().collect(),
+        continuation_token: tree.find_continuation_token(),
     })
 }
 
@@ -188,4 +209,42 @@ pub fn parse_hashtag_response(tag: &str, raw: &Value) -> Result<HashtagFeed> {
         videos,
         continuation_token,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_generic_browse_media_collections() {
+        let fixture = json!({
+            "items": [
+                {
+                    "videoRenderer": {
+                        "videoId": "dQw4w9WgXcQ",
+                        "title": { "simpleText": "Video" }
+                    }
+                },
+                {
+                    "channelRenderer": {
+                        "channelId": "UC_test",
+                        "title": { "simpleText": "Channel" }
+                    }
+                },
+                {
+                    "playlistRenderer": {
+                        "playlistId": "PL_test",
+                        "title": { "simpleText": "Playlist" }
+                    }
+                }
+            ]
+        });
+
+        let feed = parse_browse_feed_response("FEsubscriptions", &fixture)
+            .expect("fixture should parse");
+        assert_eq!(feed.browse_id, "FEsubscriptions");
+        assert_eq!(feed.videos.len(), 1);
+        assert_eq!(feed.channels.len(), 1);
+        assert_eq!(feed.playlists.len(), 1);
+    }
 }

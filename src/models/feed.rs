@@ -1,5 +1,17 @@
 use serde::{Deserialize, Serialize};
 use crate::parser::nodes::video::VideoNode;
+use crate::parser::nodes::{ChannelCardNode, PlaylistNode};
+
+/// Generic browse feed used by legacy account and discovery destinations.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct BrowseFeed {
+    pub browse_id: String,
+    pub videos: Vec<VideoNode>,
+    pub channels: Vec<ChannelCardNode>,
+    pub playlists: Vec<PlaylistNode>,
+    pub continuation_token: Option<String>,
+}
 
 /// A category filter chip in Home Feed (`ChipCloudChip.ts`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

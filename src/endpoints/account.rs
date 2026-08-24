@@ -101,3 +101,48 @@ pub async fn get_notifications(session: &Session) -> Result<AccountNotifications
         continuation_token: None,
     })
 }
+
+/// Fetch the number shown by YouTube's unread-notifications indicator.
+pub async fn get_unseen_notifications_count(session: &Session) -> Result<u64> {
+    let response = session
+        .post_innertube("/notification/get_unseen_count", json!({}))
+        .await?;
+    let raw: Value = response.json().await.map_err(InnertubeError::Network)?;
+    Ok(parse_unseen_notifications_count(&raw))
+}
+
+/// Parse both response layouts accepted by the legacy implementation.
+pub fn parse_unseen_notifications_count(raw: &Value) -> u64 {
+    raw.get("unseenCount")
+        .or_else(|| raw.pointer("/actions/0/updateNotificationsUnseenCountAction/unseenCount"))
+        .and_then(value_as_u64)
+        .unwrap_or(0)
+}
+
+fn value_as_u64(value: &Value) -> Option<u64> {
+    value
+        .as_u64()
+        .or_else(|| value.as_str().and_then(|count| count.parse().ok()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_top_level_unseen_count() {
+        assert_eq!(parse_unseen_notifications_count(&json!({ "unseenCount": 4 })), 4);
+    }
+
+    #[test]
+    fn parses_action_unseen_count_and_defaults_to_zero() {
+        let action_response = json!({
+            "actions": [{
+                "updateNotificationsUnseenCountAction": { "unseenCount": "7" }
+            }]
+        });
+
+        assert_eq!(parse_unseen_notifications_count(&action_response), 7);
+        assert_eq!(parse_unseen_notifications_count(&json!({})), 0);
+    }
+}

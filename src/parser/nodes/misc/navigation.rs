@@ -4,6 +4,11 @@ use serde_json::Value;
 /// Represents navigation endpoints (1:1 port of `src/parser/classes/NavigationEndpoint.ts`).
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct NavigationEndpointNode {
+    /// InnerTube API path supplied by `commandMetadata`, or inferred for core endpoints.
+    pub api_path: Option<String>,
+    /// The endpoint name and unmodified request payload needed to replay it.
+    pub endpoint_name: Option<String>,
+    pub payload: Value,
     pub watch: Option<WatchEndpointNode>,
     pub browse: Option<BrowseEndpointNode>,
     pub reel_watch: Option<ReelWatchEndpointNode>,
@@ -45,13 +50,38 @@ impl NavigationEndpointNode {
             return None;
         }
 
-        // Unwrap CommandContext or commandMetadata if present
+        // Unwrap CommandContext while retaining the outer command metadata.
         let target = val.get("innertubeCommand")
             .or_else(|| val.pointer("/commandContext/onTap/innertubeCommand"))
             .or_else(|| val.pointer("/onTap/innertubeCommand"))
             .unwrap_or(val);
 
-        let mut node = Self::default();
+        let endpoint_name = target
+            .as_object()
+            .and_then(|fields| {
+                fields
+                    .keys()
+                    .find(|name| name.ends_with("Endpoint") || name.ends_with("Command"))
+            })
+            .cloned();
+        let payload = endpoint_name
+            .as_ref()
+            .and_then(|name| target.get(name))
+            .cloned()
+            .unwrap_or(Value::Null);
+        let api_path = val
+            .pointer("/commandMetadata/webCommandMetadata/apiUrl")
+            .or_else(|| target.pointer("/commandMetadata/webCommandMetadata/apiUrl"))
+            .and_then(Value::as_str)
+            .map(normalize_api_path)
+            .or_else(|| endpoint_name.as_deref().and_then(infer_api_path));
+
+        let mut node = Self {
+            api_path,
+            endpoint_name,
+            payload,
+            ..Self::default()
+        };
         let mut matched = false;
 
         if let Some(w) = target.get("watchEndpoint") {
@@ -99,10 +129,46 @@ impl NavigationEndpointNode {
             }
         }
 
-        if matched {
+        if matched || node.endpoint_name.is_some() {
             Some(node)
         } else {
             None
         }
+    }
+}
+
+fn normalize_api_path(path: &str) -> String {
+    path.strip_prefix("/youtubei/v1").unwrap_or(path).to_string()
+}
+
+fn infer_api_path(endpoint_name: &str) -> Option<String> {
+    match endpoint_name {
+        "browseEndpoint" => Some("/browse".to_string()),
+        "watchEndpoint" | "reelWatchEndpoint" => Some("/player".to_string()),
+        "searchEndpoint" => Some("/search".to_string()),
+        "watchPlaylistEndpoint" => Some("/next".to_string()),
+        "liveChatItemContextMenuEndpoint" => Some("/live_chat/get_item_context_menu".to_string()),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn preserves_endpoint_payload_and_api_metadata() {
+        let node = NavigationEndpointNode::from_value(&json!({
+            "commandMetadata": {
+                "webCommandMetadata": { "apiUrl": "/youtubei/v1/browse" }
+            },
+            "browseEndpoint": { "browseId": "UC_test" }
+        }))
+        .expect("fixture should parse");
+
+        assert_eq!(node.api_path.as_deref(), Some("/browse"));
+        assert_eq!(node.endpoint_name.as_deref(), Some("browseEndpoint"));
+        assert_eq!(node.payload["browseId"], "UC_test");
     }
 }

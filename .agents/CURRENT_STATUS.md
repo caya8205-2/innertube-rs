@@ -1,8 +1,21 @@
 # innertube-rs — Current Status
 
-> **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.5.0` (**Full-parity audit and implementation in progress; see `PARITY_MANIFEST.md`**)
+> **Terakhir Diperbarui**: 25 Agustus 2026
+> **Status Repositori**: `v0.5.0` (**Full-parity audit and implementation in progress; see `PARITY_PLAN.md` and `PARITY_MANIFEST.md`**)
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
+
+---
+
+## Current Parity Handoff
+
+The historical feature matrix below records the original project milestone; it
+does **not** prove full YouTube.js parity. The active compatibility target is
+`reference-youtubejs` commit `85473772ce9a9238091636fc2cb7ea3c331ea88d`.
+
+Read `PARITY_PLAN.md` first for the ordered work plan and exact uncommitted
+checkpoint. Read `PARITY_MANIFEST.md` for the authoritative completion state.
+At this checkpoint, `cargo test --all-targets` passes 26 tests, but parser and
+public API parity are still incomplete. Do not report 100% parity.
 
 ---
 

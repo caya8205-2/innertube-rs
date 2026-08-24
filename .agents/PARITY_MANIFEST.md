@@ -23,13 +23,14 @@ tested equivalent parser path.
 | `getSearchSuggestions` | Partial | No `previous_query` contract. |
 | `getComments` | Partial | Legacy sort/comment-id arguments and continuation semantics differ. |
 | `getHomeFeed`, `getGuide`, `getHistory`, `getLibrary`, `getNotifications`, `getChannel`, `getPlaylist`, `getHashtag` | Partial | Feature paths exist but do not expose the legacy feed/parser contracts. |
-| `getCourses`, `getSubscriptionsFeed`, `getChannelsFeed`, `getUnseenNotificationsCount`, `getPlaylists` | Missing | No public Rust equivalent. |
-| `getStreamingData` | Partial | `get_stream_url` drops format metadata and download options. |
-| `download` | Missing | Direct URL resolution exists; stream-returning download API does not. |
+| `getCourses`, `getSubscriptionsFeed`, `getChannelsFeed`, `getPlaylists` | Partial | Generic typed browse-feed wrappers exist; legacy feed behavior and authenticated live verification remain. |
+| `getUnseenNotificationsCount` | Partial | Legacy response layouts and zero fallback are covered; authenticated live verification remains. |
+| `getStreamingData` | Partial | Returns a selected format with deciphered URL; legacy format options remain incomplete. |
+| `download` | Partial | Returns a streaming `reqwest::Response`; legacy range and option contracts remain incomplete. |
 | `resolveURL`, `getPost` | Partial | Rust equivalents cover the typed navigation/post-detail path; generic legacy endpoint metadata and feed behavior remain. |
 | `getPostComments` | Partial | Community Post continuation protobuf and parsed comment response are implemented; generic legacy `Comments` feed behavior remains. |
 | `getAttestationChallenge` | Partial | Request contract is implemented; typed challenge parsing and BotGuard integration remain. |
-| `call` | Missing | No public Rust equivalent. |
+| `call` | Partial | Raw and parsed `NavigationEndpoint` calls exist; command parsing and every legacy endpoint path remain incomplete. |
 
 ## Core and manager baseline
 
@@ -37,7 +38,7 @@ tested equivalent parser path.
 |---|---|---|
 | Session transport | In progress | All InnerTube POSTs and direct fallback calls return contextual errors on non-2xx. |
 | Account authentication | In progress | Cookie/OAuth lifecycle, authenticated headers, account index, and mutation preconditions match legacy. |
-| Actions and playlist manager | Partial | Every legacy interaction and playlist operation has matching protobuf/request and response contract tests. |
+| Actions and playlist manager | Partial | Playlist-removal protocol now matches legacy; every remaining interaction and playlist operation still needs matching request/response contract tests. |
 | Player and decipher | Partial | Player selection, cache lifecycle, client fallback, and current-player fixtures are equivalent. |
 | Parser | Not started | Renderer registry maps all 574 legacy classes to Rust types or tested equivalent paths. |
 
