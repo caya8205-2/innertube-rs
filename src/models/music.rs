@@ -137,3 +137,39 @@ pub struct MusicExplore {
     pub new_releases: Vec<MusicAlbumItem>,
     pub moods_and_genres: Vec<String>,
 }
+
+/// YouTube Music dedicated Artist Page (`Artist.ts`).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicArtistPage {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub subscribers: Option<String>,
+    pub thumbnail: Option<String>,
+    pub top_songs: Vec<MusicTrackItem>,
+    pub albums: Vec<MusicAlbumItem>,
+    pub singles: Vec<MusicAlbumItem>,
+    pub videos: Vec<MusicTrackItem>,
+    pub featured_on: Vec<MusicPlaylistItem>,
+    pub similar_artists: Vec<MusicArtistItem>,
+}
+
+/// A dynamic shelf on YouTube Music Home / Explore.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicShelf {
+    pub title: String,
+    pub subtitle: Option<String>,
+    pub tracks: Vec<MusicTrackItem>,
+    pub albums: Vec<MusicAlbumItem>,
+    pub playlists: Vec<MusicPlaylistItem>,
+}
+
+/// YouTube Music Home Feed (`HomeFeed.ts`).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicHomeFeed {
+    pub shelves: Vec<MusicShelf>,
+    pub continuation_token: Option<String>,
+}

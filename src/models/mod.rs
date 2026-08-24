@@ -10,3 +10,5 @@ pub mod comments;
 pub mod music;
 pub mod suggestions;
 pub mod playlist;
+pub mod feed;
+pub mod guide;

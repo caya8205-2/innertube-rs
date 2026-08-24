@@ -2,9 +2,9 @@ use serde_json::{json, Value};
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::music::{
-    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistRef,
-    MusicExplore, MusicLyrics, MusicPlaylistItem, MusicSearchFilter, MusicSearchResults,
-    MusicTrackItem,
+    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
+    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
@@ -67,6 +67,31 @@ pub async fn get_music_album(session: &Session, browse_id: &str) -> Result<Music
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_album_response(browse_id, &raw)
+}
+
+/// Fetch YouTube Music dedicated Artist Page by channel/artist ID (e.g. `UC...`).
+pub async fn get_music_artist(session: &Session, artist_id: &str) -> Result<MusicArtistPage> {
+    let clean_id = artist_id.trim_start_matches("ytchannel:").trim();
+    let payload = json!({
+        "browseId": clean_id,
+    });
+
+    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    parse_music_artist_response(clean_id, &raw)
+}
+
+/// Fetch YouTube Music Home Feed (`FEmusic_home`).
+pub async fn get_music_home(session: &Session) -> Result<MusicHomeFeed> {
+    let payload = json!({
+        "browseId": "FEmusic_home",
+    });
+
+    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    parse_music_home_response(&raw)
 }
 
 /// Fetch YouTube Music Explore page (New Releases, Charts, Moods & Genres).
@@ -246,6 +271,175 @@ pub fn parse_music_album_response(browse_id: &str, raw: &Value) -> Result<MusicA
     }
 
     Ok(album_view)
+}
+
+/// Parse YouTube Music Artist Page response (`Artist.ts`).
+pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<MusicArtistPage> {
+    let mut page = MusicArtistPage {
+        id: artist_id.to_string(),
+        ..Default::default()
+    };
+
+    // Header extraction
+    if let Some(header) = raw.pointer("/header/musicImmersiveHeaderRenderer")
+        .or_else(|| raw.pointer("/header/musicVisualHeaderRenderer"))
+        .or_else(|| raw.pointer("/header/musicHeaderRenderer"))
+    {
+        page.name = header.pointer("/title/runs/0/text")
+            .or_else(|| header.pointer("/title/simpleText"))
+            .and_then(|t| t.as_str())
+            .unwrap_or("Unknown Artist")
+            .to_string();
+
+        page.description = header.pointer("/description/runs/0/text")
+            .or_else(|| header.pointer("/description/simpleText"))
+            .and_then(|t| t.as_str())
+            .map(|s| s.to_string());
+
+        page.subscribers = header.pointer("/subscriptionButton/subscribeButtonRenderer/subscriberCountText/runs/0/text")
+            .or_else(|| header.pointer("/subscriptionButton/subscribeButtonRenderer/subscriberCountText/simpleText"))
+            .and_then(|s| s.as_str())
+            .map(|s| s.to_string());
+
+        page.thumbnail = header.pointer("/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
+            .or_else(|| header.pointer("/foregroundThumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url"))
+            .and_then(|u| u.as_str())
+            .map(|s| s.to_string());
+    }
+
+    // Extract Shelves from sectionListRenderer
+    if let Some(sections) = raw.pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
+        .and_then(|s| s.as_array())
+    {
+        for sec in sections {
+            let shelf_target = sec.get("musicShelfRenderer")
+                .or_else(|| sec.get("musicCarouselShelfRenderer"))
+                .unwrap_or(sec);
+
+            let shelf_title = shelf_target.pointer("/header/musicShelfHeaderRenderer/title/runs/0/text")
+                .or_else(|| shelf_target.pointer("/header/musicCarouselShelfBasicHeaderRenderer/title/runs/0/text"))
+                .and_then(|t| t.as_str())
+                .unwrap_or("");
+
+            let parsed_shelf = Parser::parse_tree(shelf_target);
+
+            if shelf_title.eq_ignore_ascii_case("Songs") || shelf_title.eq_ignore_ascii_case("Top songs") {
+                for item in parsed_shelf.find_music_items() {
+                    page.top_songs.push(convert_music_node_to_track_item(item));
+                }
+            } else if shelf_title.eq_ignore_ascii_case("Albums") {
+                for node in &parsed_shelf {
+                    if let YTNode::MusicCard(card) = node {
+                        page.albums.push(MusicAlbumItem {
+                            browse_id: card.id.clone().unwrap_or_default(),
+                            title: card.title.clone(),
+                            artist: card.subtitle.clone(),
+                            year: None,
+                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
+                            track_count: None,
+                        });
+                    }
+                }
+            } else if shelf_title.eq_ignore_ascii_case("Singles") || shelf_title.eq_ignore_ascii_case("Singles & EPs") {
+                for node in &parsed_shelf {
+                    if let YTNode::MusicCard(card) = node {
+                        page.singles.push(MusicAlbumItem {
+                            browse_id: card.id.clone().unwrap_or_default(),
+                            title: card.title.clone(),
+                            artist: card.subtitle.clone(),
+                            year: None,
+                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
+                            track_count: None,
+                        });
+                    }
+                }
+            } else if shelf_title.eq_ignore_ascii_case("Videos") {
+                for item in parsed_shelf.find_music_items() {
+                    page.videos.push(convert_music_node_to_track_item(item));
+                }
+            } else if shelf_title.eq_ignore_ascii_case("Fans might also like") || shelf_title.eq_ignore_ascii_case("Similar artists") {
+                for node in &parsed_shelf {
+                    if let YTNode::MusicCard(card) = node {
+                        page.similar_artists.push(MusicArtistItem {
+                            browse_id: card.id.clone().unwrap_or_default(),
+                            name: card.title.clone(),
+                            subscribers: card.subtitle.clone(),
+                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(page)
+}
+
+/// Parse YouTube Music Home Feed response (`HomeFeed.ts`).
+pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
+    let mut feed = MusicHomeFeed::default();
+
+    if let Some(sections) = raw.pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
+        .and_then(|s| s.as_array())
+    {
+        for sec in sections {
+            let shelf_target = sec.get("musicCarouselShelfRenderer")
+                .or_else(|| sec.get("musicShelfRenderer"))
+                .unwrap_or(sec);
+
+            let title = shelf_target.pointer("/header/musicCarouselShelfBasicHeaderRenderer/title/runs/0/text")
+                .or_else(|| shelf_target.pointer("/header/musicShelfHeaderRenderer/title/runs/0/text"))
+                .and_then(|t| t.as_str())
+                .unwrap_or("Featured")
+                .to_string();
+
+            let subtitle = shelf_target.pointer("/header/musicCarouselShelfBasicHeaderRenderer/strapline/runs/0/text")
+                .and_then(|s| s.as_str())
+                .map(|s| s.to_string());
+
+            let mut shelf = MusicShelf {
+                title,
+                subtitle,
+                tracks: Vec::new(),
+                albums: Vec::new(),
+                playlists: Vec::new(),
+            };
+
+            let parsed_shelf = Parser::parse_tree(shelf_target);
+            for item in parsed_shelf.find_music_items() {
+                shelf.tracks.push(convert_music_node_to_track_item(item));
+            }
+            for node in &parsed_shelf {
+                if let YTNode::MusicCard(card) = node {
+                    if card.item_type.as_deref() == Some("MUSIC_PAGE_TYPE_ALBUM") {
+                        shelf.albums.push(MusicAlbumItem {
+                            browse_id: card.id.clone().unwrap_or_default(),
+                            title: card.title.clone(),
+                            artist: card.subtitle.clone(),
+                            year: None,
+                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
+                            track_count: None,
+                        });
+                    } else {
+                        shelf.playlists.push(MusicPlaylistItem {
+                            browse_id: card.id.clone().unwrap_or_default(),
+                            title: card.title.clone(),
+                            author: card.subtitle.clone(),
+                            track_count: None,
+                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
+                        });
+                    }
+                }
+            }
+
+            if !shelf.tracks.is_empty() || !shelf.albums.is_empty() || !shelf.playlists.is_empty() {
+                feed.shelves.push(shelf);
+            }
+        }
+    }
+
+    feed.continuation_token = Parser::parse_tree(raw).find_continuation_token();
+    Ok(feed)
 }
 
 /// Parse YouTube Music explore / charts response using modular AST nodes.

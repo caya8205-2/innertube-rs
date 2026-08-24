@@ -123,19 +123,26 @@ pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
 pub use models::comments::{Comment, CommentThread, CommentsResult};
 pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
-    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistRef,
-    MusicExplore, MusicLyrics, MusicPlaylistItem, MusicSearchFilter, MusicSearchResults,
-    MusicTrackItem,
+    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
+    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
 pub use models::suggestions::{SearchSuggestion, SearchSuggestionsResult};
 pub use models::playlist::{PlaylistContinuation, PlaylistVideoItem, PlaylistView};
+pub use models::feed::{FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
+pub use models::guide::{GuideItem, GuideResponse, GuideSection};
 pub use core::session::{Session, SessionOptions};
 pub use core::player::Player;
 
 use crate::endpoints::browse::get_channel;
 use crate::endpoints::channel::{get_channel_about, get_channel_shorts, get_channel_videos};
 use crate::endpoints::comments::{get_comment_replies, get_comments};
-use crate::endpoints::music::{get_music_album, get_music_explore, get_music_lyrics, search_music};
+use crate::endpoints::feed::{get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending};
+use crate::endpoints::guide::get_guide;
+use crate::endpoints::music::{
+    get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
+    search_music,
+};
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
 use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
@@ -319,5 +326,40 @@ impl Innertube {
     /// Fetch YouTube Music explore and trending page data.
     pub async fn get_music_explore(&self) -> Result<MusicExplore> {
         get_music_explore(&self.session).await
+    }
+
+    /// Fetch YouTube Music dedicated Artist Page by channel/artist ID (e.g. `UC...`).
+    pub async fn get_music_artist(&self, artist_id: &str) -> Result<MusicArtistPage> {
+        get_music_artist(&self.session, artist_id).await
+    }
+
+    /// Fetch YouTube Music Home Feed with dynamic shelves (`FEmusic_home`).
+    pub async fn get_music_home(&self) -> Result<MusicHomeFeed> {
+        get_music_home(&self.session).await
+    }
+
+    /// Fetch the main YouTube Home Feed (`FEwhat_to_watch`).
+    pub async fn get_home_feed(&self, params: Option<&str>) -> Result<HomeFeed> {
+        get_home_feed(&self.session, params).await
+    }
+
+    /// Fetch continuation page of the YouTube Home Feed.
+    pub async fn get_home_feed_continuation(&self, continuation_token: &str) -> Result<HomeFeed> {
+        get_home_feed_continuation(&self.session, continuation_token).await
+    }
+
+    /// Fetch YouTube Trending Feed (`FEtrending`).
+    pub async fn get_trending(&self, tab_params: Option<&str>) -> Result<TrendingFeed> {
+        get_trending(&self.session, tab_params).await
+    }
+
+    /// Fetch videos for a specific hashtag (`FEhashtag`).
+    pub async fn get_hashtag_feed(&self, tag: &str) -> Result<HashtagFeed> {
+        get_hashtag_feed(&self.session, tag).await
+    }
+
+    /// Fetch the YouTube Guide navigation menu (/guide endpoint).
+    pub async fn get_guide(&self) -> Result<GuideResponse> {
+        get_guide(&self.session).await
     }
 }

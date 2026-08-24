@@ -8,3 +8,5 @@ pub mod music;
 pub mod suggestions;
 pub mod playlist;
 pub mod channel;
+pub mod feed;
+pub mod guide;
