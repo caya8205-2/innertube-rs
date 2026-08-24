@@ -59,7 +59,7 @@ pub async fn get_hashtag_feed(session: &Session, tag: &str) -> Result<HashtagFee
     let clean_tag = tag.trim_start_matches('#').trim();
     let payload = json!({
         "browseId": "FEhashtag",
-        "params": format!("EghoYXNodGFnIPgBAA%3D%3D"),
+        "params": "EghoYXNodGFnIPgBAA%3D%3D",
         "query": clean_tag,
     });
 

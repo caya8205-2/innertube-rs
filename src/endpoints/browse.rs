@@ -199,10 +199,9 @@ fn extract_yt_initial_data(html: &str) -> Option<Value> {
 
     let (start_idx, skip_len) = if let Some(idx) = html.find(marker) {
         (idx, marker.len())
-    } else if let Some(idx) = html.find(alt_marker) {
-        (idx, alt_marker.len())
     } else {
-        return None;
+        let idx = html.find(alt_marker)?;
+        (idx, alt_marker.len())
     };
 
     let start = start_idx + skip_len;

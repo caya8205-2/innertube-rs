@@ -210,10 +210,9 @@ fn convert_node_to_comment(c: &CommentNode) -> Comment {
 fn parse_comment_thread_renderer(ctr: &Value, entity_map: &HashMap<String, String>) -> Option<CommentThread> {
     let comment = if let Some(cr) = ctr.pointer("/comment/commentRenderer") {
         CommentNode::from_value(cr).map(|c| convert_node_to_comment(&c))?
-    } else if let Some(cvm) = ctr.pointer("/commentViewModel/commentViewModel") {
-        parse_comment_view_model(cvm, entity_map)?
     } else {
-        return None;
+        let cvm = ctr.pointer("/commentViewModel/commentViewModel")?;
+        parse_comment_view_model(cvm, entity_map)?
     };
 
     let reply_token = ctr.pointer("/replies/commentRepliesRenderer/contents/0/continuationItemRenderer/continuationEndpoint/continuationCommand/token")
