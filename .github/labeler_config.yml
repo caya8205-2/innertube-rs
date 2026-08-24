@@ -12,27 +12,34 @@ labels:
       - ".gitignore"
       - ".gitattributes"
       
-  - label: "tests"
+  - label: "examples"
     files:
-      - "test/.*"
+      - "examples/.*"
     
   - label: "docs"
     files:
-      - "docs/.*"
+      - ".agents/.*"
       - "README.md"
       
   - label: "parser"
     files:
       - "src/parser/.*"
-      - "src/Innertube.ts"
+      
+  - label: "endpoints"
+    files:
+      - "src/endpoints/.*"
       
   - label: "core"
     files:
       - "src/core/.*"
       
+  - label: "models"
+    files:
+      - "src/models/.*"
+      
   - label: "protobuf"
     files:
-      - "src/proto/.*"
+      - "protos/.*"
   
   - label: "xsmall-diff"
     size-below: 10

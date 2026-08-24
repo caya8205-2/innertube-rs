@@ -1,8 +1,0 @@
-**
-
-src/
-docs/
-!dist/**
-!README.md
-!LICENSE
-!bundle/**
