@@ -833,4 +833,63 @@ mod tests {
         assert_eq!(nodes.find_tabs()[0].title, "Videos");
         assert!(nodes.find_tabs()[0].selected);
     }
+
+    #[test]
+    fn test_parser_parses_buttons_and_menus() {
+        let fixture = json!({
+            "contents": [
+                {
+                    "menuRenderer": {
+                        "items": [
+                            {
+                                "menuServiceItemRenderer": {
+                                    "text": { "runs": [{ "text": "Share" }] },
+                                    "icon": { "iconType": "SHARE" },
+                                    "serviceEndpoint": {
+                                        "commandMetadata": {
+                                            "webCommandMetadata": { "apiUrl": "/youtubei/v1/share" }
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "topLevelButtons": []
+                    }
+                },
+                {
+                    "buttonRenderer": {
+                        "text": { "runs": [{ "text": "Subscribe" }] },
+                        "navigationEndpoint": {
+                            "subscribeEndpoint": {
+                                "channelIds": ["UC_test"]
+                            }
+                        }
+                    }
+                },
+                {
+                    "toggleButtonRenderer": {
+                        "isToggled": true,
+                        "defaultText": { "simpleText": "Like" },
+                        "toggledText": { "simpleText": "Liked" }
+                    }
+                }
+            ]
+        });
+
+        let nodes = Parser::parse_tree(&fixture);
+        assert_eq!(nodes.find_menus().len(), 1);
+        assert_eq!(nodes.find_menus()[0].items.len(), 1);
+        assert_eq!(nodes.find_menus()[0].items[0].text, "Share");
+
+        assert_eq!(nodes.find_buttons().len(), 1);
+        assert_eq!(nodes.find_buttons()[0].text, "Subscribe");
+
+        let toggled = nodes.iter().find_map(|n| match n {
+            crate::parser::YTNode::ToggleButton(tb) => Some(tb),
+            _ => None,
+        }).expect("ToggleButton should be parsed");
+        assert!(toggled.is_toggled);
+        assert_eq!(toggled.default_text, "Like");
+        assert_eq!(toggled.toggled_text.as_deref(), Some("Liked"));
+    }
 }

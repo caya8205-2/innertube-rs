@@ -120,6 +120,7 @@ pub use error::{InnertubeError, Result};
 pub use models::account::{
     AccountNotification, AccountNotificationsResponse, HistoryFeed, LibraryFeed,
 };
+pub use core::actions::ApiResponse;
 pub use models::actions::{
     ActionResult, CreateCommentResult, CreatePlaylistResult, NotificationPreferenceType,
 };
@@ -874,6 +875,11 @@ impl Innertube {
 
     /// Access interaction and mutation manager (`client.interact()`).
     pub fn interact(&self) -> InteractionManager<'_> {
+        InteractionManager::new(&self.session)
+    }
+
+    /// Access actions manager (`client.actions()`). Alias for `interact()`.
+    pub fn actions(&self) -> InteractionManager<'_> {
         InteractionManager::new(&self.session)
     }
 

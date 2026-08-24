@@ -62,6 +62,8 @@ pub trait NodeListExt {
     fn find_continuation_token(&self) -> Option<String>;
     fn find_shelves(&self) -> Vec<&ShelfNode>;
     fn find_tabs(&self) -> Vec<&TabNode>;
+    fn find_buttons(&self) -> Vec<&ButtonNode>;
+    fn find_menus(&self) -> Vec<&MenuNode>;
 }
 
 impl NodeListExt for [YTNode] {
@@ -157,6 +159,24 @@ impl NodeListExt for [YTNode] {
         self.iter()
             .filter_map(|n| match n {
                 YTNode::Tab(t) => Some(t),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn find_buttons(&self) -> Vec<&ButtonNode> {
+        self.iter()
+            .filter_map(|n| match n {
+                YTNode::Button(b) => Some(b),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn find_menus(&self) -> Vec<&MenuNode> {
+        self.iter()
+            .filter_map(|n| match n {
+                YTNode::Menu(m) => Some(m),
                 _ => None,
             })
             .collect()

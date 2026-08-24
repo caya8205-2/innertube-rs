@@ -51,4 +51,9 @@ impl<'a> InteractionManager<'a> {
     ) -> Result<ActionResult> {
         Actions::set_notification_preferences(self.session, channel_id, pref_type).await
     }
+
+    /// Dispatch raw API call matching `Actions.execute`.
+    pub async fn execute(&self, endpoint: &str, payload: serde_json::Value) -> Result<crate::core::actions::ApiResponse> {
+        Actions::execute(self.session, endpoint, payload).await
+    }
 }

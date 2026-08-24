@@ -18,9 +18,11 @@ pub use containers::{
 pub use continuation::ContinuationNode;
 pub use livechat::LiveChatMessageNode;
 pub use misc::{
-    AuthorNode, BrowseEndpointNode, ContinuationEndpointNode, LikeEndpointNode,
-    NavigationEndpointNode, ReelWatchEndpointNode, SearchEndpointNode, SubscribeEndpointNode,
-    TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode, WatchEndpointNode,
+    AuthorNode, BrowseEndpointNode, ButtonNode, ContinuationEndpointNode, LikeEndpointNode,
+    MenuItemNode, MenuNode, NavigationEndpointNode, ReelWatchEndpointNode, SearchEndpointNode,
+    SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
+    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, ToggleButtonNode,
+    WatchEndpointNode,
 };
 pub use music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode};
 pub use playlist::{PlaylistNode, PlaylistVideoNode};
@@ -33,6 +35,7 @@ use serde_json::Value;
 
 /// Central strongly typed Polymorphic InnerTube Node representation (1:1 port of `YTNode.ts`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[allow(clippy::large_enum_variant)]
 pub enum YTNode {
     Video(VideoNode),
     Short(ShortNode),
@@ -54,6 +57,9 @@ pub enum YTNode {
     RichShelf(RichShelfNode),
     Tab(TabNode),
     LiveChat(LiveChatMessageNode),
+    Button(ButtonNode),
+    ToggleButton(ToggleButtonNode),
+    Menu(MenuNode),
 }
 
 impl YTNode {
@@ -222,6 +228,23 @@ impl YTNode {
         {
             if let Some(lc) = LiveChatMessageNode::from_value(val) {
                 return Some(YTNode::LiveChat(lc));
+            }
+        }
+
+        // 12. Check for Buttons and Menus
+        if val.get("toggleButtonRenderer").is_some() || val.get("toggleButtonViewModel").is_some() {
+            if let Some(tb) = ToggleButtonNode::from_value(val) {
+                return Some(YTNode::ToggleButton(tb));
+            }
+        }
+        if val.get("buttonRenderer").is_some() || val.get("buttonViewModel").is_some() {
+            if let Some(b) = ButtonNode::from_value(val) {
+                return Some(YTNode::Button(b));
+            }
+        }
+        if val.get("menuRenderer").is_some() || val.get("menuPopupRenderer").is_some() {
+            if let Some(m) = MenuNode::from_value(val) {
+                return Some(YTNode::Menu(m));
             }
         }
 

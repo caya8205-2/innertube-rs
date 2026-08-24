@@ -389,6 +389,32 @@ impl Actions {
             action_id: None,
         })
     }
+
+    /// Generic action dispatcher matching `Actions.execute` (1:1 with YouTube.js).
+    pub async fn execute(
+        session: &Session,
+        endpoint: &str,
+        payload: Value,
+    ) -> Result<ApiResponse> {
+        let resp = session.post_innertube(endpoint, payload).await?;
+        let status_code = resp.status().as_u16();
+        let success = resp.status().is_success();
+        let data: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        Ok(ApiResponse {
+            success,
+            status_code,
+            data,
+        })
+    }
+}
+
+/// An unparsed InnerTube API response matching `ApiResponse` in Actions.ts.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ApiResponse {
+    pub success: bool,
+    pub status_code: u16,
+    pub data: Value,
 }
 
 fn remove_playlist_actions(set_video_ids: &[&str]) -> Vec<Value> {

@@ -14,8 +14,8 @@ tested equivalent parser path.
 
 ## Current evidence snapshot — 2026-08-25
 
-Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces) and Phase 2 (Feed<T> mixins & continuation paths) and initial Phase 3 AST node expansions.
-Default validation currently passes 42 unit/contract tests and Clippy with 0 warnings. Eight live integration tests exist in `tests/live_integration.rs` and were verified live against YouTube.
+Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), and Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`).
+Default validation currently passes 43 unit/contract tests and Clippy with 0 warnings. Eight live integration tests exist in `tests/live_integration.rs` and were verified live against YouTube.
 
 ## Public `Innertube` API baseline
 
@@ -35,7 +35,7 @@ Default validation currently passes 42 unit/contract tests and Clippy with 0 war
 | `resolveURL`, `getPost` | Partial | Rust equivalents cover the typed navigation/post-detail path; generic legacy endpoint metadata and feed behavior remain. |
 | `getPostComments` | Partial | Community Post continuation protobuf and parsed comment response are implemented; generic legacy `Comments` feed behavior remains. |
 | `getAttestationChallenge` | Partial | Request contract is implemented; typed challenge parsing and BotGuard integration remain. |
-| `call` | Partial | Raw and parsed `NavigationEndpoint` calls exist; command parsing and every legacy endpoint path remain incomplete. |
+| `call` | In progress | Generic `Actions::execute` dispatcher and raw/parsed `ApiResponse` endpoint calls implemented via `client.actions().execute()`. |
 
 ## Core and manager baseline
 
