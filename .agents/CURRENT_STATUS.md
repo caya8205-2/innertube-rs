@@ -60,5 +60,13 @@ innertube-rs/
 │   ├── endpoints/                        # Player, Search, Browse, Next, Transcript, Comments, Music, Suggestions, Playlist, Channel, Feed, Guide, LiveChat, Account
 │   ├── models/                           # Video, Format, Search, Channel, Next, Transcript, Comments, Manifest, Music, Suggestions, Playlist, Feed, Guide, Post, LiveChat, OAuth, Actions, Account
 │   └── utils/                            # QuickJS decipher engine, Protobuf helpers, Manifest parser
-└── examples/                             # 32 runnable diagnostic & verification examples
+└── examples/                             # Categorized runnable diagnostic & verification examples
+    ├── download/                         # Audio/video stream downloaders
+    ├── video/                            # Video info, watch next, comments, transcripts, suggestions
+    ├── music/                            # YT Music albums, artists, lyrics, explore, search
+    ├── channel/                          # Channel tabs, community posts
+    ├── feed/                             # Home feed, trending, guide menu
+    ├── live/                             # Real-time live chat polling
+    ├── auth/                             # OAuth2 device flow login
+    └── diagnostics/                      # Client fallbacks, botguard, n-token, and manifest tests
 ```

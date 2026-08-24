@@ -28,3 +28,165 @@ protoc-bin-vendored = "3"
 name = "innertube"
 path = "src/bin/cli.rs"
 
+# Download Examples
+[[example]]
+name = "download_audio"
+path = "examples/download/download_audio.rs"
+
+# Video & Discovery Examples
+[[example]]
+name = "get_video_info"
+path = "examples/video/get_video_info.rs"
+
+[[example]]
+name = "get_watch_next"
+path = "examples/video/get_watch_next.rs"
+
+[[example]]
+name = "get_comments"
+path = "examples/video/get_comments.rs"
+
+[[example]]
+name = "get_transcript"
+path = "examples/video/get_transcript.rs"
+
+[[example]]
+name = "get_playlist"
+path = "examples/video/get_playlist.rs"
+
+[[example]]
+name = "get_suggestions"
+path = "examples/video/get_suggestions.rs"
+
+[[example]]
+name = "search_and_browse"
+path = "examples/video/search_and_browse.rs"
+
+# Music Suite Examples
+[[example]]
+name = "get_music_album"
+path = "examples/music/get_music_album.rs"
+
+[[example]]
+name = "get_music_artist"
+path = "examples/music/get_music_artist.rs"
+
+[[example]]
+name = "get_music_explore"
+path = "examples/music/get_music_explore.rs"
+
+[[example]]
+name = "get_music_lyrics"
+path = "examples/music/get_music_lyrics.rs"
+
+[[example]]
+name = "test_music_search"
+path = "examples/music/test_music_search.rs"
+
+# Channel Suite Examples
+[[example]]
+name = "get_channel_tabs"
+path = "examples/channel/get_channel_tabs.rs"
+
+[[example]]
+name = "get_community_posts"
+path = "examples/channel/get_community_posts.rs"
+
+# Feeds & Navigation Examples
+[[example]]
+name = "get_home_feed"
+path = "examples/feed/get_home_feed.rs"
+
+[[example]]
+name = "get_trending"
+path = "examples/feed/get_trending.rs"
+
+[[example]]
+name = "get_guide"
+path = "examples/feed/get_guide.rs"
+
+# Live & Auth Examples
+[[example]]
+name = "test_live_chat"
+path = "examples/live/test_live_chat.rs"
+
+[[example]]
+name = "test_oauth_flow"
+path = "examples/auth/test_oauth_flow.rs"
+
+# Diagnostics & Benchmarks
+[[example]]
+name = "test_android_testsuite"
+path = "examples/diagnostics/test_android_testsuite.rs"
+
+[[example]]
+name = "test_android_vr_stream"
+path = "examples/diagnostics/test_android_vr_stream.rs"
+
+[[example]]
+name = "test_apply_to_url"
+path = "examples/diagnostics/test_apply_to_url.rs"
+
+[[example]]
+name = "test_cdn_modes"
+path = "examples/diagnostics/test_cdn_modes.rs"
+
+[[example]]
+name = "test_clients"
+path = "examples/diagnostics/test_clients.rs"
+
+[[example]]
+name = "test_cpn_streaming"
+path = "examples/diagnostics/test_cpn_streaming.rs"
+
+[[example]]
+name = "test_hls"
+path = "examples/diagnostics/test_hls.rs"
+
+[[example]]
+name = "test_http2_cdn"
+path = "examples/diagnostics/test_http2_cdn.rs"
+
+[[example]]
+name = "test_manifest_parser"
+path = "examples/diagnostics/test_manifest_parser.rs"
+
+[[example]]
+name = "test_mweb_full_dechiper"
+path = "examples/diagnostics/test_mweb_full_dechiper.rs"
+
+[[example]]
+name = "test_mweb_stream"
+path = "examples/diagnostics/test_mweb_stream.rs"
+
+[[example]]
+name = "test_native_botguard"
+path = "examples/diagnostics/test_native_botguard.rs"
+
+[[example]]
+name = "test_native_botguard_full"
+path = "examples/diagnostics/test_native_botguard_full.rs"
+
+[[example]]
+name = "test_ntoken_standalone"
+path = "examples/diagnostics/test_ntoken_standalone.rs"
+
+[[example]]
+name = "test_ntoken_transform"
+path = "examples/diagnostics/test_ntoken_transform.rs"
+
+[[example]]
+name = "test_tv_client"
+path = "examples/diagnostics/test_tv_client.rs"
+
+[[example]]
+name = "test_web_creator"
+path = "examples/diagnostics/test_web_creator.rs"
+
+[[example]]
+name = "test_web_dechiper"
+path = "examples/diagnostics/test_web_dechiper.rs"
+
+[[example]]
+name = "test_web_embedded"
+path = "examples/diagnostics/test_web_embedded.rs"

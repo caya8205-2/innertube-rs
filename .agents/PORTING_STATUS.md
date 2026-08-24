@@ -38,42 +38,15 @@
 
 ---
 
-## 2. Diagnostic & Example Suite (`examples/`)
+## 2. Categorized Example Suite (`examples/`)
 
-The repository includes **32 standalone runnable diagnostic tools and examples**:
+The repository includes **runnable diagnostic tools and examples organized by category**:
 
-* `examples/get_community_posts.rs`
-* `examples/test_live_chat.rs`
-* `examples/test_oauth_flow.rs`
-* `examples/get_suggestions.rs`
-* `examples/get_playlist.rs`
-* `examples/get_channel_tabs.rs`
-* `examples/get_home_feed.rs`
-* `examples/get_trending.rs`
-* `examples/get_guide.rs`
-* `examples/test_music_search.rs`
-* `examples/get_music_album.rs`
-* `examples/get_music_artist.rs`
-* `examples/get_music_explore.rs`
-* `examples/get_music_lyrics.rs`
-* `examples/get_comments.rs`
-* `examples/get_transcript.rs`
-* `examples/get_watch_next.rs`
-* `examples/test_manifest_parser.rs`
-* `examples/test_clients.rs`
-* `examples/test_mweb_stream.rs`
-* `examples/test_cdn_modes.rs`
-* `examples/test_ntoken_standalone.rs`
-* `examples/test_native_botguard.rs`
-* `examples/test_native_botguard_full.rs`
-* `examples/test_android_vr_stream.rs`
-* `examples/test_android_testsuite.rs`
-* `examples/test_tv_client.rs`
-* `examples/test_web_creator.rs`
-* `examples/test_web_embedded.rs`
-* `examples/test_cpn_streaming.rs`
-* `examples/test_hls.rs`
-* `examples/test_http2_cdn.rs`
-* `examples/download_audio.rs`
-* `examples/get_video_info.rs`
-* `examples/search_and_browse.rs`
+* **Download**: `examples/download/download_audio.rs`
+* **Video & Search**: `examples/video/get_video_info.rs`, `examples/video/get_watch_next.rs`, `examples/video/get_comments.rs`, `examples/video/get_transcript.rs`, `examples/video/get_playlist.rs`, `examples/video/get_suggestions.rs`, `examples/video/search_and_browse.rs`
+* **Music Suite**: `examples/music/get_music_album.rs`, `examples/music/get_music_artist.rs`, `examples/music/get_music_explore.rs`, `examples/music/get_music_lyrics.rs`, `examples/music/test_music_search.rs`
+* **Channel Suite**: `examples/channel/get_channel_tabs.rs`, `examples/channel/get_community_posts.rs`
+* **Feeds & Guide**: `examples/feed/get_home_feed.rs`, `examples/feed/get_trending.rs`, `examples/feed/get_guide.rs`
+* **Live Chat**: `examples/live/test_live_chat.rs`
+* **OAuth2 Authentication**: `examples/auth/test_oauth_flow.rs`
+* **Diagnostics & Benchmarks**: `examples/diagnostics/*` (Client fallbacks, botguard, n-token, and manifest tests)

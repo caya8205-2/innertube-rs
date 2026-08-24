@@ -105,9 +105,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Playlist tracks
     let playlist = yt.get_playlist("PLlaN88a7y2_plecYoJxeQNnWiiN01LUcZ").await?;
-    println!("Playlist: {}", playlist.name);
-    for track in playlist.tracks {
-        println!(" - {} by {}", track.title, track.artist);
+    println!("Playlist: {}", playlist.title);
+    for video in playlist.videos {
+        println!(" - {} by {:?}", video.title, video.author.map(|a| a.name));
     }
 
     Ok(())
