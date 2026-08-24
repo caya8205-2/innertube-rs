@@ -141,6 +141,42 @@ pub fn parse_channel_shorts_response(channel_id: &str, raw: &Value) -> Result<Ch
     Ok(resp)
 }
 
+/// Fetch channel community posts (Community tab) with pagination support.
+pub async fn get_channel_community(
+    session: &Session,
+    channel_id: &str,
+    continuation_token: Option<&str>,
+) -> Result<crate::models::post::CommunityPostsResponse> {
+    let payload = if let Some(token) = continuation_token {
+        json!({
+            "continuation": token,
+        })
+    } else {
+        json!({
+            "browseId": channel_id,
+            "params": "Egljb21tdW5pdHkyBgQKAjoA", // Community tab
+        })
+    };
+
+    let resp: reqwest::Response = session.post_innertube("/browse", payload).await?;
+    let raw: Value = resp.json().await?;
+
+    parse_channel_community_response(&raw)
+}
+
+/// Parse channel community posts response into `CommunityPostsResponse` using modular AST nodes.
+pub fn parse_channel_community_response(raw: &Value) -> Result<crate::models::post::CommunityPostsResponse> {
+    let parsed_tree = Parser::parse_tree(raw);
+    let mut resp = crate::models::post::CommunityPostsResponse::default();
+
+    for p in parsed_tree.find_posts() {
+        resp.posts.push(p.post.clone());
+    }
+
+    resp.continuation_token = parsed_tree.find_continuation_token();
+    Ok(resp)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

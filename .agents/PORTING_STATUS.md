@@ -3,8 +3,7 @@
 > **Upstream Reference**: [LuanRT/YouTube.js (YouTubei.js)](https://github.com/LuanRT/YouTube.js)  
 > **Target Project**: `innertube-rs` (Pure Rust Port)  
 > **Last Updated**: August 24, 2026  
-> **Overall Porting Progress (Read Operations & Media Streaming)**: **100% Complete**  
-> **Overall Porting Progress (Total YouTube.js Feature Parity)**: **~95%** (Remaining 5%: Account Mutations, OAuth2, LiveChat)
+> **Overall Porting Progress**: **100% Complete (Full Parity Achieved)**
 
 ---
 
@@ -16,7 +15,7 @@
 | `src/core/HTTPClient.ts` | [`src/core/http.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/core/http.rs) | 🟢 Complete | 100% | `reqwest`-based asynchronous HTTP client with gzip, brotli, HTTP/2 negotiation, custom headers, and Netscape cookie store. |
 | `src/core/Player.ts` | [`src/utils/decipher.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/decipher.rs) | 🟢 Complete | 100% | QuickJS (`rquickjs`) sandboxed decipher engine. Extracts and executes base.js signature decipher algorithms and n-token transformations (<5ms). |
 | `src/utils/ProtoUtils.ts` | [`src/utils/proto.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/proto.rs) | 🟢 Complete | 100% | Protobuf visitor data encoding and decoding using `prost` and URL-safe base64 padding. |
-| `src/parser/nodes/` | [`src/parser/nodes/`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/parser/nodes/) | 🟢 Complete | 100% | Modular AST Component Parser (Text, Thumbnail, Author, Navigation, Video, Short, Playlist, Channel, Music, Comments, Continuation). |
+| `src/parser/nodes/` | [`src/parser/nodes/`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/parser/nodes/) | 🟢 Complete | 100% | Modular AST Component Parser (Text, Thumbnail, Author, Navigation, Video, Short, Playlist, Channel, Music, Comments, Community Post, LiveChat, Continuation). |
 | `src/core/endpoints/Player.ts` | [`src/endpoints/player.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/player.rs) | 🟢 Complete | 100% | InnerTube `/player` endpoint with automatic multi-client fallback chain (**WEB → ANDROID → iOS → ANDROID_VR → MWEB**). |
 | `src/core/endpoints/Search.ts` | [`src/endpoints/search.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/search.rs) | 🟢 Complete | 100% | InnerTube `/search` endpoint delegating extraction to `Parser::parse_tree` (Video, ChannelCard, Playlist). |
 | `src/core/endpoints/Browse.ts` | [`src/endpoints/browse.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/browse.rs) | 🟢 Complete | 100% | InnerTube `/browse` endpoint. Supports channel profile scraping, top tracks, and playlist extraction. |
@@ -29,19 +28,23 @@
 | `src/parser/ytmusic/` | [`src/endpoints/music.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/music.rs) | 🟢 Complete | 100% | YouTube Music dedicated suite: Filtered search, Albums, Dedicated Artist Page, Home Feed, Lyrics, Explore/Charts. |
 | `src/actions/` (Suggestions) | [`src/endpoints/suggestions.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/suggestions.rs) | 🟢 Complete | 100% | Search autocomplete query endpoint supporting both YouTube and YouTube Music. |
 | `src/actions/` (Playlists) | [`src/endpoints/playlist.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/playlist.rs) | 🟢 Complete | 100% | Full playlist scraper supporting metadata headers, video lists, and continuation pagination. |
-| `src/actions/` (Channels) | [`src/endpoints/channel.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/channel.rs) | 🟢 Complete | 100% | Channel tabs browser: Videos tab (uploads), Shorts tab (`shortsLockupViewModel`), and Channel About metadata. |
+| `src/actions/` (Channels) | [`src/endpoints/channel.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/channel.rs) | 🟢 Complete | 100% | Channel tabs browser: Videos tab (uploads), Shorts tab, Channel About, and Community tab. |
 | `src/actions/` (Transcript / Subtitles) | [`src/endpoints/transcript.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/transcript.rs) | 🟢 Complete | 100% | Subtitle track extraction, timed text parser (JSON3 and XML), export to SRT and WebVTT. |
 | `src/parser/` (Manifests) | [`src/utils/manifest.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/utils/manifest.rs) | 🟢 Complete | 100% | Native parser for HLS (`.m3u8` master playlists) and DASH (`.mpd` representations). |
-| `src/core/OAuth2.ts` | `src/core/oauth.rs` | ⚪ Remaining 5% | 0% | TV/Device code OAuth2 login flow. |
-| `src/core/Actions.ts` | `src/core/actions.rs` | ⚪ Remaining 5% | 0% | Authenticated account mutations (Like, Dislike, Subscribe, Unsubscribe, Comment, Playlist Edit). |
-| `src/parser/youtube/LiveChat.ts` | `src/endpoints/live_chat.rs` | ⚪ Remaining 5% | 0% | Real-time live chat polling and parser. |
+| `src/core/OAuth2.ts` | [`src/core/oauth.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/core/oauth.rs) | 🟢 Complete | 100% | TV/Device code OAuth2 login flow, verification code request, token polling, and token refresher. |
+| `src/core/Actions.ts` | [`src/core/actions.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/core/actions.rs) | 🟢 Complete | 100% | Authenticated account mutations (Like, Dislike, Remove rating, Subscribe, Unsubscribe, Comment, Playlist Edit). |
+| `src/parser/youtube/LiveChat.ts` | [`src/endpoints/live_chat.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/live_chat.rs) | 🟢 Complete | 100% | Real-time live chat token extractor, live chat messages polling, Super Chat, Memberships. |
+| `src/parser/youtube/History.ts` & `Library.ts` | [`src/endpoints/account.rs`](file:///c:/Users/Caya/Desktop/Project/innertube-rs/src/endpoints/account.rs) | 🟢 Complete | 100% | Authenticated user history feed, library feed, and account notifications. |
 
 ---
 
 ## 2. Diagnostic & Example Suite (`examples/`)
 
-The repository includes **29 standalone runnable diagnostic tools and examples**:
+The repository includes **32 standalone runnable diagnostic tools and examples**:
 
+* `examples/get_community_posts.rs`
+* `examples/test_live_chat.rs`
+* `examples/test_oauth_flow.rs`
 * `examples/get_suggestions.rs`
 * `examples/get_playlist.rs`
 * `examples/get_channel_tabs.rs`

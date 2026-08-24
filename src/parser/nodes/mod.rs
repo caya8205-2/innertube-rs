@@ -5,19 +5,23 @@ pub mod continuation;
 pub mod misc;
 pub mod music;
 pub mod playlist;
+pub mod post;
 pub mod short;
 pub mod video;
+pub mod livechat;
 
 pub use channel::{ChannelCardNode, ChannelHeaderNode};
 pub use comments::{CommentNode, CommentThreadNode};
 pub use containers::TabNode;
 pub use continuation::ContinuationNode;
+pub use livechat::LiveChatMessageNode;
 pub use misc::{
     AuthorNode, BrowseEndpointNode, NavigationEndpointNode, ReelWatchEndpointNode, TextNode,
     TextRunNode, ThumbnailListNode, ThumbnailNode, WatchEndpointNode,
 };
 pub use music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode};
 pub use playlist::{PlaylistNode, PlaylistVideoNode};
+pub use post::PostNode;
 pub use short::ShortNode;
 pub use video::VideoNode;
 
@@ -25,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Central strongly typed Polymorphic InnerTube Node representation (1:1 port of `YTNode.ts`).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum YTNode {
     Video(VideoNode),
     Short(ShortNode),
@@ -38,6 +42,7 @@ pub enum YTNode {
     MusicDescriptionShelf(MusicDescriptionShelfNode),
     Comment(CommentNode),
     CommentThread(CommentThreadNode),
+    Post(PostNode),
     Continuation(ContinuationNode),
 }
 
@@ -142,6 +147,17 @@ impl YTNode {
         if val.get("commentRenderer").is_some() {
             if let Some(c) = CommentNode::from_value(val) {
                 return Some(YTNode::Comment(c));
+            }
+        }
+
+        // 9. Check for Community Post Renderers
+        if val.get("backstagePostRenderer").is_some()
+            || val.get("postRenderer").is_some()
+            || val.get("sharedPostRenderer").is_some()
+            || val.get("backstagePostThreadRenderer").is_some()
+        {
+            if let Some(p) = PostNode::from_value(val) {
+                return Some(YTNode::Post(p));
             }
         }
 

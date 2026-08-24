@@ -12,3 +12,8 @@ pub mod suggestions;
 pub mod playlist;
 pub mod feed;
 pub mod guide;
+pub mod post;
+pub mod live_chat;
+pub mod oauth;
+pub mod actions;
+pub mod account;

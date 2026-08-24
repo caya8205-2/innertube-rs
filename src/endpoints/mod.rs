@@ -10,3 +10,5 @@ pub mod playlist;
 pub mod channel;
 pub mod feed;
 pub mod guide;
+pub mod live_chat;
+pub mod account;
