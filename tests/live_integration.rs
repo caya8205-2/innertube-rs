@@ -182,3 +182,46 @@ async fn test_live_transcript() {
         .expect("Failed to fetch transcript tracks");
     assert!(!tracks.is_empty());
 }
+
+#[tokio::test]
+#[ignore = "requires network access; run with cargo test --test live_integration -- --ignored"]
+async fn test_live_resolve_url_and_home_feed() {
+    let client = Innertube::new()
+        .await
+        .expect("Failed to initialize Innertube client");
+
+    let resolved = client
+        .resolve_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        .await
+        .expect("Failed to resolve URL");
+    assert!(resolved.watch.is_some() || resolved.endpoint_name.is_some());
+
+    let _home = client
+        .get_home_feed(None)
+        .await
+        .expect("Failed to fetch home feed");
+}
+
+#[tokio::test]
+#[ignore = "requires network access; run with cargo test --test live_integration -- --ignored"]
+async fn test_live_music_and_kids_managers() {
+    let client = Innertube::new()
+        .await
+        .expect("Failed to initialize Innertube client");
+
+    // YouTube Music Manager
+    let artist = client
+        .music()
+        .get_artist("UC52ZqHVQz5OoGhvbWiRal6g")
+        .await
+        .expect("Failed to fetch music artist");
+    assert!(!artist.name.is_empty());
+
+    // YouTube Kids Manager
+    let kids_home = client
+        .kids()
+        .get_home_feed()
+        .await
+        .expect("Failed to fetch kids home feed");
+    assert!(kids_home.get("contents").is_some() || kids_home.get("responseContext").is_some());
+}

@@ -21,6 +21,11 @@ impl<'a> KidsManager<'a> {
         resp.json().await.map_err(InnertubeError::Network)
     }
 
+    /// Fetch YouTube Kids Home Feed (alias matching Kids.ts getHomeFeed).
+    pub async fn get_home_feed(&self) -> Result<Value> {
+        self.get_home().await
+    }
+
     /// Search YouTube Kids.
     pub async fn search(&self, query: &str) -> Result<Value> {
         let resp = self

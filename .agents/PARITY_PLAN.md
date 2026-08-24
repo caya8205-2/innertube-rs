@@ -52,8 +52,8 @@ Current evidence is deliberately **not** a 100% parity claim:
 
 - `cargo test --all-targets` passes 43 non-network unit/contract tests.
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
-- Eight live integration tests in `tests/live_integration.rs` were executed with
-  `cargo test --test live_integration -- --ignored` and passed 8/8 against the live
+- Ten live integration tests in `tests/live_integration.rs` were executed with
+  `cargo test --test live_integration -- --ignored` and passed 10/10 against the live
   YouTube API.
 - Phase 1 (`get_info` concurrent composition & sub-manager namespaces `music()`,
   `playlist()`, `interact()`, `actions()`, `account()`, `kids()`), Phase 2 (`Feed<T>` pagination mixin),

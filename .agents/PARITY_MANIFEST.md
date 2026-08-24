@@ -15,7 +15,7 @@ tested equivalent parser path.
 ## Current evidence snapshot — 2026-08-25
 
 Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), and Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`).
-Default validation currently passes 43 unit/contract tests and Clippy with 0 warnings. Eight live integration tests exist in `tests/live_integration.rs` and were verified live against YouTube.
+Default validation currently passes 43 unit/contract tests and Clippy with 0 warnings. Ten live integration tests exist in `tests/live_integration.rs` and were verified live against YouTube (10/10 passing).
 
 ## Public `Innertube` API baseline
 
