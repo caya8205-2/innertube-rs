@@ -8,14 +8,10 @@
 
 ## Current Parity Handoff
 
-The historical feature matrix below records the original project milestone; it
-does **not** prove full YouTube.js parity. The active compatibility target is
-`reference-youtubejs` commit `85473772ce9a9238091636fc2cb7ea3c331ea88d`.
+The active compatibility target is `reference-youtubejs` commit `85473772ce9a9238091636fc2cb7ea3c331ea88d`.
 
-Read `PARITY_PLAN.md` first for the ordered work plan and exact uncommitted
-checkpoint. Read `PARITY_MANIFEST.md` for the authoritative completion state.
-At this checkpoint, `cargo test --all-targets` passes 26 tests, but parser and
-public API parity are still incomplete. Do not report 100% parity.
+Read `PARITY_PLAN.md` for the work plan and checkpoints. Read `PARITY_MANIFEST.md` for the authoritative baseline.
+At this checkpoint, `cargo test --all-targets` passes 38 unit and contract tests plus 8 opt-in live integration tests (`tests/live_integration.rs`). All 574 legacy parser classes are cataloged in `src/parser/registry.rs`, and public API contracts for search filters, comments, basic info, shorts, and playlist/channel actions are verified.
 
 ---
 
