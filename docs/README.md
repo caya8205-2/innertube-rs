@@ -6,19 +6,21 @@ Welcome to the documentation for **`innertube-rs`**, a high-performance, asynchr
 
 ## 📚 Documentation Index
 
-1. **[Architecture & Core Concepts](api/README.md)**
+1. **[Architecture & Internal Design](architecture.md)**
    - Overview of the client architecture, session management, and HTTP client.
-2. **[Innertube Client API](api/classes/Innertube.md)**
+2. **[Innertube Client API](api/core/innertube.md)**
    - Complete reference for top-level methods on the `Innertube` struct.
-3. **[Session & Authentication](api/classes/Session.md)**
+3. **[Session & Authentication](api/core/session.md)**
    - Visitor data protobuf generation, PO-token passing, and multi-client contextual headers.
-4. **[Player & Decipher Engine](api/classes/Player.md)**
+4. **[Player & Decipher Engine](api/core/player.md)**
    - Embedded QuickJS sandbox (`rquickjs`) executing signature decipher algorithms and n-token transformations.
-5. **[OAuth2 Device Flow](api/classes/OAuth2.md)**
+5. **[OAuth2 Device Flow](api/core/oauth.md)**
    - Google TV / Device authorization flow and automatic token refreshing.
-6. **[Account Mutation Actions](api/classes/Actions.md)**
+6. **[Account Mutation Actions](api/core/actions.md)**
    - Like, Dislike, Subscribe, Unsubscribe, Playlist Management, and Commenting.
-7. **[Modular AST Component Parser](updating-the-parser.md)**
+7. **[API & Endpoints Reference](api/README.md)**
+   - Complete index of all endpoints, models, and AST nodes.
+8. **[Modular AST Component Parser](updating-the-parser.md)**
    - Technical guide to the recursive polymorphic AST parser (`src/parser/nodes/`).
 
 ---

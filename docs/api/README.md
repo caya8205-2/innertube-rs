@@ -6,31 +6,32 @@
 
 ## 1. Core Modules
 
-| Module / Struct | Description | Link |
+| Module / Struct | Description | Reference Link |
 |---|---|---|
-| [`Innertube`](classes/Innertube.md) | Top-level client containing high-level wrappers for all YouTube features | [Innertube.md](classes/Innertube.md) |
-| [`Session`](classes/Session.md) | InnerTube HTTP session, protobuf visitor data, and multi-client dispatch | [Session.md](classes/Session.md) |
-| [`Player`](classes/Player.md) | Signature and n-token decipher engine using embedded QuickJS | [Player.md](classes/Player.md) |
-| [`OAuth2`](classes/OAuth2.md) | Google TV device login flow & token refresh manager | [OAuth2.md](classes/OAuth2.md) |
-| [`Actions`](classes/Actions.md) | Authenticated account mutations (like, subscribe, comment, playlist) | [Actions.md](classes/Actions.md) |
+| [`Innertube`](core/innertube.md) | Top-level client containing high-level wrappers for all YouTube features | [core/innertube.md](core/innertube.md) |
+| [`Session`](core/session.md) | InnerTube HTTP session, protobuf visitor data, and multi-client dispatch | [core/session.md](core/session.md) |
+| [`Player`](core/player.md) | Signature and n-token decipher engine using embedded QuickJS | [core/player.md](core/player.md) |
+| [`OAuth2`](core/oauth.md) | Google TV device login flow & token refresh manager | [core/oauth.md](core/oauth.md) |
+| [`Actions`](core/actions.md) | Authenticated account mutations (like, subscribe, comment, playlist) | [core/actions.md](core/actions.md) |
 
 ---
 
 ## 2. Endpoints & Features
 
-| Feature Domain | Endpoint Functions | Models & Payloads |
+| Feature Domain | Endpoint Reference | Models & Payloads Reference |
 |---|---|---|
-| **Video & Streaming** | `get_video_info`, `get_stream_url`, `select_format` | `VideoInfo`, `Format`, `FormatFilter` |
-| **Search & Autocomplete** | `search`, `get_search_suggestions` | `SearchResults`, `SearchSuggestion` |
-| **Channels** | `get_channel_about`, `get_channel_videos`, `get_channel_shorts`, `get_channel_community` | `ChannelAbout`, `ChannelVideosResponse`, `CommunityPostsResponse` |
-| **Playlists** | `get_playlist`, `get_playlist_continuation` | `PlaylistView`, `PlaylistVideoItem` |
-| **Watch Next & Related** | `get_watch_next`, `get_related_videos` | `WatchNextResults`, `RelatedVideo` |
-| **Feeds & Navigation** | `get_home_feed`, `get_trending`, `get_hashtag_feed`, `get_guide` | `HomeFeed`, `TrendingFeed`, `GuideResponse` |
-| **YouTube Music** | `search_music`, `get_music_artist`, `get_music_album`, `get_music_lyrics`, `get_music_explore`, `get_music_home` | `MusicArtistPage`, `MusicAlbumView`, `MusicLyrics` |
-| **Comments** | `get_comments`, `get_comment_replies` | `CommentsResult`, `CommentThread`, `Comment` |
-| **Live Chat** | `get_live_chat_token`, `get_live_chat` | `LiveChatResponse`, `LiveChatMessage` |
-| **Transcripts** | `get_transcript_tracks`, `get_transcript` | `Transcript`, `TranscriptTrack`, `TranscriptSegment` |
-| **Account Feeds** | `get_history`, `get_library`, `get_notifications` | `HistoryFeed`, `LibraryFeed`, `AccountNotificationsResponse` |
+| **Video & Streaming** | [endpoints/player.md](endpoints/player.md) | [models/video.md](models/video.md), [models/format.md](models/format.md) |
+| **Search & Autocomplete** | [endpoints/search.md](endpoints/search.md) | [models/search.md](models/search.md) |
+| **Channels** | [endpoints/channel.md](endpoints/channel.md) | [models/channel.md](models/channel.md), [models/post.md](models/post.md) |
+| **Playlists** | [endpoints/playlist.md](endpoints/playlist.md) | [models/playlist.md](models/playlist.md) |
+| **Watch Next & Related** | [endpoints/next.md](endpoints/next.md) | [models/video.md](models/video.md) |
+| **Feeds & Navigation** | [endpoints/feed.md](endpoints/feed.md), [endpoints/guide.md](endpoints/guide.md) | [models/account.md](models/account.md) |
+| **YouTube Music** | [endpoints/music.md](endpoints/music.md) | [models/music.md](models/music.md) |
+| **Comments** | [endpoints/comments.md](endpoints/comments.md) | [models/comments.md](models/comments.md) |
+| **Live Chat** | [endpoints/live_chat.md](endpoints/live_chat.md) | [models/live_chat.md](models/live_chat.md) |
+| **Transcripts** | [endpoints/transcript.md](endpoints/transcript.md) | [models/transcript.md](models/transcript.md) |
+| **Account Feeds** | [endpoints/account.md](endpoints/account.md) | [models/account.md](models/account.md) |
+| **Manifest Parsers** | [models/manifest.md](models/manifest.md) | [models/manifest.md](models/manifest.md) |
 
 ---
 
@@ -38,11 +39,5 @@
 
 All InnerTube polymorphic JSON trees are parsed via `Parser::parse_tree(val)` into strongly typed `YTNode` variants:
 
-* **Video & Shorts**: `VideoNode`, `ShortNode`
-* **Playlists**: `PlaylistNode`, `PlaylistVideoNode`
-* **Channels**: `ChannelHeaderNode`, `ChannelCardNode`
-* **Music**: `MusicResponsiveListItemNode`, `MusicTwoRowItemNode`, `MusicDescriptionShelfNode`
-* **Community**: `PostNode`
-* **Live Chat**: `LiveChatMessageNode`
-* **Comments**: `CommentNode`, `CommentThreadNode`
-* **Continuations**: `ContinuationNode`
+* **AST Architecture & Traversal**: [parser/ast.md](parser/ast.md)
+* **Polymorphic Node Types**: [parser/nodes.md](parser/nodes.md)
