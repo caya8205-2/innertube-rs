@@ -5,6 +5,17 @@ edition = "2021"
 authors = ["caya8205-2"]
 description = "A fast, lightweight Rust port of YouTube.js (InnerTube API client)"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/caya8205-2/innertube-rs"
+homepage = "https://github.com/caya8205-2/innertube-rs"
+documentation = "https://docs.rs/innertube-rs"
+keywords = ["youtube", "innertube", "youtube-music", "scraping", "streaming"]
+categories = ["multimedia::video", "web-programming::http-client", "api-bindings"]
+exclude = [
+    ".agents/*",
+    ".github/*",
+    "docs/*",
+]
 
 [dependencies]
 reqwest = { version = "0.12", default-features = false, features = ["json", "cookies", "gzip", "brotli", "rustls-tls", "http2"] }
