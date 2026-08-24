@@ -24,3 +24,22 @@ pub struct CreateCommentResult {
     pub success: bool,
     pub comment_id: Option<String>,
 }
+
+/// Channel notification preference option.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NotificationPreferenceType {
+    Personalized,
+    All,
+    None,
+}
+
+impl NotificationPreferenceType {
+    pub const fn index(self) -> i32 {
+        match self {
+            Self::Personalized => 1,
+            Self::All => 2,
+            Self::None => 3,
+        }
+    }
+}

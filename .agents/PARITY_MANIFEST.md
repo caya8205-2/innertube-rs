@@ -38,9 +38,9 @@ tested equivalent parser path.
 |---|---|---|
 | Session transport | In progress | All InnerTube POSTs and direct fallback calls return contextual errors on non-2xx. |
 | Account authentication | In progress | Cookie/OAuth lifecycle, authenticated headers, account index, and mutation preconditions match legacy. |
-| Actions and playlist manager | Partial | Playlist-removal protocol now matches legacy; every remaining interaction and playlist operation still needs matching request/response contract tests. |
+| Actions and playlist manager | In progress | Playlist mutations (title, description, video move, library actions), channel notification preferences, and rating/subscription contracts are implemented and tested. |
 | Player and decipher | Partial | Player selection, cache lifecycle, client fallback, and current-player fixtures are equivalent. |
-| Parser | Not started | Renderer registry maps all 574 legacy classes to Rust types or tested equivalent paths. |
+| Parser | In progress | Parser registry and inventory maps all 574 legacy classes into categorized AST nodes and tested equivalent paths. |
 
 ## Mandatory evidence for completion
 

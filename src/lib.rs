@@ -117,7 +117,9 @@ pub use error::{InnertubeError, Result};
 pub use models::account::{
     AccountNotification, AccountNotificationsResponse, HistoryFeed, LibraryFeed,
 };
-pub use models::actions::{ActionResult, CreateCommentResult, CreatePlaylistResult};
+pub use models::actions::{
+    ActionResult, CreateCommentResult, CreatePlaylistResult, NotificationPreferenceType,
+};
 pub use models::channel::{
     ChannelAbout, ChannelArtistView, ChannelPlaylist, ChannelShortItem, ChannelShortsResponse,
     ChannelTrack, ChannelVideoItem, ChannelVideosResponse, YouTubePlaylistView,
@@ -155,7 +157,9 @@ pub use models::video::{
     GetVideoInfoOptions, PlayabilityStatus, PlayerResponse, ShortFormVideoInfo, StreamingData,
     Thumbnail, VideoDetails, VideoInfo,
 };
-pub use parser::{NavigationEndpointNode, NodeListExt, Parser, YTNode};
+pub use parser::{
+    NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserRegistry, YTNode,
+};
 
 use crate::endpoints::account::{
     get_history, get_library, get_notifications, get_unseen_notifications_count,
@@ -758,6 +762,55 @@ impl Innertube {
         comment_text: &str,
     ) -> Result<CreateCommentResult> {
         Actions::create_comment(&self.session, video_id, comment_text).await
+    }
+
+    /// Set the title / name of a playlist (`POST /browse/edit_playlist`).
+    pub async fn set_playlist_name(&self, playlist_id: &str, name: &str) -> Result<ActionResult> {
+        Actions::set_playlist_name(&self.session, playlist_id, name).await
+    }
+
+    /// Set the description of a playlist (`POST /browse/edit_playlist`).
+    pub async fn set_playlist_description(
+        &self,
+        playlist_id: &str,
+        description: &str,
+    ) -> Result<ActionResult> {
+        Actions::set_playlist_description(&self.session, playlist_id, description).await
+    }
+
+    /// Move a video to after another video in a playlist (`POST /browse/edit_playlist`).
+    pub async fn move_playlist_video(
+        &self,
+        playlist_id: &str,
+        set_video_id: &str,
+        predecessor_set_video_id: &str,
+    ) -> Result<ActionResult> {
+        Actions::move_playlist_video(
+            &self.session,
+            playlist_id,
+            set_video_id,
+            predecessor_set_video_id,
+        )
+        .await
+    }
+
+    /// Add a playlist to the user's library (`POST /like/like`).
+    pub async fn add_playlist_to_library(&self, playlist_id: &str) -> Result<ActionResult> {
+        Actions::add_playlist_to_library(&self.session, playlist_id).await
+    }
+
+    /// Remove a playlist from the user's library (`POST /like/removelike`).
+    pub async fn remove_playlist_from_library(&self, playlist_id: &str) -> Result<ActionResult> {
+        Actions::remove_playlist_from_library(&self.session, playlist_id).await
+    }
+
+    /// Modify notification preferences for a channel (`POST /notification/modify_channel_preference`).
+    pub async fn set_notification_preferences(
+        &self,
+        channel_id: &str,
+        pref_type: NotificationPreferenceType,
+    ) -> Result<ActionResult> {
+        Actions::set_notification_preferences(&self.session, channel_id, pref_type).await
     }
 
     /// Fetch authenticated user watch history (`FEhistory`).

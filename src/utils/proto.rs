@@ -11,9 +11,10 @@ use crate::models::search::{
 };
 use crate::proto::misc::{
     community_post_comments_param, community_post_comments_param_container, community_post_params,
-    create_comment_params, get_comments_section_params, reel_sequence, search_filter,
-    CommunityPostCommentsParam, CommunityPostCommentsParamContainer, CommunityPostParams,
-    CreateCommentParams, GetCommentsSectionParams, ReelSequence, SearchFilter, VisitorData,
+    create_comment_params, get_comments_section_params, notification_preferences, reel_sequence,
+    search_filter, CommunityPostCommentsParam, CommunityPostCommentsParamContainer,
+    CommunityPostParams, CreateCommentParams, GetCommentsSectionParams, NotificationPreferences,
+    ReelSequence, SearchFilter, VisitorData,
 };
 
 /// Encode random visitor ID & timestamp into VisitorData protobuf,
@@ -271,6 +272,26 @@ pub fn encode_reel_sequence_params(short_id: &str) -> Result<String> {
     Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
 }
 
+/// Encode `NotificationPreferences` into URL-encoded base64 params.
+pub fn encode_notification_preferences(channel_id: &str, pref_index: i32) -> Result<String> {
+    let params = NotificationPreferences {
+        channel_id: channel_id.to_string(),
+        pref_id: Some(notification_preferences::Preference {
+            index: pref_index,
+        }),
+        number_0: Some(0),
+        number_1: Some(4),
+    };
+
+    let mut buf = Vec::with_capacity(params.encoded_len());
+    params.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode notification preferences: {err}"))
+    })?;
+
+    let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
 /// Generate random alphanumeric string of given length.
 pub fn generate_random_string(length: usize) -> String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -415,5 +436,24 @@ mod tests {
         assert_eq!(decoded.params.map(|params| params.number), Some(5));
         assert_eq!(decoded.feature_2, 25);
         assert_eq!(decoded.feature_3, 0);
+    }
+
+    #[test]
+    fn test_notification_preferences_encode_match_legacy_contract() {
+        let encoded = encode_notification_preferences("UC_channel_123", 2)
+            .expect("notification preferences should encode");
+        let query = format!("value={encoded}");
+        let base64: String = url::form_urlencoded::parse(query.as_bytes())
+            .next()
+            .map(|(_, value)| value.into_owned())
+            .expect("URI component should decode");
+        let bytes = STANDARD.decode(base64).expect("base64 should decode");
+        let decoded =
+            NotificationPreferences::decode(bytes.as_slice()).expect("protobuf should decode");
+
+        assert_eq!(decoded.channel_id, "UC_channel_123");
+        assert_eq!(decoded.pref_id.map(|p| p.index), Some(2));
+        assert_eq!(decoded.number_0, Some(0));
+        assert_eq!(decoded.number_1, Some(4));
     }
 }

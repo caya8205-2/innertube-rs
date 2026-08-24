@@ -1,6 +1,8 @@
 pub mod nodes;
+pub mod registry;
 
 pub use nodes::*;
+pub use registry::*;
 
 use serde_json::Value;
 

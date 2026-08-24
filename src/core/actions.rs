@@ -237,6 +237,158 @@ impl Actions {
             comment_id,
         })
     }
+
+    /// Set the title / name of a playlist (`POST /browse/edit_playlist`).
+    pub async fn set_playlist_name(
+        session: &Session,
+        playlist_id: &str,
+        name: &str,
+    ) -> Result<ActionResult> {
+        session.ensure_authenticated()?;
+        let payload = json!({
+            "playlistId": playlist_id,
+            "actions": [{
+                "action": "ACTION_SET_PLAYLIST_NAME",
+                "playlistName": name
+            }]
+        });
+
+        let resp = session
+            .post_innertube("/browse/edit_playlist", payload)
+            .await?;
+        let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let success = raw.get("error").is_none();
+        Ok(ActionResult {
+            success,
+            status: Some("NAME_UPDATED".to_string()),
+            action_id: None,
+        })
+    }
+
+    /// Set the description of a playlist (`POST /browse/edit_playlist`).
+    pub async fn set_playlist_description(
+        session: &Session,
+        playlist_id: &str,
+        description: &str,
+    ) -> Result<ActionResult> {
+        session.ensure_authenticated()?;
+        let payload = json!({
+            "playlistId": playlist_id,
+            "actions": [{
+                "action": "ACTION_SET_PLAYLIST_DESCRIPTION",
+                "playlistDescription": description
+            }]
+        });
+
+        let resp = session
+            .post_innertube("/browse/edit_playlist", payload)
+            .await?;
+        let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let success = raw.get("error").is_none();
+        Ok(ActionResult {
+            success,
+            status: Some("DESCRIPTION_UPDATED".to_string()),
+            action_id: None,
+        })
+    }
+
+    /// Move a video to after another video in a playlist (`POST /browse/edit_playlist`).
+    pub async fn move_playlist_video(
+        session: &Session,
+        playlist_id: &str,
+        set_video_id: &str,
+        predecessor_set_video_id: &str,
+    ) -> Result<ActionResult> {
+        session.ensure_authenticated()?;
+        let payload = json!({
+            "playlistId": playlist_id,
+            "actions": [{
+                "action": "ACTION_MOVE_VIDEO_AFTER",
+                "setVideoId": set_video_id,
+                "movedSetVideoIdPredecessor": predecessor_set_video_id
+            }]
+        });
+
+        let resp = session
+            .post_innertube("/browse/edit_playlist", payload)
+            .await?;
+        let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let success = raw.get("error").is_none();
+        Ok(ActionResult {
+            success,
+            status: Some("MOVED".to_string()),
+            action_id: None,
+        })
+    }
+
+    /// Add a playlist to the user's library (`POST /like/like`).
+    pub async fn add_playlist_to_library(
+        session: &Session,
+        playlist_id: &str,
+    ) -> Result<ActionResult> {
+        session.ensure_authenticated()?;
+        let payload = rating_payload(playlist_id);
+
+        let resp = session.post_innertube("/like/like", payload).await?;
+        let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let success = raw.get("error").is_none();
+        Ok(ActionResult {
+            success,
+            status: Some("ADDED_TO_LIBRARY".to_string()),
+            action_id: None,
+        })
+    }
+
+    /// Remove a playlist from the user's library (`POST /like/removelike`).
+    pub async fn remove_playlist_from_library(
+        session: &Session,
+        playlist_id: &str,
+    ) -> Result<ActionResult> {
+        session.ensure_authenticated()?;
+        let payload = rating_payload(playlist_id);
+
+        let resp = session.post_innertube("/like/removelike", payload).await?;
+        let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let success = raw.get("error").is_none();
+        Ok(ActionResult {
+            success,
+            status: Some("REMOVED_FROM_LIBRARY".to_string()),
+            action_id: None,
+        })
+    }
+
+    /// Modify notification preferences for a channel (`POST /notification/modify_channel_preference`).
+    pub async fn set_notification_preferences(
+        session: &Session,
+        channel_id: &str,
+        pref_type: crate::models::actions::NotificationPreferenceType,
+    ) -> Result<ActionResult> {
+        session.ensure_authenticated()?;
+        let params = crate::utils::proto::encode_notification_preferences(
+            channel_id,
+            pref_type.index(),
+        )?;
+        let payload = json!({
+            "params": params
+        });
+
+        let resp = session
+            .post_innertube("/notification/modify_channel_preference", payload)
+            .await?;
+        let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let success = raw.get("error").is_none();
+        Ok(ActionResult {
+            success,
+            status: Some("PREFERENCE_UPDATED".to_string()),
+            action_id: None,
+        })
+    }
 }
 
 fn remove_playlist_actions(set_video_ids: &[&str]) -> Vec<Value> {
@@ -273,5 +425,45 @@ mod tests {
     #[test]
     fn rating_target_matches_legacy_like_endpoint_request() {
         assert_eq!(rating_payload("dQw4w9WgXcQ"), json!({ "target": "dQw4w9WgXcQ" }));
+    }
+
+    #[test]
+    fn playlist_mutation_payloads_match_legacy_protocol() {
+        let set_name_payload = json!({
+            "playlistId": "PL_test",
+            "actions": [{
+                "action": "ACTION_SET_PLAYLIST_NAME",
+                "playlistName": "New Title"
+            }]
+        });
+        assert_eq!(
+            set_name_payload["actions"][0]["action"],
+            "ACTION_SET_PLAYLIST_NAME"
+        );
+        assert_eq!(
+            set_name_payload["actions"][0]["playlistName"],
+            "New Title"
+        );
+
+        let move_payload = json!({
+            "playlistId": "PL_test",
+            "actions": [{
+                "action": "ACTION_MOVE_VIDEO_AFTER",
+                "setVideoId": "set_1",
+                "movedSetVideoIdPredecessor": "set_0"
+            }]
+        });
+        assert_eq!(
+            move_payload["actions"][0]["action"],
+            "ACTION_MOVE_VIDEO_AFTER"
+        );
+        assert_eq!(
+            move_payload["actions"][0]["setVideoId"],
+            "set_1"
+        );
+        assert_eq!(
+            move_payload["actions"][0]["movedSetVideoIdPredecessor"],
+            "set_0"
+        );
     }
 }

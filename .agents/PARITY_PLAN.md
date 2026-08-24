@@ -36,23 +36,18 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-25
 
-The latest local commit is `fafedb2 feat(parity): add browse, streaming, and endpoint compatibility`. The following subsequent changes are intentionally
+The latest local commit is `afa934f feat(parity): port basic info, shorts, search filters, and comments contracts`. The following subsequent changes are intentionally
 uncommitted and must be preserved:
 
-- `get_basic_info` and `get_shorts_video_info` with `VideoInfo`, `ShortFormVideoInfo`, and `ReelSequence` protobuf encoding.
-- Typed `SearchFilters` with `SearchFilter` protobuf serialization for `/search`.
-- `get_search_suggestions_with_options` with `previous_query` and session cookies.
-- `get_comments_with_options` with `GetCommentsSectionParams` protobuf continuation tokens, sort options, and comment ID filtering.
-- `get_streaming_data_with_options` and `download_with_options` supporting rich `FormatOptions` and HTTP byte ranges (`DownloadRange`).
-- Fixture-based contract tests for all added protobuf encoders and format selections.
+- Item 3: Actions & playlist operations (`set_playlist_name`, `set_playlist_description`, `move_playlist_video`, `add_playlist_to_library`, `remove_playlist_from_library`, and `set_notification_preferences` with `NotificationPreferences` protobuf encoding).
+- Item 4: Parser registry and inventory mapping all 574 legacy classes to categorized AST nodes with comprehensive inventory validation tests (`src/parser/registry.rs`).
 - Manifest updates reflecting these additions.
 
-Touched files: `.agents/PARITY_MANIFEST.md`, `.agents/PARITY_PLAN.md`, `src/endpoints/comments.rs`,
-`src/endpoints/player.rs`, `src/endpoints/search.rs`, `src/endpoints/suggestions.rs`, `src/lib.rs`,
-`src/models/comments.rs`, `src/models/format.rs`, `src/models/search.rs`, `src/models/video.rs`,
+Touched files: `.agents/PARITY_MANIFEST.md`, `.agents/PARITY_PLAN.md`, `src/core/actions.rs`,
+`src/lib.rs`, `src/models/actions.rs`, `src/parser/mod.rs`, `src/parser/registry.rs`,
 and `src/utils/proto.rs`.
 
-Last local validation: `cargo test --all-targets` passed 34 tests;
+Last local validation: `cargo test --all-targets` passed 38 tests;
 `cargo clippy --all-targets -- -D warnings` and `cargo check --examples` passed.
 The current worktree is not yet a full-parity implementation.
 
