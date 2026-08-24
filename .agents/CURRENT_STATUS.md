@@ -11,11 +11,19 @@
 The active compatibility target is `reference-youtubejs` commit `85473772ce9a9238091636fc2cb7ea3c331ea88d`.
 
 Read `PARITY_PLAN.md` for the work plan and checkpoints. Read `PARITY_MANIFEST.md` for the authoritative baseline.
-At this checkpoint, `cargo test --all-targets` passes 38 unit and contract tests plus 8 opt-in live integration tests (`tests/live_integration.rs`). All 574 legacy parser classes are cataloged in `src/parser/registry.rs`, and public API contracts for search filters, comments, basic info, shorts, and playlist/channel actions are verified.
+At this checkpoint, `cargo test --all-targets` passes 38 unit and contract
+tests. Eight opt-in live integration tests exist in `tests/live_integration.rs`
+but are ignored and have not been executed here. All 574 legacy parser classes
+are cataloged in `src/parser/registry.rs`; cataloging is not typed parser
+coverage or a full-parity claim.
 
 ---
 
-## 1. Ringkasan Status Fitur (Complete Feature Matrix)
+## 1. Historical Feature Matrix (Obsolete for Parity Claims)
+
+The matrix below predates the full-parity audit. Its green `Ready` and `100%`
+labels are historical milestone labels, not current compatibility evidence.
+Use `PARITY_MANIFEST.md` instead when deciding project parity status.
 
 | Modul / Fitur | Status | Verifikasi Live | Catatan |
 |---|---|---|---|

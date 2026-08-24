@@ -12,6 +12,16 @@ method is not complete merely because a Rust method has a similar name.
 every class is either represented directly or is covered by a documented,
 tested equivalent parser path.
 
+## Current evidence snapshot — 2026-08-25
+
+Implementation work has completed a first pass through plan items 2–6, but
+that is **not** completion evidence. Default validation currently passes 38
+unit/contract tests and Clippy. Eight live integration tests exist in
+`tests/live_integration.rs` and were executed in an explicit run with 8/8 passing
+(video info & stream URL, search filters, suggestions, comments, channel, YT Music,
+guide & hashtag feed, transcript). The parser registry is a 574-name inventory,
+not proof of 574 typed parser implementations.
+
 ## Public `Innertube` API baseline
 
 | Legacy API | Rust status | Notes |
@@ -40,7 +50,7 @@ tested equivalent parser path.
 | Account authentication | In progress | Cookie/OAuth lifecycle, authenticated headers, account index, and mutation preconditions match legacy. |
 | Actions and playlist manager | In progress | Playlist mutations (title, description, video move, library actions), channel notification preferences, and rating/subscription contracts are implemented and tested. |
 | Player and decipher | Partial | Player selection, cache lifecycle, client fallback, and current-player fixtures are equivalent. |
-| Parser | In progress | Parser registry and inventory maps all 574 legacy classes into categorized AST nodes and tested equivalent paths. |
+| Parser | In progress | A registry inventories 574 legacy class names by category; typed-node or tested-equivalent coverage remains unproven. |
 
 ## Mandatory evidence for completion
 

@@ -36,24 +36,37 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-25
 
-The latest local commit is `afa934f feat(parity): port basic info, shorts, search filters, and comments contracts`. The following subsequent changes are intentionally
-uncommitted and must be preserved:
+The current HEAD is `7d01b05 test(parity): add opt-in live integration test
+suite`. Inspect `git status --short` before acting; documentation corrections
+may be present after this checkpoint.
 
-- Item 3: Actions & playlist operations (`set_playlist_name`, `set_playlist_description`, `move_playlist_video`, `add_playlist_to_library`, `remove_playlist_from_library`, and `set_notification_preferences` with `NotificationPreferences` protobuf encoding).
-- Item 4: Parser registry and inventory mapping all 574 legacy classes to categorized AST nodes with comprehensive inventory validation tests (`src/parser/registry.rs`).
-- Manifest updates reflecting these additions.
+Recent implementation batches:
 
-Touched files: `.agents/PARITY_MANIFEST.md`, `.agents/PARITY_PLAN.md`, `src/core/actions.rs`,
-`src/lib.rs`, `src/models/actions.rs`, `src/parser/mod.rs`, `src/parser/registry.rs`,
-and `src/utils/proto.rs`.
+- `afa934f`: basic-info, Shorts, search-filter, comment, and streaming option
+  contracts.
+- `e10de98`: playlist and interaction-manager operations plus a 574-name
+  parser inventory.
+- `7d01b05`: eight opt-in live integration tests.
 
-Last local validation: `cargo test --all-targets` passed 38 tests;
-`cargo clippy --all-targets -- -D warnings` and `cargo check --examples` passed.
-The current worktree is not yet a full-parity implementation.
+Current evidence is deliberately **not** a 100% parity claim:
+
+- `cargo test --all-targets` passes 38 non-network unit/contract tests.
+- `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
+- Eight live integration tests in `tests/live_integration.rs` were executed with
+  `cargo test --test live_integration -- --ignored` and passed 8/8 against the live
+  YouTube API.
+- `src/parser/registry.rs` catalogs and categorizes 574 legacy class names. It
+  does not prove that all 574 classes are represented by typed Rust nodes or
+  tested equivalent parsing paths.
+- All public API rows and several core rows remain `Partial` or `In progress`
+  in `PARITY_MANIFEST.md`.
+
+The next agent must work from the manifest gaps, not repeat the implementation
+checklist as though it were a completion report.
 
 ## Handoff instructions
 
 Read `.agents/AGENTS.md`, this plan, and `PARITY_MANIFEST.md` before making
-changes. Inspect `git status --short` and `git diff` before editing. Continue
-from the first applicable incomplete plan item; do not restore, reset, or
-commit the existing changes unless the user explicitly asks.
+changes. Inspect `git status --short`, `git log --oneline -6`, and `git diff`
+before editing. Continue from the first manifest gap that can be evidenced;
+do not restore, reset, or commit changes unless the user explicitly asks.

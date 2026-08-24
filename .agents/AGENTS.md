@@ -26,6 +26,26 @@
 3. **Preserve Reference Integrity:** The existing JS/TS files in this repository serve as the upstream reference implementation. Do not delete or mangle reference code unless explicitly instructed to clean up.
 4. **Idiomatic Rust Over Direct Translation:** Do not blindly translate JavaScript's dynamic typing / loose objects into complex `serde_json::Value` hell. Design clean, strongly typed Rust structs and enums with `serde` wherever feasible, falling back to dynamic parsing only where YouTube schemas are highly polymorphic.
 
+### A.1 Full-Parity Control Protocol
+Before beginning parity work, an agent must read `PARITY_PLAN.md` and
+`PARITY_MANIFEST.md`, then run `git status --short`, `git log --oneline -6`,
+and the default test suite. The manifest is the only completion authority.
+
+- **Implemented is not verified.** A method, wrapper, or test file only proves
+  an implementation attempt; it does not close a manifest item.
+- **An inventory is not a parser port.** Listing renderer names or assigning
+  categories does not prove a typed Rust representation or a tested equivalent
+  parsing path.
+- **Ignored tests are not executed tests.** They are runnable evidence only
+  after they pass in an explicitly recorded run.
+- **A plan item is not a completion gate.** Items 2–6 may be implemented while
+  all manifest rows correctly remain `Partial` or `In progress`.
+
+At the end of every parity batch, update the `Current checkpoint` in
+`PARITY_PLAN.md` with the actual HEAD commit, exact validation results, and
+remaining gap. Do not set a manifest row to `Complete` without a named
+fixture/contract test and any required live-test evidence.
+
 ### B. Technical Standards
 - **Language Standard:** Rust (Edition 2021+)
 - **Async Runtime:** `tokio`

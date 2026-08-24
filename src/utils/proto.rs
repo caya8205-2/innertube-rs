@@ -11,10 +11,11 @@ use crate::models::search::{
 };
 use crate::proto::misc::{
     community_post_comments_param, community_post_comments_param_container, community_post_params,
-    create_comment_params, get_comments_section_params, notification_preferences, reel_sequence,
-    search_filter, CommunityPostCommentsParam, CommunityPostCommentsParamContainer,
-    CommunityPostParams, CreateCommentParams, GetCommentsSectionParams, NotificationPreferences,
-    ReelSequence, SearchFilter, VisitorData,
+    create_comment_params, get_comments_section_params, hashtag, notification_preferences,
+    reel_sequence, search_filter, CommunityPostCommentsParam,
+    CommunityPostCommentsParamContainer, CommunityPostParams, CreateCommentParams,
+    GetCommentsSectionParams, Hashtag, NotificationPreferences, ReelSequence, SearchFilter,
+    VisitorData,
 };
 
 /// Encode random visitor ID & timestamp into VisitorData protobuf,
@@ -289,6 +290,25 @@ pub fn encode_notification_preferences(channel_id: &str, pref_index: i32) -> Res
     })?;
 
     let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
+/// Encode `Hashtag` into URL-safe Base64 and URL-encoded params.
+pub fn encode_hashtag_params(hashtag: &str) -> Result<String> {
+    let clean_hashtag = hashtag.trim_start_matches('#');
+    let params = Hashtag {
+        params: Some(hashtag::Params {
+            hashtag: clean_hashtag.to_string(),
+            r#type: 1,
+        }),
+    };
+
+    let mut buf = Vec::with_capacity(params.encoded_len());
+    params.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode hashtag params: {err}"))
+    })?;
+
+    let base64 = URL_SAFE.encode(buf);
     Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
 }
 

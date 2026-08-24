@@ -145,22 +145,19 @@ async fn test_live_music_explore_and_search() {
 
 #[tokio::test]
 #[ignore = "requires network access; run with cargo test --test live_integration -- --ignored"]
-async fn test_live_home_and_trending_feed() {
+async fn test_live_guide_and_feed() {
     let client = Innertube::new()
         .await
         .expect("Failed to initialize Innertube client");
 
-    let home = client
-        .get_home_feed(None)
-        .await
-        .expect("Failed to fetch home feed");
-    assert!(!home.videos.is_empty());
+    let guide = client.get_guide().await.expect("Failed to fetch guide");
+    assert!(!guide.sections.is_empty());
 
-    let trending = client
-        .get_trending(None)
+    let hashtag = client
+        .get_hashtag_feed("rust")
         .await
-        .expect("Failed to fetch trending");
-    assert!(!trending.videos.is_empty());
+        .expect("Failed to fetch hashtag feed");
+    assert_eq!(hashtag.hashtag, "rust");
 }
 
 #[tokio::test]

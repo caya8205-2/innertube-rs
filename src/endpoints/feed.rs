@@ -57,10 +57,10 @@ pub async fn get_trending(session: &Session, tab_params: Option<&str>) -> Result
 /// Fetch videos for a specific hashtag (`FEhashtag`).
 pub async fn get_hashtag_feed(session: &Session, tag: &str) -> Result<HashtagFeed> {
     let clean_tag = tag.trim_start_matches('#').trim();
+    let params = crate::utils::proto::encode_hashtag_params(clean_tag)?;
     let payload = json!({
         "browseId": "FEhashtag",
-        "params": "EghoYXNodGFnIPgBAA%3D%3D",
-        "query": clean_tag,
+        "params": params,
     });
 
     let resp = session.post_innertube("/browse", payload).await?;
