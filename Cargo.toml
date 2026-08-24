@@ -14,7 +14,6 @@ categories = ["multimedia::video", "web-programming::http-client", "api-bindings
 exclude = [
     ".agents/*",
     ".github/*",
-    "docs/*",
 ]
 
 [dependencies]
