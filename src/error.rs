@@ -15,16 +15,16 @@ pub enum InnertubeError {
     Player(String),
 
     #[error("API error ({status}): {message}")]
-    Api {
-        status: String,
-        message: String,
-    },
+    Api { status: String, message: String },
 
     #[error("Resource not found: {0}")]
     NotFound(String),
 
     #[error("Content is restricted: {0}")]
     Restricted(String),
+
+    #[error("Authentication is required: {0}")]
+    AuthenticationRequired(String),
 
     #[error("Format error: {0}")]
     Format(String),

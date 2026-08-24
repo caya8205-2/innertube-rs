@@ -1,5 +1,22 @@
 use serde::{Deserialize, Serialize};
 
+/// Sort order accepted by Community Post comment threads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum PostCommentSort {
+    #[default]
+    TopComments,
+    NewestFirst,
+}
+
+impl PostCommentSort {
+    pub(crate) const fn proto_value(self) -> i32 {
+        match self {
+            Self::TopComments => 0,
+            Self::NewestFirst => 1,
+        }
+    }
+}
+
 /// An individual YouTube comment.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]

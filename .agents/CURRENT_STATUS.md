@@ -1,7 +1,7 @@
 # innertube-rs — Current Status
 
 > **Terakhir Diperbarui**: 24 Agustus 2026  
-> **Status Repositori**: `v0.5.0` (**100% Full Parity Port of YouTube.js Achieved**)  
+> **Status Repositori**: `v0.5.0` (**Full-parity audit and implementation in progress; see `PARITY_MANIFEST.md`**)
 > **Remote Git**: `https://github.com/caya8205-2/innertube-rs.git` (Branch: `main`)
 
 ---

@@ -1,6 +1,7 @@
 # innertube-rs
 
-[![Crates.io](https://img.shields.io/crates/v/innertube-rs.svg)](https://crates.io/crates/innertube-rs)
+[![Crates.io](https://img.shields.io/crates/v/innertube-rs?style=flat&logo=rust&logoColor=white)](https://crates.io/crates/innertube-rs)
+[![Crates.io Total Downloads](https://shields.io/crates/d/innertube-rs?style=flat&logo=rust&logoColor=white)](https://crates.io/crates/innertube-rs)
 [![Documentation](https://docs.rs/innertube-rs/badge.svg)](https://docs.rs/innertube-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml)

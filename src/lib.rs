@@ -98,69 +98,80 @@ pub mod proto {
     }
 }
 
-pub mod error;
 pub mod constants;
+pub mod core;
+pub mod endpoints;
+pub mod error;
 pub mod models;
 pub mod parser;
-pub mod core;
 pub mod utils;
-pub mod endpoints;
 
 use std::sync::Arc;
 
 // Re-exports for convenient top-level access
+pub use core::actions::Actions;
+pub use core::oauth::OAuth2;
+pub use core::player::Player;
+pub use core::session::{Session, SessionOptions};
 pub use error::{InnertubeError, Result};
-pub use parser::{NodeListExt, Parser, YTNode};
-pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
-pub use models::video::{PlayerResponse, VideoDetails, StreamingData, PlayabilityStatus, Thumbnail};
-pub use models::search::{SearchResults, SearchResultItem, SearchVideoItem, SearchChannelItem, SearchPlaylistItem};
+pub use models::account::{
+    AccountNotification, AccountNotificationsResponse, HistoryFeed, LibraryFeed,
+};
+pub use models::actions::{ActionResult, CreateCommentResult, CreatePlaylistResult};
 pub use models::channel::{
     ChannelAbout, ChannelArtistView, ChannelPlaylist, ChannelShortItem, ChannelShortsResponse,
     ChannelTrack, ChannelVideoItem, ChannelVideosResponse, YouTubePlaylistView,
 };
-pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
-pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
-pub use models::comments::{Comment, CommentThread, CommentsResult};
-pub use models::manifest::{ManifestStream, ParsedManifest};
-pub use models::music::{
-    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
-    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
-};
-pub use models::suggestions::{SearchSuggestion, SearchSuggestionsResult};
-pub use models::playlist::{PlaylistContinuation, PlaylistVideoItem, PlaylistView};
+pub use models::comments::{Comment, CommentThread, CommentsResult, PostCommentSort};
 pub use models::feed::{FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
+pub use models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
 pub use models::guide::{GuideItem, GuideResponse, GuideSection};
-pub use models::post::{CommunityPoll, CommunityPost, CommunityPostsResponse, PollChoice, PostImage};
 pub use models::live_chat::{
     LiveChatMembership, LiveChatMessage, LiveChatResponse, LiveChatSuperChat, LiveChatTextMessage,
 };
-pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
-pub use models::actions::{ActionResult, CreateCommentResult, CreatePlaylistResult};
-pub use models::account::{
-    AccountNotification, AccountNotificationsResponse, HistoryFeed, LibraryFeed,
+pub use models::manifest::{ManifestStream, ParsedManifest};
+pub use models::music::{
+    MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem, MusicSearchFilter,
+    MusicSearchResults, MusicShelf, MusicTrackItem,
 };
-pub use core::session::{Session, SessionOptions};
-pub use core::player::Player;
-pub use core::oauth::OAuth2;
-pub use core::actions::Actions;
+pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
+pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
+pub use models::playlist::{PlaylistContinuation, PlaylistVideoItem, PlaylistView};
+pub use models::post::{
+    CommunityPoll, CommunityPost, CommunityPostsResponse, PollChoice, PostImage,
+};
+pub use models::search::{
+    SearchChannelItem, SearchPlaylistItem, SearchResultItem, SearchResults, SearchVideoItem,
+};
+pub use models::suggestions::{SearchSuggestion, SearchSuggestionsResult};
+pub use models::transcript::{Transcript, TranscriptSegment, TranscriptTrack};
+pub use models::video::{
+    PlayabilityStatus, PlayerResponse, StreamingData, Thumbnail, VideoDetails,
+};
+pub use parser::{NavigationEndpointNode, NodeListExt, Parser, YTNode};
 
 use crate::endpoints::account::{get_history, get_library, get_notifications};
+use crate::endpoints::attestation::get_attestation_challenge;
 use crate::endpoints::browse::get_channel;
 use crate::endpoints::channel::{
     get_channel_about, get_channel_community, get_channel_shorts, get_channel_videos,
 };
 use crate::endpoints::comments::{get_comment_replies, get_comments};
-use crate::endpoints::feed::{get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending};
+use crate::endpoints::feed::{
+    get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending,
+};
 use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
     search_music,
 };
+use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{fetch_player_response, resolve_stream_url, select_format};
 use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
+use crate::endpoints::post::{get_post, get_post_comments};
 use crate::endpoints::search::search;
 use crate::endpoints::suggestions::get_search_suggestions;
 use crate::endpoints::transcript::{get_transcript, get_transcript_tracks};
@@ -217,7 +228,11 @@ impl Innertube {
     }
 
     /// Execute a search query for videos, channels, and playlists.
-    pub async fn search(&self, query: &str, continuation_token: Option<&str>) -> Result<SearchResults> {
+    pub async fn search(
+        &self,
+        query: &str,
+        continuation_token: Option<&str>,
+    ) -> Result<SearchResults> {
         search(&self.session, query, continuation_token).await
     }
 
@@ -241,7 +256,10 @@ impl Innertube {
     }
 
     /// Fetch next page of playlist videos using a continuation token.
-    pub async fn get_playlist_continuation(&self, continuation_token: &str) -> Result<PlaylistContinuation> {
+    pub async fn get_playlist_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<PlaylistContinuation> {
         get_playlist_continuation(&self.session, continuation_token).await
     }
 
@@ -295,11 +313,21 @@ impl Innertube {
         playlist_id: &str,
         playlist_index: Option<usize>,
     ) -> Result<WatchNextResults> {
-        get_watch_next(&self.session, video_id, Some(playlist_id), playlist_index, None).await
+        get_watch_next(
+            &self.session,
+            video_id,
+            Some(playlist_id),
+            playlist_index,
+            None,
+        )
+        .await
     }
 
     /// Fetch continuation results for watch next recommendations using a continuation token.
-    pub async fn get_watch_next_continuation(&self, continuation_token: &str) -> Result<WatchNextResults> {
+    pub async fn get_watch_next_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<WatchNextResults> {
         get_watch_next(&self.session, "", None, None, Some(continuation_token)).await
     }
 
@@ -319,7 +347,10 @@ impl Innertube {
     }
 
     /// Fetch next page of comments using a continuation token.
-    pub async fn get_comments_continuation(&self, continuation_token: &str) -> Result<CommentsResult> {
+    pub async fn get_comments_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<CommentsResult> {
         get_comments(&self.session, "", Some(continuation_token)).await
     }
 
@@ -382,6 +413,39 @@ impl Innertube {
         get_hashtag_feed(&self.session, tag).await
     }
 
+    /// Resolve a YouTube URL to its InnerTube navigation endpoint.
+    pub async fn resolve_url(&self, url: &str) -> Result<NavigationEndpointNode> {
+        resolve_url(&self.session, url).await
+    }
+
+    /// Fetch a Community Post detail page.
+    pub async fn get_post(
+        &self,
+        post_id: &str,
+        channel_id: &str,
+    ) -> Result<CommunityPostsResponse> {
+        get_post(&self.session, post_id, channel_id).await
+    }
+
+    /// Fetch comments attached to a Community Post.
+    pub async fn get_post_comments(
+        &self,
+        post_id: &str,
+        channel_id: &str,
+        sort: PostCommentSort,
+    ) -> Result<CommentsResult> {
+        get_post_comments(&self.session, post_id, channel_id, sort).await
+    }
+
+    /// Request an attestation challenge for a BotGuard-compatible engagement flow.
+    pub async fn get_attestation_challenge(
+        &self,
+        engagement_type: &str,
+        ids: Option<serde_json::Value>,
+    ) -> Result<serde_json::Value> {
+        get_attestation_challenge(&self.session, engagement_type, ids).await
+    }
+
     /// Fetch the YouTube Guide navigation menu (/guide endpoint).
     pub async fn get_guide(&self) -> Result<GuideResponse> {
         get_guide(&self.session).await
@@ -394,9 +458,15 @@ impl Innertube {
 
     /// Extract live chat continuation token from a live stream video ID.
     pub async fn get_live_chat_token(&self, video_id: &str) -> Result<Option<String>> {
-        let next_resp = self.session.post_innertube("/next", serde_json::json!({
-            "videoId": video_id,
-        })).await?;
+        let next_resp = self
+            .session
+            .post_innertube(
+                "/next",
+                serde_json::json!({
+                    "videoId": video_id,
+                }),
+            )
+            .await?;
         let raw: serde_json::Value = next_resp.json().await?;
         Ok(extract_live_chat_continuation_token(&raw))
     }
@@ -404,13 +474,24 @@ impl Innertube {
     /// Request an OAuth2 device and user code for Google TV authentication.
     pub async fn request_oauth_code(&self) -> Result<(OAuth2ClientID, DeviceAndUserCode)> {
         let client = OAuth2::get_client_id(&self.session.http_client).await?;
-        let code = OAuth2::get_device_and_user_code(&self.session.http_client, &client.client_id).await?;
+        let code =
+            OAuth2::get_device_and_user_code(&self.session.http_client, &client.client_id).await?;
         Ok((client, code))
     }
 
     /// Poll for OAuth2 access tokens after user authorizes on `https://www.google.com/device`.
-    pub async fn poll_oauth_token(&self, client: &OAuth2ClientID, code: &DeviceAndUserCode) -> Result<OAuth2Tokens> {
-        OAuth2::poll_for_access_token(&self.session.http_client, client, &code.device_code, code.interval).await
+    pub async fn poll_oauth_token(
+        &self,
+        client: &OAuth2ClientID,
+        code: &DeviceAndUserCode,
+    ) -> Result<OAuth2Tokens> {
+        OAuth2::poll_for_access_token(
+            &self.session.http_client,
+            client,
+            &code.device_code,
+            code.interval,
+        )
+        .await
     }
 
     /// Like a YouTube video (`POST /like/like`).
@@ -439,7 +520,11 @@ impl Innertube {
     }
 
     /// Create a new YouTube playlist (`POST /playlist/create`).
-    pub async fn create_playlist(&self, title: &str, video_ids: Option<&[&str]>) -> Result<CreatePlaylistResult> {
+    pub async fn create_playlist(
+        &self,
+        title: &str,
+        video_ids: Option<&[&str]>,
+    ) -> Result<CreatePlaylistResult> {
         Actions::create_playlist(&self.session, title, video_ids).await
     }
 
@@ -449,17 +534,29 @@ impl Innertube {
     }
 
     /// Add videos to an existing playlist (`POST /browse/edit_playlist`).
-    pub async fn add_to_playlist(&self, playlist_id: &str, video_ids: &[&str]) -> Result<ActionResult> {
+    pub async fn add_to_playlist(
+        &self,
+        playlist_id: &str,
+        video_ids: &[&str],
+    ) -> Result<ActionResult> {
         Actions::add_to_playlist(&self.session, playlist_id, video_ids).await
     }
 
     /// Remove videos from an existing playlist (`POST /browse/edit_playlist`).
-    pub async fn remove_from_playlist(&self, playlist_id: &str, set_video_ids: &[&str]) -> Result<ActionResult> {
+    pub async fn remove_from_playlist(
+        &self,
+        playlist_id: &str,
+        set_video_ids: &[&str],
+    ) -> Result<ActionResult> {
         Actions::remove_from_playlist(&self.session, playlist_id, set_video_ids).await
     }
 
     /// Create a top-level comment on a video (`POST /comment/create_comment`).
-    pub async fn create_comment(&self, video_id: &str, comment_text: &str) -> Result<CreateCommentResult> {
+    pub async fn create_comment(
+        &self,
+        video_id: &str,
+        comment_text: &str,
+    ) -> Result<CreateCommentResult> {
         Actions::create_comment(&self.session, video_id, comment_text).await
     }
 

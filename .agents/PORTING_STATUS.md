@@ -3,7 +3,7 @@
 > **Upstream Reference**: [LuanRT/YouTube.js (YouTubei.js)](https://github.com/LuanRT/YouTube.js)  
 > **Target Project**: `innertube-rs` (Pure Rust Port)  
 > **Last Updated**: August 24, 2026  
-> **Overall Porting Progress**: **100% Complete (Full Parity Achieved)**
+> **Overall Porting Progress**: **Full-parity audit and implementation in progress; see `.agents/PARITY_MANIFEST.md`.**
 
 ---
 

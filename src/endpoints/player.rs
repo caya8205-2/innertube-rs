@@ -1,10 +1,10 @@
-use serde_json::json;
 use crate::constants::clients;
 use crate::core::session::{Session, SessionOptions};
 use crate::error::{InnertubeError, Result};
 use crate::models::format::{FormatFilter, FormatType, QualityPreference, StreamingFormat};
 use crate::models::video::PlayerResponse;
 use crate::utils::decipher::PlayerDecipherer;
+use serde_json::json;
 
 /// Fetch player metadata and streaming formats for a video from `/youtubei/v1/player`.
 pub async fn fetch_player_response(
@@ -37,9 +37,14 @@ pub async fn fetch_player_response(
     let mut player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
     // Check if playability status is not OK or adaptive formats have no URLs/ciphers. If so, fallback to ANDROID -> ANDROID_VR -> iOS -> MWEB
-    let needs_fallback = player_response.playability_status.status != "OK" || player_response.streaming_data.as_ref().is_none_or(|sd| {
-        sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
-    });
+    let needs_fallback = player_response.playability_status.status != "OK"
+        || player_response.streaming_data.as_ref().is_none_or(|sd| {
+            sd.adaptive_formats.is_empty()
+                || sd
+                    .adaptive_formats
+                    .iter()
+                    .all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
+        });
 
     if needs_fallback {
         // 1. Fetch standard ANDROID client for reliable progressive formats (itag 18)
@@ -74,9 +79,13 @@ pub async fn fetch_player_response(
         }
 
         // 3. Fallback to ANDROID_VR if adaptive formats still missing
-        let still_needs_vr = player_response.playability_status.status != "OK" || player_response.streaming_data.as_ref().is_none_or(|sd| {
-            sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
-        });
+        let still_needs_vr = player_response.playability_status.status != "OK"
+            || player_response.streaming_data.as_ref().is_none_or(|sd| {
+                sd.adaptive_formats.is_empty()
+                    || sd.adaptive_formats.iter().all(|f| {
+                        f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none()
+                    })
+            });
 
         if still_needs_vr {
             if let Ok(vr_response) = fetch_player_response_android_vr(session, video_id).await {
@@ -102,12 +111,18 @@ pub async fn fetch_player_response(
         }
 
         // 4. Fallback to MWEB if still needed
-        let still_needs_mweb = player_response.playability_status.status != "OK" || player_response.streaming_data.as_ref().is_none_or(|sd| {
-            sd.adaptive_formats.is_empty() || sd.adaptive_formats.iter().all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
-        });
+        let still_needs_mweb = player_response.playability_status.status != "OK"
+            || player_response.streaming_data.as_ref().is_none_or(|sd| {
+                sd.adaptive_formats.is_empty()
+                    || sd.adaptive_formats.iter().all(|f| {
+                        f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none()
+                    })
+            });
 
         if still_needs_mweb {
-            if let Ok(mweb_response) = fetch_player_response_mweb(session, video_id, signature_timestamp).await {
+            if let Ok(mweb_response) =
+                fetch_player_response_mweb(session, video_id, signature_timestamp).await
+            {
                 if mweb_response.playability_status.status == "OK" {
                     let mut final_mweb = mweb_response;
                     if let Some(ref mut mweb_sd) = final_mweb.streaming_data {
@@ -134,7 +149,11 @@ pub async fn fetch_player_response(
         return Err(InnertubeError::Restricted(format!(
             "Video is not playable: {} ({})",
             player_response.playability_status.status,
-            player_response.playability_status.reason.as_deref().unwrap_or("No reason provided")
+            player_response
+                .playability_status
+                .reason
+                .as_deref()
+                .unwrap_or("No reason provided")
         )));
     }
 
@@ -168,8 +187,13 @@ async fn fetch_player_response_mweb(
         });
     }
 
-    let url = format!("{}/player?key={}", crate::constants::INNERTUBE_API_BASE_URL, session.api_key);
-    let resp = session.http_client
+    let url = format!(
+        "{}/player?key={}",
+        crate::constants::INNERTUBE_API_BASE_URL,
+        session.api_key
+    );
+    let resp = session
+        .http_client
         .post(&url)
         .header("User-Agent", clients::MWEB_USER_AGENT)
         .header("X-Youtube-Client-Name", "2")
@@ -178,6 +202,7 @@ async fn fetch_player_response_mweb(
         .send()
         .await
         .map_err(InnertubeError::Network)?;
+    let resp = Session::ensure_success("player (MWEB fallback)", resp).await?;
     let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
     Ok(player_response)
@@ -208,8 +233,13 @@ async fn fetch_player_response_android(
         payload["serviceIntegrityDimensions"] = json!({ "poToken": pot });
     }
 
-    let url = format!("{}/player?key={}", crate::constants::INNERTUBE_API_BASE_URL, session.api_key);
-    let mut req = session.http_client
+    let url = format!(
+        "{}/player?key={}",
+        crate::constants::INNERTUBE_API_BASE_URL,
+        session.api_key
+    );
+    let mut req = session
+        .http_client
         .post(&url)
         .header("User-Agent", clients::ANDROID_USER_AGENT)
         .header("X-Youtube-Client-Name", "3")
@@ -219,10 +249,12 @@ async fn fetch_player_response_android(
         req = req.header("Cookie", c);
     }
 
-    let resp = req.json(&payload)
+    let resp = req
+        .json(&payload)
         .send()
         .await
         .map_err(InnertubeError::Network)?;
+    let resp = Session::ensure_success("player (ANDROID fallback)", resp).await?;
     let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
     Ok(player_response)
@@ -255,8 +287,13 @@ async fn fetch_player_response_android_vr(
         payload["serviceIntegrityDimensions"] = json!({ "poToken": pot });
     }
 
-    let url = format!("{}/player?key={}", crate::constants::INNERTUBE_API_BASE_URL, session.api_key);
-    let mut req = session.http_client
+    let url = format!(
+        "{}/player?key={}",
+        crate::constants::INNERTUBE_API_BASE_URL,
+        session.api_key
+    );
+    let mut req = session
+        .http_client
         .post(&url)
         .header("User-Agent", clients::ANDROID_VR_USER_AGENT)
         .header("X-Youtube-Client-Name", "28")
@@ -266,20 +303,19 @@ async fn fetch_player_response_android_vr(
         req = req.header("Cookie", c);
     }
 
-    let resp = req.json(&payload)
+    let resp = req
+        .json(&payload)
         .send()
         .await
         .map_err(InnertubeError::Network)?;
+    let resp = Session::ensure_success("player (ANDROID_VR fallback)", resp).await?;
     let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
     Ok(player_response)
 }
 
 /// Fallback player fetch using iOS client to get direct stream URLs for all adaptive formats.
-async fn fetch_player_response_ios(
-    session: &Session,
-    video_id: &str,
-) -> Result<PlayerResponse> {
+async fn fetch_player_response_ios(session: &Session, video_id: &str) -> Result<PlayerResponse> {
     let ios_options = SessionOptions {
         client_name: Some(clients::IOS_NAME.to_string()),
         client_version: Some(clients::IOS_VERSION.to_string()),
