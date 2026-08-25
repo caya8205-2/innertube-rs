@@ -163,3 +163,46 @@ impl std::ops::DerefMut for PostNode {
         &mut self.post
     }
 }
+
+/// Strongly typed BackstageImage AST node (`backstageImageRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackstageImageNode {
+    pub image: ThumbnailListNode,
+}
+
+impl BackstageImageNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("backstageImageRenderer").unwrap_or(val);
+        let image = ThumbnailListNode::from_value(node.get("image").unwrap_or(node));
+        Some(Self { image })
+    }
+}
+
+/// Strongly typed PostMultiImage AST node (`postMultiImageRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PostMultiImageNode {
+    pub images: Vec<ThumbnailListNode>,
+}
+
+impl PostMultiImageNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("postMultiImageRenderer").unwrap_or(val);
+        let images = node
+            .get("images")
+            .and_then(Value::as_array)
+            .map(|arr| {
+                arr.iter()
+                    .map(|img_val| {
+                        let inner = img_val.get("backstageImageRenderer").unwrap_or(img_val);
+                        ThumbnailListNode::from_value(inner.get("image").unwrap_or(inner))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Some(Self { images })
+    }
+}
+

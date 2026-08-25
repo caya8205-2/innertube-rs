@@ -85,6 +85,16 @@ pub enum YTNodeVariant {
     ProfileColumn,
     ProfileColumnUserInfo,
     VerticalList,
+    Chapter,
+    Heatmap,
+    MacroMarkersList,
+    MacroMarkersListItem,
+    SearchRefinementCard,
+    HorizontalCardList,
+    ExpandableTab,
+    BackstageImage,
+    PostMultiImage,
+    ChannelSubMenu,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -306,7 +316,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "BackstageImage",
             legacy_path: "BackstageImage.ts",
             category: ParserCategory::CommunityPost,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Post),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::BackstageImage),
         },
         LegacyClassMeta {
             name: "BackstagePost",
@@ -480,7 +490,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChannelSubMenu",
             legacy_path: "ChannelSubMenu.ts",
             category: ParserCategory::Channel,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelCard),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelSubMenu),
         },
         LegacyClassMeta {
             name: "ChannelSwitcherHeader",
@@ -516,7 +526,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Chapter",
             legacy_path: "Chapter.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Chapter),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Chapter),
         },
         LegacyClassMeta {
             name: "ChildVideo",
@@ -888,7 +898,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ExpandableTab",
             legacy_path: "ExpandableTab.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Tab),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ExpandableTab),
         },
         LegacyClassMeta {
             name: "ExpandableVideoDescriptionBody",
@@ -1080,7 +1090,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Heatmap",
             legacy_path: "Heatmap.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Heatmap),
         },
         LegacyClassMeta {
             name: "HeroPlaylistThumbnail",
@@ -1104,7 +1114,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "HorizontalCardList",
             legacy_path: "HorizontalCardList.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::HorizontalCardList),
         },
         LegacyClassMeta {
             name: "HorizontalList",
@@ -1296,7 +1306,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MacroMarkersList",
             legacy_path: "MacroMarkersList.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MacroMarkersList),
         },
         LegacyClassMeta {
             name: "MacroMarkersListEntity",
@@ -1308,7 +1318,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MacroMarkersListItem",
             legacy_path: "MacroMarkersListItem.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MacroMarkersListItem),
         },
         LegacyClassMeta {
             name: "MenuTitle",
@@ -1854,7 +1864,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PostMultiImage",
             legacy_path: "PostMultiImage.ts",
             category: ParserCategory::CommunityPost,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Post),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PostMultiImage),
         },
         LegacyClassMeta {
             name: "PremiereTrailerBadge",
@@ -2022,7 +2032,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SearchRefinementCard",
             legacy_path: "SearchRefinementCard.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Card),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::SearchRefinementCard),
         },
         LegacyClassMeta {
             name: "SearchSubMenu",
@@ -3709,10 +3719,10 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 150);
-        assert_eq!(container_count, 170);
+        assert_eq!(direct_count, 157);
+        assert_eq!(container_count, 166);
         assert_eq!(endpoint_count, 70);
-        assert_eq!(element_count, 177);
+        assert_eq!(element_count, 174);
         assert_eq!(kids_count, 7);
     }
 
@@ -3732,6 +3742,7 @@ mod tests {
             (json!({ "c4TabbedHeaderRenderer": { "title": "CH" } }), "ChannelHeader"),
             (json!({ "channelAboutFullMetadataRenderer": { "description": { "simpleText": "About" } } }), "ChannelAboutFullMetadata"),
             (json!({ "channelMetadataRenderer": { "title": "Meta" } }), "ChannelMetadata"),
+            (json!({ "channelSubMenuRenderer": { "contentTypeSubMenuItems": [] } }), "ChannelSubMenu"),
             (json!({ "musicResponsiveListItemRenderer": { "flexColumns": [] } }), "MusicItem"),
             (json!({ "musicTwoRowItemRenderer": { "title": { "runs": [{ "text": "M2" }] } } }), "MusicCard"),
             (json!({ "musicDescriptionShelfRenderer": { "description": { "runs": [{ "text": "D" }] } } }), "MusicDescriptionShelf"),
@@ -3742,6 +3753,8 @@ mod tests {
             (json!({ "commentThreadRenderer": { "comment": { "commentRenderer": { "commentId": "ct1", "authorText": { "simpleText": "A" }, "contentText": { "runs": [{ "text": "T" }] } } } } }), "CommentThread"),
             (json!({ "creatorHeartRenderer": { "isHearted": true } }), "CreatorHeart"),
             (json!({ "backstagePostRenderer": { "postId": "p1", "contentText": { "runs": [{ "text": "Post" }] } } }), "Post"),
+            (json!({ "backstageImageRenderer": { "image": { "thumbnails": [{ "url": "https://img.jpg" }] } } }), "BackstageImage"),
+            (json!({ "postMultiImageRenderer": { "images": [] } }), "PostMultiImage"),
             (json!({ "continuationItemRenderer": { "continuationEndpoint": { "continuationCommand": { "token": "tok" } } } }), "Continuation"),
             (json!({ "chipCloudRenderer": { "chips": [] } }), "ChipCloud"),
             (json!({ "chipCloudChipRenderer": { "text": { "runs": [{ "text": "Chip" }] } } }), "ChipCloudChip"),
@@ -3776,6 +3789,13 @@ mod tests {
             (json!({ "profileColumnRenderer": { "items": [] } }), "ProfileColumn"),
             (json!({ "profileColumnUserInfoRenderer": { "title": "User" } }), "ProfileColumnUserInfo"),
             (json!({ "verticalListRenderer": { "items": [] } }), "VerticalList"),
+            (json!({ "chapterRenderer": { "title": { "simpleText": "Intro" }, "timeRangeStartMillis": 0 } }), "Chapter"),
+            (json!({ "heatmapRenderer": { "maxHeightDp": 40.0 } }), "Heatmap"),
+            (json!({ "macroMarkersListRenderer": { "contents": [] } }), "MacroMarkersList"),
+            (json!({ "macroMarkersListItemRenderer": { "title": { "simpleText": "Marker 1" } } }), "MacroMarkersListItem"),
+            (json!({ "searchRefinementCardRenderer": { "query": { "simpleText": "rust tutorial" } } }), "SearchRefinementCard"),
+            (json!({ "horizontalCardListRenderer": { "cards": [] } }), "HorizontalCardList"),
+            (json!({ "expandableTabRenderer": { "title": { "simpleText": "Videos" } } }), "ExpandableTab"),
         ];
 
         for (fixture, label) in test_cases {

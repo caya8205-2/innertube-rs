@@ -1,7 +1,9 @@
 pub mod alert;
 pub mod author;
 pub mod button;
+pub mod cards;
 pub mod endscreen;
+pub mod markers;
 pub mod menu;
 pub mod metadata;
 pub mod navigation;
@@ -15,7 +17,9 @@ pub mod thumbnail;
 pub use alert::{AlertNode, CardNode, ClarificationNode, PollNode};
 pub use author::AuthorNode;
 pub use button::{ButtonNode, ToggleButtonNode};
+pub use cards::{ExpandableTabNode, HorizontalCardListNode, SearchRefinementCardNode};
 pub use endscreen::{EndscreenElementNode, EndscreenNode};
+pub use markers::{ChapterNode, HeatmapNode, MacroMarkersListItemNode, MacroMarkersListNode};
 pub use menu::{MenuItemNode, MenuNode};
 pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, ViewCountNode};
 pub use navigation::{

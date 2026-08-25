@@ -12,6 +12,7 @@ pub mod video;
 
 pub use channel::{
     ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode, ChannelMetadataNode,
+    ChannelSubMenuNode,
 };
 pub use comments::{CommentNode, CommentThreadNode, CreatorHeartNode};
 pub use containers::{
@@ -26,22 +27,23 @@ pub use livechat::{
     MarkChatItemAsDeletedActionNode,
 };
 pub use misc::{
-    AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode, CardNode, ClarificationNode,
-    ContinuationEndpointNode, DidYouMeanNode, EndscreenElementNode, EndscreenNode, LikeEndpointNode,
-    MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode, NavigationEndpointNode,
-    PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode, ProfileColumnNode,
-    ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode, SearchSubMenuNode,
-    ShowingResultsForNode, SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode,
-    ThumbnailNode, ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode,
-    TimedMarkerDecorationNode, ToggleButtonNode, VerticalListNode, VideoOwnerNode, ViewCountNode,
-    WatchEndpointNode,
+    AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode, CardNode, ChapterNode,
+    ClarificationNode, ContinuationEndpointNode, DidYouMeanNode, EndscreenElementNode,
+    EndscreenNode, ExpandableTabNode, HeatmapNode, HorizontalCardListNode, LikeEndpointNode,
+    MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
+    MicroformatDataNode, NavigationEndpointNode, PlayerOverlayNode, PlayerStoryboardSpecNode,
+    PollNode, ProfileColumnNode, ProfileColumnUserInfoNode, ReelWatchEndpointNode,
+    SearchEndpointNode, SearchRefinementCardNode, SearchSubMenuNode, ShowingResultsForNode,
+    SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
+    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, TimedMarkerDecorationNode,
+    ToggleButtonNode, VerticalListNode, VideoOwnerNode, ViewCountNode, WatchEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
     MusicResponsiveListItemNode, MusicTwoRowItemNode,
 };
 pub use playlist::{PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode};
-pub use post::PostNode;
+pub use post::{BackstageImageNode, PostMultiImageNode, PostNode};
 pub use short::{ReelShelfNode, ShortNode};
 pub use video::{VideoNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode};
 
@@ -65,6 +67,7 @@ pub enum YTNode {
     ChannelCard(ChannelCardNode),
     ChannelAboutFullMetadata(ChannelAboutFullMetadataNode),
     ChannelMetadata(ChannelMetadataNode),
+    ChannelSubMenu(ChannelSubMenuNode),
     MusicItem(MusicResponsiveListItemNode),
     MusicCard(MusicTwoRowItemNode),
     MusicDescriptionShelf(MusicDescriptionShelfNode),
@@ -75,6 +78,8 @@ pub enum YTNode {
     CommentThread(CommentThreadNode),
     CreatorHeart(CreatorHeartNode),
     Post(PostNode),
+    BackstageImage(BackstageImageNode),
+    PostMultiImage(PostMultiImageNode),
     Continuation(ContinuationNode),
     SectionList(SectionListNode),
     ItemSection(ItemSectionNode),
@@ -115,6 +120,13 @@ pub enum YTNode {
     ProfileColumn(ProfileColumnNode),
     ProfileColumnUserInfo(ProfileColumnUserInfoNode),
     VerticalList(VerticalListNode),
+    Chapter(ChapterNode),
+    Heatmap(HeatmapNode),
+    MacroMarkersList(MacroMarkersListNode),
+    MacroMarkersListItem(MacroMarkersListItemNode),
+    SearchRefinementCard(SearchRefinementCardNode),
+    HorizontalCardList(HorizontalCardListNode),
+    ExpandableTab(ExpandableTabNode),
 }
 
 impl YTNode {
@@ -523,6 +535,62 @@ impl YTNode {
         if val.get("verticalListRenderer").is_some() {
             if let Some(vl) = VerticalListNode::from_value(val) {
                 return Some(YTNode::VerticalList(vl));
+            }
+        }
+
+        // 23. Check for Markers, Chapters & Heatmaps
+        if val.get("chapterRenderer").is_some() {
+            if let Some(ch) = ChapterNode::from_value(val) {
+                return Some(YTNode::Chapter(ch));
+            }
+        }
+        if val.get("heatmapRenderer").is_some() {
+            if let Some(hm) = HeatmapNode::from_value(val) {
+                return Some(YTNode::Heatmap(hm));
+            }
+        }
+        if val.get("macroMarkersListRenderer").is_some() {
+            if let Some(mml) = MacroMarkersListNode::from_value(val) {
+                return Some(YTNode::MacroMarkersList(mml));
+            }
+        }
+        if val.get("macroMarkersListItemRenderer").is_some() {
+            if let Some(mmli) = MacroMarkersListItemNode::from_value(val) {
+                return Some(YTNode::MacroMarkersListItem(mmli));
+            }
+        }
+
+        // 24. Check for Cards & Tabs
+        if val.get("searchRefinementCardRenderer").is_some() {
+            if let Some(src) = SearchRefinementCardNode::from_value(val) {
+                return Some(YTNode::SearchRefinementCard(src));
+            }
+        }
+        if val.get("horizontalCardListRenderer").is_some() {
+            if let Some(hcl) = HorizontalCardListNode::from_value(val) {
+                return Some(YTNode::HorizontalCardList(hcl));
+            }
+        }
+        if val.get("expandableTabRenderer").is_some() {
+            if let Some(et) = ExpandableTabNode::from_value(val) {
+                return Some(YTNode::ExpandableTab(et));
+            }
+        }
+
+        // 25. Check for Post Media & Channel SubMenus
+        if val.get("backstageImageRenderer").is_some() {
+            if let Some(bi) = BackstageImageNode::from_value(val) {
+                return Some(YTNode::BackstageImage(bi));
+            }
+        }
+        if val.get("postMultiImageRenderer").is_some() {
+            if let Some(pmi) = PostMultiImageNode::from_value(val) {
+                return Some(YTNode::PostMultiImage(pmi));
+            }
+        }
+        if val.get("channelSubMenuRenderer").is_some() {
+            if let Some(csm) = ChannelSubMenuNode::from_value(val) {
+                return Some(YTNode::ChannelSubMenu(csm));
             }
         }
 

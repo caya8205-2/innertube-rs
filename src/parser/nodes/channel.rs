@@ -237,3 +237,29 @@ impl ChannelMetadataNode {
     }
 }
 
+/// Strongly typed ChannelSubMenu AST node (`channelSubMenuRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChannelSubMenuNode {
+    pub content_type_sub_menu_items: Vec<Value>,
+    pub sort_filter_sub_menu: Option<Value>,
+}
+
+impl ChannelSubMenuNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("channelSubMenuRenderer").unwrap_or(val);
+        let content_type_sub_menu_items = node
+            .get("contentTypeSubMenuItems")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let sort_filter_sub_menu = node.get("sortFilterSubMenu").cloned();
+
+        Some(Self {
+            content_type_sub_menu_items,
+            sort_filter_sub_menu,
+        })
+    }
+}
+
+

@@ -864,5 +864,151 @@ fn test_fixture_player_overlays_and_profile_columns() {
     }
 }
 
+#[test]
+fn test_fixture_video_chapters_markers_and_heatmaps() {
+    let chapter_json = json!({
+        "chapterRenderer": {
+            "title": { "runs": [{ "text": "Getting Started with Rust" }] },
+            "timeRangeStartMillis": 120000,
+            "thumbnail": {
+                "thumbnails": [{ "url": "https://img.youtube.com/chap1.jpg" }]
+            }
+        }
+    });
+    let chapter_node = YTNode::parse(&chapter_json).expect("ChapterNode should parse");
+    if let YTNode::Chapter(ch) = chapter_node {
+        assert_eq!(ch.title, "Getting Started with Rust");
+        assert_eq!(ch.time_range_start_millis, 120000);
+        assert!(!ch.thumbnails.thumbnails.is_empty());
+    } else {
+        panic!("Expected YTNode::Chapter");
+    }
+
+    let heatmap_json = json!({
+        "heatmapRenderer": {
+            "maxHeightDp": 50.0,
+            "minHeightDp": 10.0,
+            "showHeatmapOnSeek": true
+        }
+    });
+    let heatmap_node = YTNode::parse(&heatmap_json).expect("HeatmapNode should parse");
+    if let YTNode::Heatmap(hm) = heatmap_node {
+        assert_eq!(hm.max_height_dp, Some(50.0));
+        assert_eq!(hm.min_height_dp, Some(10.0));
+        assert_eq!(hm.show_heatmap_on_seek, Some(true));
+    } else {
+        panic!("Expected YTNode::Heatmap");
+    }
+
+    let macro_markers_json = json!({
+        "macroMarkersListRenderer": {
+            "title": { "runs": [{ "text": "Chapters" }] },
+            "contents": [{
+                "macroMarkersListItemRenderer": {
+                    "title": { "runs": [{ "text": "Section 1" }] },
+                    "timeDescription": { "runs": [{ "text": "0:00" }] },
+                    "thumbnail": { "thumbnails": [{ "url": "https://img.youtube.com/m1.jpg" }] }
+                }
+            }]
+        }
+    });
+    let macro_node = YTNode::parse(&macro_markers_json).expect("MacroMarkersListNode should parse");
+    if let YTNode::MacroMarkersList(mml) = macro_node {
+        assert_eq!(mml.title.as_deref(), Some("Chapters"));
+        assert_eq!(mml.contents.len(), 1);
+    } else {
+        panic!("Expected YTNode::MacroMarkersList");
+    }
+}
+
+#[test]
+fn test_fixture_search_refinements_post_media_and_channel_submenus() {
+    let refinement_json = json!({
+        "searchRefinementCardRenderer": {
+            "query": { "runs": [{ "text": "rust async tutorial" }] },
+            "thumbnail": { "thumbnails": [{ "url": "https://img.youtube.com/ref.jpg" }] },
+            "searchEndpoint": { "searchEndpoint": { "query": "rust async tutorial" } }
+        }
+    });
+    let refinement_node = YTNode::parse(&refinement_json).expect("SearchRefinementCardNode should parse");
+    if let YTNode::SearchRefinementCard(src) = refinement_node {
+        assert_eq!(src.query, "rust async tutorial");
+        assert!(!src.thumbnails.thumbnails.is_empty());
+        assert!(src.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::SearchRefinementCard");
+    }
+
+    let horiz_cards_json = json!({
+        "horizontalCardListRenderer": {
+            "cards": [{ "searchRefinementCardRenderer": { "query": { "simpleText": "tokio" } } }],
+            "header": { "richListHeaderRenderer": { "title": { "simpleText": "Related" } } }
+        }
+    });
+    let horiz_node = YTNode::parse(&horiz_cards_json).expect("HorizontalCardListNode should parse");
+    if let YTNode::HorizontalCardList(hcl) = horiz_node {
+        assert_eq!(hcl.cards.len(), 1);
+        assert!(hcl.header.is_some());
+    } else {
+        panic!("Expected YTNode::HorizontalCardList");
+    }
+
+    let expandable_tab_json = json!({
+        "expandableTabRenderer": {
+            "title": { "runs": [{ "text": "Live streams" }] },
+            "selected": true
+        }
+    });
+    let tab_node = YTNode::parse(&expandable_tab_json).expect("ExpandableTabNode should parse");
+    if let YTNode::ExpandableTab(et) = tab_node {
+        assert_eq!(et.title, "Live streams");
+        assert!(et.selected);
+    } else {
+        panic!("Expected YTNode::ExpandableTab");
+    }
+
+    let backstage_img_json = json!({
+        "backstageImageRenderer": {
+            "image": { "thumbnails": [{ "url": "https://yt3.ggpht.com/post_img.jpg" }] }
+        }
+    });
+    let img_node = YTNode::parse(&backstage_img_json).expect("BackstageImageNode should parse");
+    if let YTNode::BackstageImage(bi) = img_node {
+        assert!(!bi.image.thumbnails.is_empty());
+    } else {
+        panic!("Expected YTNode::BackstageImage");
+    }
+
+    let post_multi_img_json = json!({
+        "postMultiImageRenderer": {
+            "images": [
+                { "backstageImageRenderer": { "image": { "thumbnails": [{ "url": "https://yt3.ggpht.com/img1.jpg" }] } } },
+                { "backstageImageRenderer": { "image": { "thumbnails": [{ "url": "https://yt3.ggpht.com/img2.jpg" }] } } }
+            ]
+        }
+    });
+    let multi_node = YTNode::parse(&post_multi_img_json).expect("PostMultiImageNode should parse");
+    if let YTNode::PostMultiImage(pmi) = multi_node {
+        assert_eq!(pmi.images.len(), 2);
+    } else {
+        panic!("Expected YTNode::PostMultiImage");
+    }
+
+    let channel_sub_menu_json = json!({
+        "channelSubMenuRenderer": {
+            "contentTypeSubMenuItems": [{ "title": "Latest" }, { "title": "Popular" }],
+            "sortFilterSubMenu": { "title": "Sort by" }
+        }
+    });
+    let sub_menu_node = YTNode::parse(&channel_sub_menu_json).expect("ChannelSubMenuNode should parse");
+    if let YTNode::ChannelSubMenu(csm) = sub_menu_node {
+        assert_eq!(csm.content_type_sub_menu_items.len(), 2);
+        assert!(csm.sort_filter_sub_menu.is_some());
+    } else {
+        panic!("Expected YTNode::ChannelSubMenu");
+    }
+}
+
+
 
 
