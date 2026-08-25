@@ -75,6 +75,16 @@ pub enum YTNodeVariant {
     Card,
     Clarification,
     Poll,
+    AddChatItemAction,
+    MarkChatItemAsDeletedAction,
+    LiveChatAutoModMessage,
+    LiveChatModeChangeMessage,
+    PlayerOverlay,
+    PlayerStoryboardSpec,
+    TimedMarkerDecoration,
+    ProfileColumn,
+    ProfileColumnUserInfo,
+    VerticalList,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -1688,7 +1698,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlayerLiveStoryboardSpec",
             legacy_path: "PlayerLiveStoryboardSpec.ts",
             category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlayerStoryboardSpec),
         },
         LegacyClassMeta {
             name: "PlayerMicroformat",
@@ -1706,7 +1716,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlayerOverlay",
             legacy_path: "PlayerOverlay.ts",
             category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlayerOverlay),
         },
         LegacyClassMeta {
             name: "PlayerOverlayAutoplay",
@@ -1724,7 +1734,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlayerStoryboardSpec",
             legacy_path: "PlayerStoryboardSpec.ts",
             category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlayerStoryboardSpec),
         },
         LegacyClassMeta {
             name: "Playlist",
@@ -1874,7 +1884,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ProfileColumn",
             legacy_path: "ProfileColumn.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Column),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ProfileColumn),
         },
         LegacyClassMeta {
             name: "ProfileColumnStats",
@@ -1892,7 +1902,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ProfileColumnUserInfo",
             legacy_path: "ProfileColumnUserInfo.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Column),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ProfileColumnUserInfo),
         },
         LegacyClassMeta {
             name: "Quiz",
@@ -2450,7 +2460,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "TimedMarkerDecoration",
             legacy_path: "TimedMarkerDecoration.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::TimedMarkerDecoration),
         },
         LegacyClassMeta {
             name: "TitleAndButtonListHeader",
@@ -2582,7 +2592,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "VerticalList",
             legacy_path: "VerticalList.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::VerticalList),
         },
         LegacyClassMeta {
             name: "VerticalWatchCardList",
@@ -3116,7 +3126,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AddChatItemAction",
             legacy_path: "livechat/AddChatItemAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AddChatItemAction),
         },
         LegacyClassMeta {
             name: "AddLiveChatTickerItemAction",
@@ -3140,13 +3150,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MarkChatItemAsDeletedAction",
             legacy_path: "livechat/MarkChatItemAsDeletedAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MarkChatItemAsDeletedAction),
         },
         LegacyClassMeta {
             name: "MarkChatItemsByAuthorAsDeletedAction",
             legacy_path: "livechat/MarkChatItemsByAuthorAsDeletedAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MarkChatItemAsDeletedAction),
         },
         LegacyClassMeta {
             name: "RemoveBannerForLiveChatCommand",
@@ -3254,7 +3264,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatAutoModMessage",
             legacy_path: "livechat/items/LiveChatAutoModMessage.ts",
             category: ParserCategory::LiveChat,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatAutoModMessage),
         },
         LegacyClassMeta {
             name: "LiveChatBanner",
@@ -3302,7 +3312,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatModeChangeMessage",
             legacy_path: "livechat/items/LiveChatModeChangeMessage.ts",
             category: ParserCategory::LiveChat,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatModeChangeMessage),
         },
         LegacyClassMeta {
             name: "LiveChatPaidMessage",
@@ -3699,10 +3709,10 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 143);
-        assert_eq!(container_count, 173);
-        assert_eq!(endpoint_count, 73);
-        assert_eq!(element_count, 178);
+        assert_eq!(direct_count, 150);
+        assert_eq!(container_count, 170);
+        assert_eq!(endpoint_count, 70);
+        assert_eq!(element_count, 177);
         assert_eq!(kids_count, 7);
     }
 
@@ -3740,6 +3750,10 @@ mod tests {
             (json!({ "liveChatMembershipItemRenderer": { "id": "mem1", "authorName": { "simpleText": "VIP" } } }), "LiveChatMembershipItem"),
             (json!({ "liveChatViewerEngagementMessageRenderer": { "message": { "runs": [{ "text": "Welcome to chat" }] } } }), "LiveChatViewerEngagementMessage"),
             (json!({ "liveChatBannerRenderer": { "header": { "liveChatBannerHeaderRenderer": { "text": { "simpleText": "Pinned" } } } } }), "LiveChatBanner"),
+            (json!({ "addChatItemAction": { "clientId": "c1" } }), "AddChatItemAction"),
+            (json!({ "markChatItemAsDeletedAction": { "targetItemId": "m1" } }), "MarkChatItemAsDeletedAction"),
+            (json!({ "liveChatAutoModMessageRenderer": { "headerText": { "simpleText": "Review" } } }), "LiveChatAutoModMessage"),
+            (json!({ "liveChatModeChangeMessageRenderer": { "text": { "simpleText": "Slow mode on" } } }), "LiveChatModeChangeMessage"),
             (json!({ "buttonRenderer": { "text": { "runs": [{ "text": "Btn" }] } } }), "Button"),
             (json!({ "toggleButtonRenderer": { "defaultText": { "simpleText": "Tog" } } }), "ToggleButton"),
             (json!({ "menuRenderer": { "items": [] } }), "Menu"),
@@ -3756,6 +3770,12 @@ mod tests {
             (json!({ "cardRenderer": { "cardId": "c1" } }), "Card"),
             (json!({ "clarificationRenderer": { "title": { "simpleText": "Fact check" } } }), "Clarification"),
             (json!({ "pollRenderer": { "question": { "simpleText": "Vote" } } }), "Poll"),
+            (json!({ "playerOverlayRenderer": { "actions": [] } }), "PlayerOverlay"),
+            (json!({ "playerStoryboardSpecRenderer": { "spec": "http://storyboard" } }), "PlayerStoryboardSpec"),
+            (json!({ "timedMarkerDecorationRenderer": { "visibleTimeRangeStartMillis": 1000 } }), "TimedMarkerDecoration"),
+            (json!({ "profileColumnRenderer": { "items": [] } }), "ProfileColumn"),
+            (json!({ "profileColumnUserInfoRenderer": { "title": "User" } }), "ProfileColumnUserInfo"),
+            (json!({ "verticalListRenderer": { "items": [] } }), "VerticalList"),
         ];
 
         for (fixture, label) in test_cases {

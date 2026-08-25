@@ -6,6 +6,8 @@ pub mod menu;
 pub mod metadata;
 pub mod navigation;
 pub mod overlay;
+pub mod player_overlay;
+pub mod profile;
 pub mod search_modifiers;
 pub mod text;
 pub mod thumbnail;
@@ -21,6 +23,8 @@ pub use navigation::{
     ReelWatchEndpointNode, SearchEndpointNode, SubscribeEndpointNode, WatchEndpointNode,
 };
 pub use overlay::{ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode};
+pub use player_overlay::{PlayerOverlayNode, PlayerStoryboardSpecNode, TimedMarkerDecorationNode};
+pub use profile::{ProfileColumnNode, ProfileColumnUserInfoNode, VerticalListNode};
 pub use search_modifiers::{DidYouMeanNode, SearchSubMenuNode, ShowingResultsForNode};
 pub use text::{TextNode, TextRunNode};
 pub use thumbnail::{ThumbnailListNode, ThumbnailNode};

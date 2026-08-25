@@ -235,3 +235,100 @@ impl LiveChatBannerNode {
     }
 }
 
+/// Strongly typed AddChatItemAction AST node (`addChatItemAction`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddChatItemActionNode {
+    pub client_id: Option<String>,
+    pub item: Option<Value>,
+}
+
+impl AddChatItemActionNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("addChatItemAction").unwrap_or(val);
+        let client_id = node.get("clientId").and_then(Value::as_str).map(ToString::to_string);
+        let item = node.get("item").cloned();
+
+        Some(Self { client_id, item })
+    }
+}
+
+/// Strongly typed MarkChatItemAsDeletedAction AST node (`markChatItemAsDeletedAction` / `markChatItemsByAuthorAsDeletedAction`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkChatItemAsDeletedActionNode {
+    pub target_item_id: Option<String>,
+    pub deleted_state_message: Option<String>,
+}
+
+impl MarkChatItemAsDeletedActionNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val
+            .get("markChatItemAsDeletedAction")
+            .or_else(|| val.get("markChatItemsByAuthorAsDeletedAction"))
+            .unwrap_or(val);
+
+        let target_item_id = node
+            .get("targetItemId")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        let deleted_state_message = node
+            .get("deletedStateMessage")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        Some(Self {
+            target_item_id,
+            deleted_state_message,
+        })
+    }
+}
+
+/// Strongly typed LiveChatAutoModMessage AST node (`liveChatAutoModMessageRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveChatAutoModMessageNode {
+    pub header_text: Option<String>,
+    pub auto_moderated_item: Option<Value>,
+}
+
+impl LiveChatAutoModMessageNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("liveChatAutoModMessageRenderer").unwrap_or(val);
+        let header_text = node
+            .get("headerText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+        let auto_moderated_item = node.get("autoModeratedItem").cloned();
+
+        Some(Self {
+            header_text,
+            auto_moderated_item,
+        })
+    }
+}
+
+/// Strongly typed LiveChatModeChangeMessage AST node (`liveChatModeChangeMessageRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveChatModeChangeMessageNode {
+    pub text: String,
+    pub icon_type: Option<String>,
+}
+
+impl LiveChatModeChangeMessageNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("liveChatModeChangeMessageRenderer").unwrap_or(val);
+        let text = node
+            .get("text")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+        let icon_type = node.pointer("/icon/iconType").and_then(Value::as_str).map(ToString::to_string);
+
+        Some(Self { text, icon_type })
+    }
+}
+
+

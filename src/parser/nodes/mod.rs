@@ -20,17 +20,21 @@ pub use containers::{
 };
 pub use continuation::ContinuationNode;
 pub use livechat::{
-    LiveChatBannerNode, LiveChatMembershipItemNode, LiveChatMessageNode, LiveChatPaidStickerNode,
-    LiveChatViewerEngagementMessageNode,
+    AddChatItemActionNode, LiveChatAutoModMessageNode, LiveChatBannerNode,
+    LiveChatMembershipItemNode, LiveChatMessageNode, LiveChatModeChangeMessageNode,
+    LiveChatPaidStickerNode, LiveChatViewerEngagementMessageNode,
+    MarkChatItemAsDeletedActionNode,
 };
 pub use misc::{
     AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode, CardNode, ClarificationNode,
     ContinuationEndpointNode, DidYouMeanNode, EndscreenElementNode, EndscreenNode, LikeEndpointNode,
     MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode, NavigationEndpointNode,
-    PollNode, ReelWatchEndpointNode, SearchEndpointNode, SearchSubMenuNode, ShowingResultsForNode,
-    SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
-    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, ToggleButtonNode,
-    VideoOwnerNode, ViewCountNode, WatchEndpointNode,
+    PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode, ProfileColumnNode,
+    ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode, SearchSubMenuNode,
+    ShowingResultsForNode, SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode,
+    ThumbnailNode, ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode,
+    TimedMarkerDecorationNode, ToggleButtonNode, VerticalListNode, VideoOwnerNode, ViewCountNode,
+    WatchEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
@@ -85,6 +89,10 @@ pub enum YTNode {
     LiveChatMembershipItem(LiveChatMembershipItemNode),
     LiveChatViewerEngagementMessage(LiveChatViewerEngagementMessageNode),
     LiveChatBanner(LiveChatBannerNode),
+    AddChatItemAction(AddChatItemActionNode),
+    MarkChatItemAsDeletedAction(MarkChatItemAsDeletedActionNode),
+    LiveChatAutoModMessage(LiveChatAutoModMessageNode),
+    LiveChatModeChangeMessage(LiveChatModeChangeMessageNode),
     Button(ButtonNode),
     ToggleButton(ToggleButtonNode),
     Menu(MenuNode),
@@ -101,6 +109,12 @@ pub enum YTNode {
     Card(CardNode),
     Clarification(ClarificationNode),
     Poll(PollNode),
+    PlayerOverlay(PlayerOverlayNode),
+    PlayerStoryboardSpec(PlayerStoryboardSpecNode),
+    TimedMarkerDecoration(TimedMarkerDecorationNode),
+    ProfileColumn(ProfileColumnNode),
+    ProfileColumnUserInfo(ProfileColumnUserInfoNode),
+    VerticalList(VerticalListNode),
 }
 
 impl YTNode {
@@ -449,6 +463,66 @@ impl YTNode {
         if val.get("pollRenderer").is_some() {
             if let Some(p) = PollNode::from_value(val) {
                 return Some(YTNode::Poll(p));
+            }
+        }
+
+        // 20. Check for Live Chat Actions & Moderation
+        if val.get("addChatItemAction").is_some() {
+            if let Some(a) = AddChatItemActionNode::from_value(val) {
+                return Some(YTNode::AddChatItemAction(a));
+            }
+        }
+        if val.get("markChatItemAsDeletedAction").is_some()
+            || val.get("markChatItemsByAuthorAsDeletedAction").is_some()
+        {
+            if let Some(m) = MarkChatItemAsDeletedActionNode::from_value(val) {
+                return Some(YTNode::MarkChatItemAsDeletedAction(m));
+            }
+        }
+        if val.get("liveChatAutoModMessageRenderer").is_some() {
+            if let Some(am) = LiveChatAutoModMessageNode::from_value(val) {
+                return Some(YTNode::LiveChatAutoModMessage(am));
+            }
+        }
+        if val.get("liveChatModeChangeMessageRenderer").is_some() {
+            if let Some(mc) = LiveChatModeChangeMessageNode::from_value(val) {
+                return Some(YTNode::LiveChatModeChangeMessage(mc));
+            }
+        }
+
+        // 21. Check for Player Overlays & Storyboards
+        if val.get("playerOverlayRenderer").is_some() {
+            if let Some(po) = PlayerOverlayNode::from_value(val) {
+                return Some(YTNode::PlayerOverlay(po));
+            }
+        }
+        if val.get("playerStoryboardSpecRenderer").is_some()
+            || val.get("playerLiveStoryboardSpecRenderer").is_some()
+        {
+            if let Some(pss) = PlayerStoryboardSpecNode::from_value(val) {
+                return Some(YTNode::PlayerStoryboardSpec(pss));
+            }
+        }
+        if val.get("timedMarkerDecorationRenderer").is_some() {
+            if let Some(tmd) = TimedMarkerDecorationNode::from_value(val) {
+                return Some(YTNode::TimedMarkerDecoration(tmd));
+            }
+        }
+
+        // 22. Check for Profile & Vertical List Components
+        if val.get("profileColumnRenderer").is_some() {
+            if let Some(pc) = ProfileColumnNode::from_value(val) {
+                return Some(YTNode::ProfileColumn(pc));
+            }
+        }
+        if val.get("profileColumnUserInfoRenderer").is_some() {
+            if let Some(pcu) = ProfileColumnUserInfoNode::from_value(val) {
+                return Some(YTNode::ProfileColumnUserInfo(pcu));
+            }
+        }
+        if val.get("verticalListRenderer").is_some() {
+            if let Some(vl) = VerticalListNode::from_value(val) {
+                return Some(YTNode::VerticalList(vl));
             }
         }
 

@@ -719,4 +719,150 @@ fn test_fixture_music_headers_badges_alerts_and_polls() {
     }
 }
 
+#[test]
+fn test_fixture_livechat_actions_and_moderation() {
+    let add_action_json = json!({
+        "addChatItemAction": {
+            "clientId": "client_msg_101",
+            "item": {
+                "liveChatTextMessageRenderer": {
+                    "id": "msg_dyn_1",
+                    "message": { "runs": [{ "text": "Super live!" }] }
+                }
+            }
+        }
+    });
+    let add_action_node = YTNode::parse(&add_action_json).expect("AddChatItemActionNode should parse");
+    if let YTNode::AddChatItemAction(act) = add_action_node {
+        assert_eq!(act.client_id.as_deref(), Some("client_msg_101"));
+        assert!(act.item.is_some());
+    } else {
+        panic!("Expected YTNode::AddChatItemAction");
+    }
+
+    let mark_del_json = json!({
+        "markChatItemAsDeletedAction": {
+            "targetItemId": "bad_msg_999",
+            "deletedStateMessage": { "runs": [{ "text": "[Message deleted by moderator]" }] }
+        }
+    });
+    let mark_del_node = YTNode::parse(&mark_del_json).expect("MarkChatItemAsDeletedActionNode should parse");
+    if let YTNode::MarkChatItemAsDeletedAction(del) = mark_del_node {
+        assert_eq!(del.target_item_id.as_deref(), Some("bad_msg_999"));
+        assert_eq!(del.deleted_state_message.as_deref(), Some("[Message deleted by moderator]"));
+    } else {
+        panic!("Expected YTNode::MarkChatItemAsDeletedAction");
+    }
+
+    let automod_json = json!({
+        "liveChatAutoModMessageRenderer": {
+            "headerText": { "runs": [{ "text": "Held for review" }] },
+            "autoModeratedItem": {
+                "liveChatTextMessageRenderer": { "id": "held_1" }
+            }
+        }
+    });
+    let automod_node = YTNode::parse(&automod_json).expect("LiveChatAutoModMessageNode should parse");
+    if let YTNode::LiveChatAutoModMessage(am) = automod_node {
+        assert_eq!(am.header_text.as_deref(), Some("Held for review"));
+        assert!(am.auto_moderated_item.is_some());
+    } else {
+        panic!("Expected YTNode::LiveChatAutoModMessage");
+    }
+
+    let mode_change_json = json!({
+        "liveChatModeChangeMessageRenderer": {
+            "text": { "runs": [{ "text": "Subscribers-only mode enabled" }] },
+            "icon": { "iconType": "SUBSCRIBERS_ONLY" }
+        }
+    });
+    let mode_node = YTNode::parse(&mode_change_json).expect("LiveChatModeChangeMessageNode should parse");
+    if let YTNode::LiveChatModeChangeMessage(mc) = mode_node {
+        assert_eq!(mc.text, "Subscribers-only mode enabled");
+        assert_eq!(mc.icon_type.as_deref(), Some("SUBSCRIBERS_ONLY"));
+    } else {
+        panic!("Expected YTNode::LiveChatModeChangeMessage");
+    }
+}
+
+#[test]
+fn test_fixture_player_overlays_and_profile_columns() {
+    let overlay_json = json!({
+        "playerOverlayRenderer": {
+            "actions": [{ "likeButtonRenderer": { "likeStatus": "LIKE" } }],
+            "autonavToggle": { "toggleButtonRenderer": { "defaultText": { "simpleText": "Autoplay" } } }
+        }
+    });
+    let overlay_node = YTNode::parse(&overlay_json).expect("PlayerOverlayNode should parse");
+    if let YTNode::PlayerOverlay(po) = overlay_node {
+        assert_eq!(po.actions.len(), 1);
+        assert!(po.autonav_toggle.is_some());
+    } else {
+        panic!("Expected YTNode::PlayerOverlay");
+    }
+
+    let storyboard_json = json!({
+        "playerStoryboardSpecRenderer": {
+            "spec": "https://i.ytimg.com/sb/xyz/storyboard.jpg#48#27#10#10"
+        }
+    });
+    let sb_node = YTNode::parse(&storyboard_json).expect("PlayerStoryboardSpecNode should parse");
+    if let YTNode::PlayerStoryboardSpec(sb) = sb_node {
+        assert_eq!(sb.spec.as_deref(), Some("https://i.ytimg.com/sb/xyz/storyboard.jpg#48#27#10#10"));
+    } else {
+        panic!("Expected YTNode::PlayerStoryboardSpec");
+    }
+
+    let marker_json = json!({
+        "timedMarkerDecorationRenderer": {
+            "visibleTimeRangeStartMillis": 5000,
+            "visibleTimeRangeEndMillis": 15000,
+            "decorationTimeMillis": 10000,
+            "label": { "runs": [{ "text": "Key Moment" }] },
+            "icon": { "iconType": "CHAPTER_MARKER" }
+        }
+    });
+    let marker_node = YTNode::parse(&marker_json).expect("TimedMarkerDecorationNode should parse");
+    if let YTNode::TimedMarkerDecoration(tmd) = marker_node {
+        assert_eq!(tmd.visible_time_range_start_millis, Some(5000));
+        assert_eq!(tmd.visible_time_range_end_millis, Some(15000));
+        assert_eq!(tmd.decoration_time_millis, Some(10000));
+        assert_eq!(tmd.label.as_deref(), Some("Key Moment"));
+        assert_eq!(tmd.icon_type.as_deref(), Some("CHAPTER_MARKER"));
+    } else {
+        panic!("Expected YTNode::TimedMarkerDecoration");
+    }
+
+    let profile_user_json = json!({
+        "profileColumnUserInfoRenderer": {
+            "title": { "runs": [{ "text": "TechExplorer" }] },
+            "description": { "runs": [{ "text": "Exploring systems and rust." }] },
+            "thumbnail": { "thumbnails": [{ "url": "https://yt3.ggpht.com/avatar.jpg" }] }
+        }
+    });
+    let profile_node = YTNode::parse(&profile_user_json).expect("ProfileColumnUserInfoNode should parse");
+    if let YTNode::ProfileColumnUserInfo(pcu) = profile_node {
+        assert_eq!(pcu.title, "TechExplorer");
+        assert_eq!(pcu.description.as_deref(), Some("Exploring systems and rust."));
+        assert!(!pcu.thumbnails.thumbnails.is_empty());
+    } else {
+        panic!("Expected YTNode::ProfileColumnUserInfo");
+    }
+
+    let vertical_list_json = json!({
+        "verticalListRenderer": {
+            "items": [{ "videoRenderer": { "videoId": "v_vert_1" } }],
+            "collapsedItemCount": 5
+        }
+    });
+    let vl_node = YTNode::parse(&vertical_list_json).expect("VerticalListNode should parse");
+    if let YTNode::VerticalList(vl) = vl_node {
+        assert_eq!(vl.items.len(), 1);
+        assert_eq!(vl.collapsed_item_count, Some(5));
+    } else {
+        panic!("Expected YTNode::VerticalList");
+    }
+}
+
+
 
