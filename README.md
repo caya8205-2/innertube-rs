@@ -1,12 +1,17 @@
-<p align="center">
-  <img src="site/public/innertube-rs-logo.png" alt="innertube-rs logo" width="180" />
-</p>
-
-<p align="center">
-  An asynchronous Rust client for YouTube's internal API (<b>InnerTube</b>), ported from <a href="https://github.com/LuanRT/YouTube.js">YouTube.js</a>.
-</p>
-
 <div align="center">
+  <br/>
+  <p>
+    <a href=https://github.com/caya8205-2/innertube-rs>
+        <img src="site/public/innertube-rs-logo.png" alt="innertube-rs logo" width="200" />
+    </a>
+  </p>
+
+  <p align="center">
+   <strong>
+    An asynchronous Rust client for <br>
+    YouTube's internal API (InnerTube), ported from <a href="https://github.com/LuanRT/YouTube.js">YouTube.js</a>.
+   </strong>
+  </p>
 
   [![Crates](https://img.shields.io/crates/v/innertube-rs?style=flat?logo=rust&logoColor=white)](https://crates.io/crates/innertube-rs)
   [![Total Downloads](https://shields.io/crates/d/innertube-rs?style=flat?logo=rust&logoColor=white)](https://crates.io/crates/innertube-rs)
@@ -14,13 +19,11 @@
   [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![CI](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml)
 
+  <p align="center">
+    <code>innertube-rs</code> provides native Rust bindings for interacting with <code>/youtubei/v1</code>, including metadata extraction, <br>
+    signature deciphering, stream URL resolution, search, and channel/playlist scraping.
+  </p>
 </div>
-
-<p align="center">
-  <code>innertube-rs</code> provides native Rust bindings for interacting with <code>/youtubei/v1</code>, including metadata extraction, signature deciphering, stream URL resolution, search, and channel/playlist scraping.
-</p>
-
-<hr />
 
 ## Features
 
