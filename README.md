@@ -3,16 +3,18 @@
 </p>
 
 <p align="center">
-  <a href="https://crates.io/crates/innertube-rs"><img src="https://img.shields.io/crates/v/innertube-rs?style=flat&amp;logo=rust&amp;logoColor=white" alt="Crates.io" /></a>
-  <a href="https://crates.io/crates/innertube-rs"><img src="https://shields.io/crates/d/innertube-rs?style=flat&amp;logo=rust&amp;logoColor=white" alt="Crates.io total downloads" /></a>
-  <a href="https://docs.rs/innertube-rs"><img src="https://docs.rs/innertube-rs/badge.svg" alt="Documentation" /></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT license" /></a>
-  <a href="https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml"><img src="https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  An asynchronous Rust client for YouTube's internal API (<b>InnerTube</b>), ported from <a href="https://github.com/LuanRT/YouTube.js">YouTube.js</a>.
 </p>
 
-<p align="center">
-  An asynchronous Rust client for YouTube's internal API (InnerTube), ported from <a href="https://github.com/LuanRT/YouTube.js">YouTube.js</a>.
-</p>
+<div align="center">
+
+  [![Crates](https://img.shields.io/crates/v/innertube-rs?style=flat?logo=rust&logoColor=white)](https://crates.io/crates/innertube-rs)
+  [![Total Downloads](https://shields.io/crates/d/innertube-rs?style=flat?logo=rust&logoColor=white)](https://crates.io/crates/innertube-rs)
+  [![Docs](https://docs.rs/innertube-rs/badge.svg)](https://docs.rs/innertube-rs)
+  [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![CI](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/caya8205-2/innertube-rs/actions/workflows/ci.yml)
+
+</div>
 
 <p align="center">
   <code>innertube-rs</code> provides native Rust bindings for interacting with <code>/youtubei/v1</code>, including metadata extraction, signature deciphering, stream URL resolution, search, and channel/playlist scraping.
@@ -166,4 +168,4 @@ cargo doc --no-deps --open
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+[MIT](LICENSE)
