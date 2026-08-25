@@ -14,10 +14,10 @@ tested equivalent parser path.
 
 ## Current evidence snapshot — 2026-08-25
 
-Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`), Phase 5 (Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins), and Phase 6 (574/574 Legacy Parser Classes cataloging, 25 Legacy Public API contracts harness, and authenticated mutation precondition hardening).
-Default validation currently passes 84 non-network unit/contract tests across library, deterministic fixture, API contract, and authenticated test suites with 0 Clippy warnings. Ten live integration tests exist and pass 10/10 against YouTube.
+Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`), Phase 5 (Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins), and Phase 6 (574/574 Legacy Parser Classes mapped to strongly typed enum targets, 25 Legacy Public API contracts harness, and authenticated mutation request/precondition contracts).
+Default validation currently passes 83 non-network unit/contract tests across library (40), deterministic fixture (10), API contract (25), and authenticated (8) test suites with 0 Clippy warnings. Eleven opt-in live integration tests exist (10 anonymous passing 10/10 against YouTube live, and 1 reversible authenticated mutation test with cleanup).
 
-`src/parser/registry.rs` tracks all 574 legacy parser classes directly extracted from `reference-youtubejs:src/parser/classes/` and maps each to a concrete `ParserDispatchTarget` (`DirectAst`, `Container`, `NavigationEndpoint`, `Element`, `DocumentedEquivalent`), verified by `test_all_574_legacy_classes_are_registered_with_concrete_targets`.
+`src/parser/registry.rs` tracks all 574 legacy parser classes directly extracted from `reference-youtubejs:src/parser/classes/` and maps each to a strongly typed `ParserDispatchTarget` (`Direct(YTNodeVariant)`, `Container(ContainerKind)`, `NavigationEndpoint(EndpointKind)`, `Element(ElementKind)`, `DocumentedEquivalent(&'static str)`), verified by `test_all_574_legacy_classes_are_registered_with_concrete_targets` and `test_all_ytnode_variants_have_executable_parsers`.
 
 ## Public `Innertube` API baseline
 

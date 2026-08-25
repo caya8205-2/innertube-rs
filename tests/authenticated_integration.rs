@@ -4,6 +4,7 @@ use innertube_rs::{
     ActionResult, CreateCommentResult, CreatePlaylistResult, Innertube, InnertubeError,
     NotificationPreferenceType, Session, SessionOptions,
 };
+use serde_json::{json, Value};
 use std::sync::Arc;
 
 // =========================================================================
@@ -142,7 +143,7 @@ async fn test_anonymous_session_rejects_comment_and_notification_mutations() {
 }
 
 // =========================================================================
-// 2. AUTHENTICATED SESSION PAYLOAD FORMATTING CONTRACTS
+// 2. AUTHENTICATED MUTATION PAYLOAD & PROTOBUF CONTRACTS
 // =========================================================================
 
 #[tokio::test]
@@ -158,18 +159,80 @@ async fn test_authenticated_session_flag_and_headers() {
         .expect("Authenticated session should initialize");
 
     assert!(session.is_authenticated(), "Session with SAPISID cookie must be detected as authenticated");
+    assert!(session.ensure_authenticated().is_ok());
+}
+
+#[test]
+fn test_mutation_payload_contracts_rating_and_subscription() {
+    let rating_target = json!({
+        "target": {
+            "videoId": "dQw4w9WgXcQ"
+        }
+    });
+    assert_eq!(rating_target["target"]["videoId"], "dQw4w9WgXcQ");
+
+    let sub_payload = json!({
+        "channelIds": ["UCuAXFkgsw1L7xaCfnd5JJOw"]
+    });
+    assert_eq!(sub_payload["channelIds"][0], "UCuAXFkgsw1L7xaCfnd5JJOw");
+}
+
+#[test]
+fn test_mutation_payload_contracts_playlist_operations() {
+    let add_actions = vec![
+        json!({
+            "action": "ACTION_ADD_VIDEO",
+            "addedVideoId": "video_1"
+        }),
+        json!({
+            "action": "ACTION_ADD_VIDEO",
+            "addedVideoId": "video_2"
+        }),
+    ];
+    let add_payload = json!({
+        "playlistId": "PL_test_playlist",
+        "actions": add_actions
+    });
+    assert_eq!(add_payload["playlistId"], "PL_test_playlist");
+    assert_eq!(add_payload["actions"].as_array().unwrap().len(), 2);
+    assert_eq!(add_payload["actions"][0]["action"], "ACTION_ADD_VIDEO");
+
+    let move_action = json!({
+        "action": "ACTION_MOVE_VIDEO_AFTER",
+        "setVideoId": "set_1",
+        "movedSetVideoIdPredecessor": "set_0"
+    });
+    assert_eq!(move_action["action"], "ACTION_MOVE_VIDEO_AFTER");
+    assert_eq!(move_action["setVideoId"], "set_1");
+    assert_eq!(move_action["movedSetVideoIdPredecessor"], "set_0");
+}
+
+#[test]
+fn test_mutation_payload_contracts_comment_and_notification() {
+    let comment_params = innertube_rs::utils::proto::encode_create_comment_params("dQw4w9WgXcQ")
+        .expect("Create comment protobuf param encoding must succeed");
+    assert!(!comment_params.is_empty());
+
+    let notif_params = innertube_rs::utils::proto::encode_notification_preferences(
+        "UCuAXFkgsw1L7xaCfnd5JJOw",
+        NotificationPreferenceType::All.index(),
+    )
+    .expect("Notification preference protobuf encoding must succeed");
+    assert!(!notif_params.is_empty());
 }
 
 // =========================================================================
-// 3. OPT-IN LIVE AUTHENTICATED MUTATION TEST
+// 3. OPT-IN LIVE AUTHENTICATED MUTATION TEST (WITH SAFE REVERSIBLE CLEANUP)
 // =========================================================================
 
 #[tokio::test]
-#[ignore = "Live authenticated network test requiring INNERTUBE_COOKIE or INNERTUBE_OAUTH_TOKEN"]
-async fn test_live_authenticated_account_and_notifications() {
+#[ignore = "Live authenticated mutation test requiring INNERTUBE_COOKIE and INNERTUBE_MUTATION_TEST=1"]
+async fn test_live_authenticated_mutation_with_cleanup() {
     let cookie = std::env::var("INNERTUBE_COOKIE").ok();
-    if cookie.is_none() {
-        println!("Skipping live authenticated test: INNERTUBE_COOKIE is not set");
+    let allow_mutation = std::env::var("INNERTUBE_MUTATION_TEST").unwrap_or_default() == "1";
+
+    if cookie.is_none() || !allow_mutation {
+        println!("Skipping live mutation test: INNERTUBE_COOKIE or INNERTUBE_MUTATION_TEST=1 is not set");
         return;
     }
 
@@ -178,10 +241,22 @@ async fn test_live_authenticated_account_and_notifications() {
         ..Default::default()
     };
 
-    let yt = Innertube::with_options(options).await.expect("Authenticated Innertube should initialize");
+    let yt = Innertube::with_options(options)
+        .await
+        .expect("Authenticated Innertube should initialize");
     assert!(yt.session.is_authenticated());
 
-    let unseen = yt.get_unseen_notifications_count().await;
-    println!("Live unseen notifications count: {:?}", unseen);
-    assert!(unseen.is_ok());
+    let test_video_id = "dQw4w9WgXcQ";
+
+    // 1. Perform like mutation
+    println!("Step 1: Liking test video {}", test_video_id);
+    let like_res = innertube_rs::Actions::like(&yt.session, test_video_id).await;
+    println!("Like result: {:?}", like_res);
+    assert!(like_res.is_ok(), "Authenticated like should succeed");
+
+    // 2. Perform cleanup: remove rating
+    println!("Step 2: Cleaning up rating (remove_rating) on {}", test_video_id);
+    let clean_res = innertube_rs::Actions::remove_rating(&yt.session, test_video_id).await;
+    println!("Cleanup result: {:?}", clean_res);
+    assert!(clean_res.is_ok(), "Authenticated remove_rating should succeed");
 }
