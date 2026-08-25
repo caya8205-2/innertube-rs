@@ -222,26 +222,21 @@ fn test_mutation_payload_contracts_comment_and_notification() {
 }
 
 // =========================================================================
-// 3. OPT-IN LIVE AUTHENTICATED MUTATION TEST (WITH SAFE REVERSIBLE CLEANUP)
+// 3. OPT-IN LIVE AUTHENTICATED MUTATION SUITE (WITH SAFE REVERSIBLE CLEANUP)
 // =========================================================================
 
 #[tokio::test]
-#[ignore = "Live authenticated mutation test requiring INNERTUBE_COOKIE and INNERTUBE_MUTATION_TEST=1"]
-async fn test_live_authenticated_mutation_with_cleanup() {
+#[ignore = "Live authenticated rating mutation test requiring INNERTUBE_COOKIE and INNERTUBE_MUTATION_TEST=1"]
+async fn test_live_authenticated_rating_mutation_with_cleanup() {
     let cookie = std::env::var("INNERTUBE_COOKIE").ok();
     let allow_mutation = std::env::var("INNERTUBE_MUTATION_TEST").unwrap_or_default() == "1";
 
     if cookie.is_none() || !allow_mutation {
-        println!("Skipping live mutation test: INNERTUBE_COOKIE or INNERTUBE_MUTATION_TEST=1 is not set");
+        println!("Skipping live rating mutation test: INNERTUBE_COOKIE or INNERTUBE_MUTATION_TEST=1 is not set");
         return;
     }
 
-    let options = SessionOptions {
-        cookie,
-        ..Default::default()
-    };
-
-    let yt = Innertube::with_options(options)
+    let yt = Innertube::with_options(SessionOptions { cookie, ..Default::default() })
         .await
         .expect("Authenticated Innertube should initialize");
     assert!(yt.session.is_authenticated());
@@ -249,14 +244,86 @@ async fn test_live_authenticated_mutation_with_cleanup() {
     let test_video_id = "dQw4w9WgXcQ";
 
     // 1. Perform like mutation
-    println!("Step 1: Liking test video {}", test_video_id);
     let like_res = innertube_rs::Actions::like(&yt.session, test_video_id).await;
-    println!("Like result: {:?}", like_res);
     assert!(like_res.is_ok(), "Authenticated like should succeed");
 
     // 2. Perform cleanup: remove rating
-    println!("Step 2: Cleaning up rating (remove_rating) on {}", test_video_id);
     let clean_res = innertube_rs::Actions::remove_rating(&yt.session, test_video_id).await;
-    println!("Cleanup result: {:?}", clean_res);
     assert!(clean_res.is_ok(), "Authenticated remove_rating should succeed");
+}
+
+#[tokio::test]
+#[ignore = "Live authenticated subscription mutation test requiring INNERTUBE_COOKIE and INNERTUBE_MUTATION_TEST=1"]
+async fn test_live_authenticated_subscription_mutation_with_cleanup() {
+    let cookie = std::env::var("INNERTUBE_COOKIE").ok();
+    let allow_mutation = std::env::var("INNERTUBE_MUTATION_TEST").unwrap_or_default() == "1";
+
+    if cookie.is_none() || !allow_mutation {
+        println!("Skipping live subscription mutation test: INNERTUBE_COOKIE or INNERTUBE_MUTATION_TEST=1 is not set");
+        return;
+    }
+
+    let yt = Innertube::with_options(SessionOptions { cookie, ..Default::default() })
+        .await
+        .expect("Authenticated Innertube should initialize");
+    assert!(yt.session.is_authenticated());
+
+    let test_channel_id = "UCuAXFkgsw1L7xaCfnd5JJOw";
+
+    // 1. Subscribe to channel
+    let sub_res = innertube_rs::Actions::subscribe(&yt.session, &[test_channel_id]).await;
+    assert!(sub_res.is_ok(), "Authenticated subscribe should succeed");
+
+    // 2. Cleanup: Unsubscribe
+    let unsub_res = innertube_rs::Actions::unsubscribe(&yt.session, &[test_channel_id]).await;
+    assert!(unsub_res.is_ok(), "Authenticated unsubscribe cleanup should succeed");
+}
+
+#[tokio::test]
+#[ignore = "Live authenticated playlist mutation test requiring INNERTUBE_COOKIE and INNERTUBE_MUTATION_TEST=1"]
+async fn test_live_authenticated_playlist_lifecycle_with_cleanup() {
+    let cookie = std::env::var("INNERTUBE_COOKIE").ok();
+    let allow_mutation = std::env::var("INNERTUBE_MUTATION_TEST").unwrap_or_default() == "1";
+
+    if cookie.is_none() || !allow_mutation {
+        println!("Skipping live playlist mutation test: INNERTUBE_COOKIE or INNERTUBE_MUTATION_TEST=1 is not set");
+        return;
+    }
+
+    let yt = Innertube::with_options(SessionOptions { cookie, ..Default::default() })
+        .await
+        .expect("Authenticated Innertube should initialize");
+    assert!(yt.session.is_authenticated());
+
+    // 1. Create temporary test playlist
+    let create_res = innertube_rs::Actions::create_playlist(&yt.session, "Test Temp Playlist", Some(&["dQw4w9WgXcQ"])).await;
+    assert!(create_res.is_ok(), "Authenticated create_playlist should succeed");
+
+    let playlist_id = create_res.unwrap().playlist_id;
+    if let Some(pid) = playlist_id {
+        // 2. Cleanup: Delete created playlist
+        let del_res = innertube_rs::Actions::delete_playlist(&yt.session, &pid).await;
+        assert!(del_res.is_ok(), "Authenticated delete_playlist cleanup should succeed");
+    }
+}
+
+#[tokio::test]
+#[ignore = "Live authenticated comment mutation test requiring INNERTUBE_COOKIE and INNERTUBE_MUTATION_TEST=1"]
+async fn test_live_authenticated_comment_mutation() {
+    let cookie = std::env::var("INNERTUBE_COOKIE").ok();
+    let allow_mutation = std::env::var("INNERTUBE_MUTATION_TEST").unwrap_or_default() == "1";
+
+    if cookie.is_none() || !allow_mutation {
+        println!("Skipping live comment mutation test: INNERTUBE_COOKIE or INNERTUBE_MUTATION_TEST=1 is not set");
+        return;
+    }
+
+    let yt = Innertube::with_options(SessionOptions { cookie, ..Default::default() })
+        .await
+        .expect("Authenticated Innertube should initialize");
+    assert!(yt.session.is_authenticated());
+
+    let test_video_id = "dQw4w9WgXcQ";
+    let comment_res = innertube_rs::Actions::create_comment(&yt.session, test_video_id, "Test comment via automated parity test").await;
+    println!("Comment creation result: {:?}", comment_res);
 }

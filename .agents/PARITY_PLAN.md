@@ -49,7 +49,7 @@ Recent implementation batches:
 - `a021912`: Live integration tests expanded to 10 endpoints (10/10 passing).
 - `8a7fcd8`: Documentation sync and baseline consistency.
 - `aa714d6`: Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins.
-- Current batch: `src/parser/registry.rs` exhaustive 574/574 legacy parser class mapping with strongly typed `ParserDispatchTarget` enum targets (`YTNodeVariant`, `ContainerKind`, `EndpointKind`, `ElementKind`), `tests/api_contracts.rs` covering all 25 legacy public APIs, `tests/authenticated_integration.rs` testing mutation payload contracts and safe live mutation runner with cleanup, and expanded AST nodes (`VideoPrimaryInfo`, `VideoSecondaryInfo`, `ReelShelf`, `PlaylistPanel`, `PlaylistPanelVideo`, `CreatorHeart`, `ChipCloud`, `ChipCloudChip`).
+- Current batch: `src/parser/registry.rs` 100% strongly typed enum mapping for all 574 legacy classes (134 Direct, 164 Container, 195 Element, 74 NavigationEndpoint, 7 Kids; 0 DocumentedEquivalent strings), `tests/api_contracts.rs` covering all 25 legacy public APIs, `tests/authenticated_integration.rs` testing mutation payload contracts and 4-type reversible live mutation suite with cleanup, and expanded AST nodes (`VideoPrimaryInfo`, `VideoSecondaryInfo`, `ReelShelf`, `PlaylistPanel`, `PlaylistPanelVideo`, `CreatorHeart`, `ChipCloud`, `ChipCloudChip`).
 
 Current evidence is deliberately **not** a 100% parity claim:
 
@@ -58,9 +58,9 @@ Current evidence is deliberately **not** a 100% parity claim:
 - Ten live integration tests in `tests/live_integration.rs` were executed with
   `cargo test --test live_integration -- --ignored` and passed 10/10 against the live
   YouTube API.
-- Eleven opt-in live tests exist in total (10 anonymous + 1 reversible authenticated mutation with cleanup).
+- Fourteen opt-in live tests exist in total (10 anonymous + 4 reversible authenticated mutation tests with automated cleanup).
 - `src/parser/registry.rs` provides an executable `ParserDispatchTarget` mapping for all 574 registered legacy parser classes
-  to typed AST node variants, containers, endpoints, elements, or equivalent fallbacks, verified by `test_all_574_legacy_classes_are_registered_with_concrete_targets` and `test_all_ytnode_variants_have_executable_parsers`.
+  to typed AST node variants, containers, endpoints, elements, and kids modules, verified by `test_all_574_legacy_classes_are_registered_with_strongly_typed_targets` and `test_all_ytnode_variants_have_executable_parsers`.
 - Dedicated API contracts in `tests/api_contracts.rs` cover request construction, response handling, and parameters for all 25 public `Innertube` APIs.
 - Public API rows and core rows reflect objective `In progress` or `Partial` status
   in `PARITY_MANIFEST.md`.

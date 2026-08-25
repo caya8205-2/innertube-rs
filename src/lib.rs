@@ -163,8 +163,8 @@ pub use models::video::{
 };
 pub use parser::{
     ButtonNode, ChannelCardNode, ChipCloudChipNode, ChipCloudNode, CommentNode, CommentThreadNode,
-    ContainerKind, CreatorHeartNode, ElementKind, EndpointKind, ItemSectionNode, LegacyClassMeta,
-    LiveChatMessageNode, MenuItemNode, MenuNode, MusicDescriptionShelfNode,
+    ContainerKind, CreatorHeartNode, ElementKind, EndpointKind, ItemSectionNode, KidsKind,
+    LegacyClassMeta, LiveChatMessageNode, MenuItemNode, MenuNode, MusicDescriptionShelfNode,
     MusicResponsiveListItemNode, MusicTwoRowItemNode, NavigationEndpointNode, NodeListExt, Parser,
     ParserCategory, ParserDispatchTarget, ParserRegistry, PlaylistNode, PlaylistPanelNode,
     PlaylistPanelVideoNode, PlaylistVideoNode, PostNode, ReelShelfNode, RichGridNode, RichShelfNode,
