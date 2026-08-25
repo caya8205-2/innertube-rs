@@ -48,18 +48,19 @@ Recent implementation batches:
 - `58a0afa`: Button, Menu, Overlay AST node expansions and `Actions.execute` dispatcher.
 - `a021912`: Live integration tests expanded to 10 endpoints (10/10 passing).
 - `8a7fcd8`: Documentation sync and baseline consistency.
-- Current batch: `src/parser/registry.rs` executable `ParserDispatchTarget` mapping with 546 verified entries, and `tests/contract_fixtures.rs` deterministic fixture suite with 6 comprehensive end-to-end tests.
+- Current batch: `src/parser/registry.rs` executable `ParserDispatchTarget` mapping with 546 verified entries, `tests/contract_fixtures.rs` deterministic fixture suite with 10 comprehensive tests, and public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins.
 
 Current evidence is deliberately **not** a 100% parity claim:
 
-- `cargo test --all-targets` passes 50 non-network unit/contract tests (44 in `src/lib.rs` + 6 in `tests/contract_fixtures.rs`).
+- `cargo test --all-targets` passes 54 non-network unit/contract tests (44 in `src/lib.rs` + 10 in `tests/contract_fixtures.rs`).
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
 - Ten live integration tests in `tests/live_integration.rs` were executed with
   `cargo test --test live_integration -- --ignored` and passed 10/10 against the live
   YouTube API.
 - Phase 1 (`get_info` concurrent composition & sub-manager namespaces `music()`,
   `playlist()`, `interact()`, `actions()`, `account()`, `kids()`), Phase 2 (`Feed<T>` pagination mixin),
-  Phase 3 (Container, Button, Menu, and Endpoint AST nodes), and Phase 4 (`Actions.execute` / `ApiResponse`)
+  Phase 3 (Container, Button, Menu, and Endpoint AST nodes), Phase 4 (`Actions.execute` / `ApiResponse`),
+  and Phase 5 (Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, Attestation Challenge, and rich feed mixins)
   are implemented.
 - `src/parser/registry.rs` provides an executable `ParserDispatchTarget` mapping for all 546 registered keys
   to direct AST nodes, containers, elements, or equivalent fallbacks, verified by `test_all_registered_classes_have_executable_dispatch_target`.

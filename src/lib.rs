@@ -162,7 +162,10 @@ pub use models::video::{
     Thumbnail, VideoDetails, VideoInfo,
 };
 pub use parser::{
-    NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserRegistry, YTNode,
+    ButtonNode, ChannelCardNode, CommentThreadNode, LiveChatMessageNode, MenuItemNode, MenuNode,
+    NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserRegistry, PlaylistNode,
+    PlaylistVideoNode, PostNode, ShortNode, ThumbnailOverlayProgressBarNode,
+    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoNode, YTNode,
 };
 
 use crate::endpoints::account::{

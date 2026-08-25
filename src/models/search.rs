@@ -113,3 +113,33 @@ pub struct SearchResults {
     pub items: Vec<SearchResultItem>,
     pub continuation_token: Option<String>,
 }
+
+impl SearchResults {
+    /// Check if the search result has a continuation page.
+    pub fn has_continuation(&self) -> bool {
+        self.continuation_token.is_some()
+    }
+
+    /// Fetch the next page of search results.
+    pub async fn get_continuation(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<SearchResults> {
+        let token = self.continuation_token.as_deref().ok_or_else(|| {
+            crate::error::InnertubeError::Other(
+                "No continuation token available for search".to_string(),
+            )
+        })?;
+        crate::endpoints::search::search(session, "", Some(token)).await
+    }
+
+    /// Re-run the search query with updated filters applied.
+    pub async fn apply_filter(
+        &self,
+        session: &crate::core::session::Session,
+        filter: &SearchFilters,
+    ) -> crate::error::Result<SearchResults> {
+        crate::endpoints::search::search_with_filters(session, &self.query, Some(filter), None)
+            .await
+    }
+}

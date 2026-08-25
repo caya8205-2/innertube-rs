@@ -17,7 +17,7 @@ pub async fn get_attestation_challenge(
     response.json().await.map_err(InnertubeError::Network)
 }
 
-pub(crate) fn build_attestation_payload(engagement_type: &str, ids: Option<Value>) -> Value {
+pub fn build_attestation_payload(engagement_type: &str, ids: Option<Value>) -> Value {
     let mut payload = json!({ "engagementType": engagement_type });
     if let Some(ids) = ids {
         payload["ids"] = ids;

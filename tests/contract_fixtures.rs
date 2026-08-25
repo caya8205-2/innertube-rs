@@ -1,7 +1,12 @@
+#![allow(unused_imports, dead_code)]
+
 use innertube_rs::{
-    ApiResponse, NodeListExt, Parser, YTNode,
+    ActionResult, ApiResponse, CreateCommentResult, CreatePlaylistResult, FormatFilter,
+    FormatType, NavigationEndpointNode, NodeListExt, NotificationPreferenceType, Parser,
+    PlaylistNode, PlaylistVideoNode, PostCommentSort, PostNode, QualityPreference, SearchFilters,
+    SearchPrioritize, ShortNode, VideoNode, YouTubePlaylistView, YTNode,
 };
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[test]
 fn test_fixture_search_response_parsing() {
@@ -370,4 +375,119 @@ fn test_fixture_actions_execute_response() {
     assert!(api_response.success);
     assert_eq!(api_response.status_code, 200);
     assert!(api_response.data.get("actions").is_some());
+}
+
+#[test]
+fn test_fixture_courses_and_subscriptions_feeds() {
+    let browse_payload = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [
+                    {
+                        "tabRenderer": {
+                            "title": "Courses",
+                            "selected": true,
+                            "content": {
+                                "sectionListRenderer": {
+                                    "contents": [
+                                        {
+                                            "itemSectionRenderer": {
+                                                "contents": [
+                                                    {
+                                                        "playlistRenderer": {
+                                                            "playlistId": "PL_course_1",
+                                                            "title": { "simpleText": "Rust Deep Dive" },
+                                                            "videoCount": "40"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    });
+
+    let feed = innertube_rs::endpoints::feed::parse_browse_feed_response("FEcourses", &browse_payload)
+        .expect("Should parse courses feed");
+    assert_eq!(feed.browse_id, "FEcourses");
+    assert_eq!(feed.playlists.len(), 1);
+    assert_eq!(feed.playlists[0].title, "Rust Deep Dive");
+}
+
+#[test]
+fn test_fixture_unseen_notifications_count() {
+    let top_level = json!({ "unseenCount": 12 });
+    assert_eq!(
+        innertube_rs::endpoints::account::parse_unseen_notifications_count(&top_level),
+        12
+    );
+
+    let action_wrapped = json!({
+        "actions": [
+            {
+                "updateNotificationsUnseenCountAction": {
+                    "unseenCount": "5"
+                }
+            }
+        ]
+    });
+    assert_eq!(
+        innertube_rs::endpoints::account::parse_unseen_notifications_count(&action_wrapped),
+        5
+    );
+}
+
+#[test]
+fn test_fixture_attestation_challenge() {
+    let payload = innertube_rs::endpoints::attestation::build_attestation_payload(
+        "ENGAGEMENT_TYPE_VIDEO",
+        Some(json!([{"videoId": "dQw4w9WgXcQ"}])),
+    );
+    assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_VIDEO");
+    assert_eq!(payload["ids"][0]["videoId"], "dQw4w9WgXcQ");
+}
+
+#[test]
+fn test_fixture_feed_mixin_continuations() {
+    let search_res = innertube_rs::SearchResults {
+        query: "rust".to_string(),
+        items: vec![],
+        continuation_token: Some("token_search".to_string()),
+    };
+    assert!(search_res.has_continuation());
+
+    let comments_res = innertube_rs::CommentsResult {
+        total_comments_text: None,
+        comments: vec![],
+        continuation_token: Some("token_comments".to_string()),
+    };
+    assert!(comments_res.has_continuation());
+
+    let playlist_view = innertube_rs::PlaylistView {
+        id: "PL_123".to_string(),
+        title: "Test".to_string(),
+        author: None,
+        author_id: None,
+        description: None,
+        video_count: None,
+        view_count: None,
+        last_updated: None,
+        thumbnail: None,
+        videos: vec![],
+        continuation_token: Some("token_playlist".to_string()),
+    };
+    assert!(playlist_view.has_continuation());
+
+    let channel_videos = innertube_rs::ChannelVideosResponse {
+        channel_id: "UC_123".to_string(),
+        videos: vec![],
+        continuation_token: Some("token_channel".to_string()),
+    };
+    assert!(channel_videos.has_continuation());
 }

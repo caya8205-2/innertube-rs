@@ -78,6 +78,26 @@ pub async fn get_browse_feed(session: &Session, browse_id: &str) -> Result<Brows
     parse_browse_feed_response(browse_id, &raw)
 }
 
+/// Fetch YouTube Courses feed (`FEcourses`).
+pub async fn get_courses(session: &Session) -> Result<BrowseFeed> {
+    get_browse_feed(session, "FEcourses").await
+}
+
+/// Fetch YouTube Subscriptions feed (`FEsubscriptions`).
+pub async fn get_subscriptions_feed(session: &Session) -> Result<BrowseFeed> {
+    get_browse_feed(session, "FEsubscriptions").await
+}
+
+/// Fetch Subscribed Channels list (`FEchannels`).
+pub async fn get_channels_feed(session: &Session) -> Result<BrowseFeed> {
+    get_browse_feed(session, "FEchannels").await
+}
+
+/// Fetch User Playlists feed (`FEplaylist_aggregation`).
+pub async fn get_playlists(session: &Session) -> Result<BrowseFeed> {
+    get_browse_feed(session, "FEplaylist_aggregation").await
+}
+
 /// Fetch continuation of a generic browse destination.
 pub async fn get_browse_continuation(session: &Session, continuation_token: &str) -> Result<BrowseFeed> {
     let payload = json!({

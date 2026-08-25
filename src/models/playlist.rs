@@ -52,6 +52,26 @@ pub struct PlaylistView {
     pub continuation_token: Option<String>,
 }
 
+impl PlaylistView {
+    /// Check if there are further playlist videos to load.
+    pub fn has_continuation(&self) -> bool {
+        self.continuation_token.is_some()
+    }
+
+    /// Fetch the next page of playlist items.
+    pub async fn get_continuation(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<PlaylistContinuation> {
+        let token = self.continuation_token.as_deref().ok_or_else(|| {
+            crate::error::InnertubeError::Other(
+                "No continuation token available for playlist".to_string(),
+            )
+        })?;
+        crate::endpoints::playlist::get_playlist_continuation(session, token).await
+    }
+}
+
 /// Continuation response for additional playlist items.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]

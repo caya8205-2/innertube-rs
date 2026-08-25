@@ -45,11 +45,30 @@ pub struct CommentThread {
     pub replies_continuation_token: Option<String>,
 }
 
-/// Comments list result containing comment threads and pagination continuation token.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CommentsResult {
     pub total_comments_text: Option<String>,
     pub comments: Vec<CommentThread>,
     pub continuation_token: Option<String>,
+}
+
+impl CommentsResult {
+    /// Check if there are further comment threads to load.
+    pub fn has_continuation(&self) -> bool {
+        self.continuation_token.is_some()
+    }
+
+    /// Fetch the next page of comment threads.
+    pub async fn get_continuation(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<CommentsResult> {
+        let token = self.continuation_token.as_deref().ok_or_else(|| {
+            crate::error::InnertubeError::Other(
+                "No continuation token available for comments".to_string(),
+            )
+        })?;
+        crate::endpoints::comments::get_comments(session, "", Some(token)).await
+    }
 }

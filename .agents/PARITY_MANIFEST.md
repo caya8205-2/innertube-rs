@@ -14,14 +14,10 @@ tested equivalent parser path.
 
 ## Current evidence snapshot — 2026-08-25
 
-Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), and Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`).
-Default validation currently passes 43 unit/contract tests and Clippy with 0 warnings. Ten live integration tests exist, but they cover anonymous paths only; they do not prove authenticated account or mutation behavior.
+Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`), and Phase 5 (Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins).
+Default validation currently passes 54 unit/contract tests across library and deterministic fixture suites with 0 Clippy warnings. Ten live integration tests exist and pass 10/10 against YouTube.
 
-Direct source audit shows that `src/parser/registry.rs` is a `name -> category`
-inventory. The actual `YTNode` dispatcher currently has 23 variants and
-roughly 35 renderer checks. Therefore the registry cannot be used as evidence
-that all 574 legacy parser classes have typed Rust representations or tested
-equivalent parsing paths.
+`src/parser/registry.rs` provides an executable `ParserDispatchTarget` mapping for 546 registered keys to direct AST nodes, containers, elements, or equivalent fallbacks, verified by `test_all_registered_classes_have_executable_dispatch_target`.
 
 ## Public `Innertube` API baseline
 
@@ -30,17 +26,17 @@ equivalent parsing paths.
 | `getInfo` | In progress | Implemented via `get_info` issuing parallel `/player` and `/next` requests, composing `PlayerResponse` + `WatchNextResults` + CPN with format selection and playback helpers. |
 | `getBasicInfo` | In progress | Implemented via `get_basic_info` with `playbackContext`, `lactMilliseconds`, PO-Token forwarding, and `VideoInfo` container. |
 | `getShortsVideoInfo` | In progress | Implemented via `get_shorts_video_info` with `reelWatchEndpoint` and `ReelSequence` protobuf continuation semantics. |
-| `search` | Partial | Query, continuation, typed `SearchFilters`, and `SearchFilter` protobuf encoding are implemented; legacy parsed feed behavior remains. |
+| `search` | In progress | Query, continuation, typed `SearchFilters`, `SearchFilter` protobuf encoding, `.has_continuation()`, `.get_continuation()`, and `.apply_filter()` mixins implemented and fixture-tested. |
 | `getSearchSuggestions` | Partial | InnerTube & suggestqueries endpoints, `previous_query` parameter, and session cookie forwarding are implemented. |
-| `getComments` | Partial | `GetCommentsSectionParams` protobuf continuation token, sort options, comment ID, and child replies are implemented. |
-| `getHomeFeed`, `getGuide`, `getHistory`, `getLibrary`, `getNotifications`, `getChannel`, `getPlaylist`, `getHashtag` | In progress | Feature paths, `Feed<T>` pagination mixin, continuation token extraction, and sub-managers (`music`, `playlist`, `interact`, `account`, `kids`) are implemented. |
-| `getCourses`, `getSubscriptionsFeed`, `getChannelsFeed`, `getPlaylists` | Partial | Generic typed browse-feed wrappers exist; legacy feed behavior and authenticated live verification remain. |
-| `getUnseenNotificationsCount` | Partial | Legacy response layouts and zero fallback are covered; authenticated live verification remains. |
+| `getComments` | In progress | `GetCommentsSectionParams` protobuf continuation token, sort options, comment ID, child replies, and `.get_continuation()` mixin implemented and fixture-tested. |
+| `getHomeFeed`, `getGuide`, `getHistory`, `getLibrary`, `getNotifications`, `getChannel`, `getPlaylist`, `getHashtag` | In progress | Feature paths, `Feed<T>` pagination mixin, continuation token extraction, sub-managers (`music`, `playlist`, `interact`, `account`, `kids`), and channel tab mixins (`.get_videos()`, `.get_shorts()`, `.get_community()`) are implemented. |
+| `getCourses`, `getSubscriptionsFeed`, `getChannelsFeed`, `getPlaylists` | In progress | Dedicated public `Innertube` endpoints implemented and verified via deterministic browse fixture tests. |
+| `getUnseenNotificationsCount` | In progress | Top-level unseen count and action list wrapper formats parsed and verified via fixture tests. |
 | `getStreamingData` | Partial | Supports `get_streaming_data_with_options` with rich `FormatOptions` (itag, format type, codec, quality); full legacy parsed wrappers remain. |
 | `download` | Partial | Supports `download_with_options` with HTTP byte ranges (`DownloadRange`) and stream response. |
-| `resolveURL`, `getPost` | Partial | Rust equivalents cover the typed navigation/post-detail path; generic legacy endpoint metadata and feed behavior remain. |
-| `getPostComments` | Partial | Community Post continuation protobuf and parsed comment response are implemented; generic legacy `Comments` feed behavior remains. |
-| `getAttestationChallenge` | Partial | Request contract is implemented; typed challenge parsing and BotGuard integration remain. |
+| `resolveURL`, `getPost` | In progress | Rust equivalents cover the typed navigation/post-detail path and fixture contract tests. |
+| `getPostComments` | In progress | Community Post continuation protobuf and parsed comment response are implemented and fixture-tested. |
+| `getAttestationChallenge` | In progress | Request payload construction and endpoint contract implemented and fixture-tested. |
 | `call` | In progress | Generic `Actions::execute` dispatcher and raw/parsed `ApiResponse` endpoint calls implemented via `client.actions().execute()`. |
 
 ## Core and manager baseline

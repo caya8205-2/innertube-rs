@@ -136,4 +136,30 @@ impl PostNode {
             },
         })
     }
+
+    pub fn post_id(&self) -> &str {
+        &self.post.id
+    }
+
+    pub fn author_name(&self) -> Option<&str> {
+        self.post.author.as_ref().map(|a| a.name.as_str())
+    }
+
+    pub fn text(&self) -> &str {
+        &self.post.content_text
+    }
+}
+
+impl std::ops::Deref for PostNode {
+    type Target = CommunityPost;
+
+    fn deref(&self) -> &Self::Target {
+        &self.post
+    }
+}
+
+impl std::ops::DerefMut for PostNode {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.post
+    }
 }

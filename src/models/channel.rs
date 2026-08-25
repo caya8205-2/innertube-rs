@@ -87,6 +87,32 @@ pub struct ChannelAbout {
     pub banner: Option<String>,
 }
 
+impl ChannelAbout {
+    /// Fetch the channel's recent uploads (Videos tab).
+    pub async fn get_videos(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<ChannelVideosResponse> {
+        crate::endpoints::channel::get_channel_videos(session, &self.channel_id, None).await
+    }
+
+    /// Fetch the channel's Shorts (Shorts tab).
+    pub async fn get_shorts(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<ChannelShortsResponse> {
+        crate::endpoints::channel::get_channel_shorts(session, &self.channel_id, None).await
+    }
+
+    /// Fetch the channel's Community posts.
+    pub async fn get_community(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<crate::models::post::CommunityPostsResponse> {
+        crate::endpoints::channel::get_channel_community(session, &self.channel_id, None).await
+    }
+}
+
 /// Videos tab response with pagination.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -96,6 +122,26 @@ pub struct ChannelVideosResponse {
     pub continuation_token: Option<String>,
 }
 
+impl ChannelVideosResponse {
+    /// Check if there are more videos to load.
+    pub fn has_continuation(&self) -> bool {
+        self.continuation_token.is_some()
+    }
+
+    /// Fetch the next page of videos for this channel.
+    pub async fn get_continuation(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<ChannelVideosResponse> {
+        let token = self.continuation_token.as_deref().ok_or_else(|| {
+            crate::error::InnertubeError::Other(
+                "No continuation token available for channel videos".to_string(),
+            )
+        })?;
+        crate::endpoints::channel::get_channel_videos(session, &self.channel_id, Some(token)).await
+    }
+}
+
 /// Shorts tab response with pagination.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -103,4 +149,24 @@ pub struct ChannelShortsResponse {
     pub channel_id: String,
     pub shorts: Vec<ChannelShortItem>,
     pub continuation_token: Option<String>,
+}
+
+impl ChannelShortsResponse {
+    /// Check if there are more shorts to load.
+    pub fn has_continuation(&self) -> bool {
+        self.continuation_token.is_some()
+    }
+
+    /// Fetch the next page of shorts for this channel.
+    pub async fn get_continuation(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<ChannelShortsResponse> {
+        let token = self.continuation_token.as_deref().ok_or_else(|| {
+            crate::error::InnertubeError::Other(
+                "No continuation token available for channel shorts".to_string(),
+            )
+        })?;
+        crate::endpoints::channel::get_channel_shorts(session, &self.channel_id, Some(token)).await
+    }
 }
