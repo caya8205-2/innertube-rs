@@ -95,6 +95,16 @@ pub enum YTNodeVariant {
     BackstageImage,
     PostMultiImage,
     ChannelSubMenu,
+    ShowEngagementPanelAction,
+    UpdateEngagementPanelAction,
+    NavigateAction,
+    ShowLiveChatAction,
+    PlayerCaptionsTracklist,
+    PlayerErrorMessage,
+    PlayerLegacyDesktopYpcTrailer,
+    PlaylistMetadata,
+    PlaylistSidebarPrimaryInfo,
+    PlaylistSidebarSecondaryInfo,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -1678,7 +1688,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlayerCaptionsTracklist",
             legacy_path: "PlayerCaptionsTracklist.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlayerCaptionsTracklist),
         },
         LegacyClassMeta {
             name: "PlayerControlsOverlay",
@@ -1690,7 +1700,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlayerErrorMessage",
             legacy_path: "PlayerErrorMessage.ts",
             category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlayerErrorMessage),
         },
         LegacyClassMeta {
             name: "PlayerLegacyDesktopYpcOffer",
@@ -1702,7 +1712,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlayerLegacyDesktopYpcTrailer",
             legacy_path: "PlayerLegacyDesktopYpcTrailer.ts",
             category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlayerLegacyDesktopYpcTrailer),
         },
         LegacyClassMeta {
             name: "PlayerLiveStoryboardSpec",
@@ -1786,7 +1796,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlaylistMetadata",
             legacy_path: "PlaylistMetadata.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlaylistMetadata),
         },
         LegacyClassMeta {
             name: "PlaylistPanel",
@@ -1816,13 +1826,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlaylistSidebarPrimaryInfo",
             legacy_path: "PlaylistSidebarPrimaryInfo.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlaylistSidebarPrimaryInfo),
         },
         LegacyClassMeta {
             name: "PlaylistSidebarSecondaryInfo",
             legacy_path: "PlaylistSidebarSecondaryInfo.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::PlaylistSidebarSecondaryInfo),
         },
         LegacyClassMeta {
             name: "PlaylistThumbnailOverlay",
@@ -2776,7 +2786,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChangeEngagementPanelVisibilityAction",
             legacy_path: "actions/ChangeEngagementPanelVisibilityAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowEngagementPanelAction),
         },
         LegacyClassMeta {
             name: "GetMultiPageMenuAction",
@@ -2812,7 +2822,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UpdateEngagementPanelAction",
             legacy_path: "actions/UpdateEngagementPanelAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::UpdateEngagementPanelAction),
         },
         LegacyClassMeta {
             name: "UpdateSubscribeButtonAction",
@@ -3094,7 +3104,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShowEngagementPanelEndpoint",
             legacy_path: "endpoints/ShowEngagementPanelEndpoint.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowEngagementPanelAction),
         },
         LegacyClassMeta {
             name: "SignalServiceEndpoint",
@@ -3208,19 +3218,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShowLiveChatActionPanelAction",
             legacy_path: "livechat/ShowLiveChatActionPanelAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowLiveChatAction),
         },
         LegacyClassMeta {
             name: "ShowLiveChatDialogAction",
             legacy_path: "livechat/ShowLiveChatDialogAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowLiveChatAction),
         },
         LegacyClassMeta {
             name: "ShowLiveChatTooltipCommand",
             legacy_path: "livechat/ShowLiveChatTooltipCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowLiveChatAction),
         },
         LegacyClassMeta {
             name: "UpdateDateTextAction",
@@ -3719,9 +3729,9 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 157);
-        assert_eq!(container_count, 166);
-        assert_eq!(endpoint_count, 70);
+        assert_eq!(direct_count, 167);
+        assert_eq!(container_count, 162);
+        assert_eq!(endpoint_count, 64);
         assert_eq!(element_count, 174);
         assert_eq!(kids_count, 7);
     }
@@ -3738,6 +3748,9 @@ mod tests {
             (json!({ "playlistVideoRenderer": { "videoId": "pv1", "title": { "runs": [{ "text": "PV" }] } } }), "PlaylistVideo"),
             (json!({ "playlistPanelRenderer": { "title": { "simpleText": "Panel" } } }), "PlaylistPanel"),
             (json!({ "playlistPanelVideoRenderer": { "videoId": "ppv1", "title": { "runs": [{ "text": "PPV" }] } } }), "PlaylistPanelVideo"),
+            (json!({ "playlistMetadataRenderer": { "title": "PL Meta" } }), "PlaylistMetadata"),
+            (json!({ "playlistSidebarPrimaryInfoRenderer": { "title": { "simpleText": "PL Side" } } }), "PlaylistSidebarPrimaryInfo"),
+            (json!({ "playlistSidebarSecondaryInfoRenderer": { "videoOwner": {} } }), "PlaylistSidebarSecondaryInfo"),
             (json!({ "channelRenderer": { "channelId": "c1", "title": { "simpleText": "C" } } }), "ChannelCard"),
             (json!({ "c4TabbedHeaderRenderer": { "title": "CH" } }), "ChannelHeader"),
             (json!({ "channelAboutFullMetadataRenderer": { "description": { "simpleText": "About" } } }), "ChannelAboutFullMetadata"),
@@ -3767,6 +3780,10 @@ mod tests {
             (json!({ "markChatItemAsDeletedAction": { "targetItemId": "m1" } }), "MarkChatItemAsDeletedAction"),
             (json!({ "liveChatAutoModMessageRenderer": { "headerText": { "simpleText": "Review" } } }), "LiveChatAutoModMessage"),
             (json!({ "liveChatModeChangeMessageRenderer": { "text": { "simpleText": "Slow mode on" } } }), "LiveChatModeChangeMessage"),
+            (json!({ "showEngagementPanelEndpoint": { "panelIdentifier": "panel_1" } }), "ShowEngagementPanelAction"),
+            (json!({ "updateEngagementPanelAction": { "panelIdentifier": "panel_1" } }), "UpdateEngagementPanelAction"),
+            (json!({ "navigateAction": { "endpoint": {} } }), "NavigateAction"),
+            (json!({ "showLiveChatAction": { "clientId": "live_c1" } }), "ShowLiveChatAction"),
             (json!({ "buttonRenderer": { "text": { "runs": [{ "text": "Btn" }] } } }), "Button"),
             (json!({ "toggleButtonRenderer": { "defaultText": { "simpleText": "Tog" } } }), "ToggleButton"),
             (json!({ "menuRenderer": { "items": [] } }), "Menu"),
@@ -3786,6 +3803,9 @@ mod tests {
             (json!({ "playerOverlayRenderer": { "actions": [] } }), "PlayerOverlay"),
             (json!({ "playerStoryboardSpecRenderer": { "spec": "http://storyboard" } }), "PlayerStoryboardSpec"),
             (json!({ "timedMarkerDecorationRenderer": { "visibleTimeRangeStartMillis": 1000 } }), "TimedMarkerDecoration"),
+            (json!({ "playerCaptionsTracklistRenderer": { "captionTracks": [] } }), "PlayerCaptionsTracklist"),
+            (json!({ "playerErrorMessageRenderer": { "reason": { "simpleText": "Unavailable" } } }), "PlayerErrorMessage"),
+            (json!({ "playerLegacyDesktopYpcTrailerRenderer": { "videoId": "trailer_1" } }), "PlayerLegacyDesktopYpcTrailer"),
             (json!({ "profileColumnRenderer": { "items": [] } }), "ProfileColumn"),
             (json!({ "profileColumnUserInfoRenderer": { "title": "User" } }), "ProfileColumnUserInfo"),
             (json!({ "verticalListRenderer": { "items": [] } }), "VerticalList"),

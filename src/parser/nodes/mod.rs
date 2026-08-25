@@ -31,18 +31,24 @@ pub use misc::{
     ClarificationNode, ContinuationEndpointNode, DidYouMeanNode, EndscreenElementNode,
     EndscreenNode, ExpandableTabNode, HeatmapNode, HorizontalCardListNode, LikeEndpointNode,
     MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
-    MicroformatDataNode, NavigationEndpointNode, PlayerOverlayNode, PlayerStoryboardSpecNode,
-    PollNode, ProfileColumnNode, ProfileColumnUserInfoNode, ReelWatchEndpointNode,
-    SearchEndpointNode, SearchRefinementCardNode, SearchSubMenuNode, ShowingResultsForNode,
+    MicroformatDataNode, NavigateActionNode, NavigationEndpointNode, PlayerCaptionsTracklistNode,
+    PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode,
+    PlayerStoryboardSpecNode, PollNode, ProfileColumnNode, ProfileColumnUserInfoNode,
+    ReelWatchEndpointNode, SearchEndpointNode, SearchRefinementCardNode, SearchSubMenuNode,
+    ShowingResultsForNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
     SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
     ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, TimedMarkerDecorationNode,
-    ToggleButtonNode, VerticalListNode, VideoOwnerNode, ViewCountNode, WatchEndpointNode,
+    ToggleButtonNode, UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode,
+    ViewCountNode, WatchEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
     MusicResponsiveListItemNode, MusicTwoRowItemNode,
 };
-pub use playlist::{PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode};
+pub use playlist::{
+    PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
+    PlaylistSidebarPrimaryInfoNode, PlaylistSidebarSecondaryInfoNode, PlaylistVideoNode,
+};
 pub use post::{BackstageImageNode, PostMultiImageNode, PostNode};
 pub use short::{ReelShelfNode, ShortNode};
 pub use video::{VideoNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode};
@@ -63,6 +69,9 @@ pub enum YTNode {
     PlaylistVideo(PlaylistVideoNode),
     PlaylistPanel(PlaylistPanelNode),
     PlaylistPanelVideo(PlaylistPanelVideoNode),
+    PlaylistMetadata(PlaylistMetadataNode),
+    PlaylistSidebarPrimaryInfo(PlaylistSidebarPrimaryInfoNode),
+    PlaylistSidebarSecondaryInfo(PlaylistSidebarSecondaryInfoNode),
     ChannelHeader(ChannelHeaderNode),
     ChannelCard(ChannelCardNode),
     ChannelAboutFullMetadata(ChannelAboutFullMetadataNode),
@@ -98,6 +107,10 @@ pub enum YTNode {
     MarkChatItemAsDeletedAction(MarkChatItemAsDeletedActionNode),
     LiveChatAutoModMessage(LiveChatAutoModMessageNode),
     LiveChatModeChangeMessage(LiveChatModeChangeMessageNode),
+    ShowEngagementPanelAction(ShowEngagementPanelActionNode),
+    UpdateEngagementPanelAction(UpdateEngagementPanelActionNode),
+    NavigateAction(NavigateActionNode),
+    ShowLiveChatAction(ShowLiveChatActionNode),
     Button(ButtonNode),
     ToggleButton(ToggleButtonNode),
     Menu(MenuNode),
@@ -117,6 +130,9 @@ pub enum YTNode {
     PlayerOverlay(PlayerOverlayNode),
     PlayerStoryboardSpec(PlayerStoryboardSpecNode),
     TimedMarkerDecoration(TimedMarkerDecorationNode),
+    PlayerCaptionsTracklist(PlayerCaptionsTracklistNode),
+    PlayerErrorMessage(PlayerErrorMessageNode),
+    PlayerLegacyDesktopYpcTrailer(PlayerLegacyDesktopYpcTrailerNode),
     ProfileColumn(ProfileColumnNode),
     ProfileColumnUserInfo(ProfileColumnUserInfoNode),
     VerticalList(VerticalListNode),
@@ -591,6 +607,64 @@ impl YTNode {
         if val.get("channelSubMenuRenderer").is_some() {
             if let Some(csm) = ChannelSubMenuNode::from_value(val) {
                 return Some(YTNode::ChannelSubMenu(csm));
+            }
+        }
+
+        // 26. Check for Engagement & Live Actions
+        if val.get("showEngagementPanelEndpoint").is_some()
+            || val.get("showEngagementPanelAction").is_some()
+        {
+            if let Some(se) = ShowEngagementPanelActionNode::from_value(val) {
+                return Some(YTNode::ShowEngagementPanelAction(se));
+            }
+        }
+        if val.get("updateEngagementPanelAction").is_some() {
+            if let Some(ue) = UpdateEngagementPanelActionNode::from_value(val) {
+                return Some(YTNode::UpdateEngagementPanelAction(ue));
+            }
+        }
+        if val.get("navigateAction").is_some() {
+            if let Some(na) = NavigateActionNode::from_value(val) {
+                return Some(YTNode::NavigateAction(na));
+            }
+        }
+        if val.get("showLiveChatAction").is_some() || val.get("showLiveChatItemEndpoint").is_some() {
+            if let Some(slc) = ShowLiveChatActionNode::from_value(val) {
+                return Some(YTNode::ShowLiveChatAction(slc));
+            }
+        }
+
+        // 27. Check for Player Media & Error Messages
+        if val.get("playerCaptionsTracklistRenderer").is_some() {
+            if let Some(pct) = PlayerCaptionsTracklistNode::from_value(val) {
+                return Some(YTNode::PlayerCaptionsTracklist(pct));
+            }
+        }
+        if val.get("playerErrorMessageRenderer").is_some() {
+            if let Some(pem) = PlayerErrorMessageNode::from_value(val) {
+                return Some(YTNode::PlayerErrorMessage(pem));
+            }
+        }
+        if val.get("playerLegacyDesktopYpcTrailerRenderer").is_some() {
+            if let Some(ypc) = PlayerLegacyDesktopYpcTrailerNode::from_value(val) {
+                return Some(YTNode::PlayerLegacyDesktopYpcTrailer(ypc));
+            }
+        }
+
+        // 28. Check for Playlist Metadata & Sidebar Info
+        if val.get("playlistMetadataRenderer").is_some() {
+            if let Some(pm) = PlaylistMetadataNode::from_value(val) {
+                return Some(YTNode::PlaylistMetadata(pm));
+            }
+        }
+        if val.get("playlistSidebarPrimaryInfoRenderer").is_some() {
+            if let Some(spi) = PlaylistSidebarPrimaryInfoNode::from_value(val) {
+                return Some(YTNode::PlaylistSidebarPrimaryInfo(spi));
+            }
+        }
+        if val.get("playlistSidebarSecondaryInfoRenderer").is_some() {
+            if let Some(ssi) = PlaylistSidebarSecondaryInfoNode::from_value(val) {
+                return Some(YTNode::PlaylistSidebarSecondaryInfo(ssi));
             }
         }
 

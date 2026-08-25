@@ -335,3 +335,79 @@ impl PlaylistPanelNode {
         })
     }
 }
+
+/// Strongly typed PlaylistMetadata AST node (`playlistMetadataRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistMetadataNode {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub privacy: Option<String>,
+}
+
+impl PlaylistMetadataNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("playlistMetadataRenderer").unwrap_or(val);
+        let title = node.get("title").and_then(Value::as_str).map(ToString::to_string);
+        let description = node.get("description").and_then(Value::as_str).map(ToString::to_string);
+        let privacy = node.get("privacy").and_then(Value::as_str).map(ToString::to_string);
+
+        Some(Self {
+            title,
+            description,
+            privacy,
+        })
+    }
+}
+
+/// Strongly typed PlaylistSidebarPrimaryInfo AST node (`playlistSidebarPrimaryInfoRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistSidebarPrimaryInfoNode {
+    pub title: Option<String>,
+    pub stats: Vec<String>,
+    pub thumbnails: ThumbnailListNode,
+}
+
+impl PlaylistSidebarPrimaryInfoNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("playlistSidebarPrimaryInfoRenderer").unwrap_or(val);
+        let title = node.get("title").and_then(TextNode::from_value).map(|t| t.text);
+
+        let mut stats = Vec::new();
+        if let Some(arr) = node.get("stats").and_then(Value::as_array) {
+            for item in arr {
+                if let Some(txt) = TextNode::from_value(item) {
+                    stats.push(txt.text);
+                }
+            }
+        }
+
+        let thumbnails = ThumbnailListNode::from_value(node.get("thumbnailRenderer").unwrap_or(node));
+
+        Some(Self {
+            title,
+            stats,
+            thumbnails,
+        })
+    }
+}
+
+/// Strongly typed PlaylistSidebarSecondaryInfo AST node (`playlistSidebarSecondaryInfoRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistSidebarSecondaryInfoNode {
+    pub owner: Option<Value>,
+    pub button: Option<Value>,
+}
+
+impl PlaylistSidebarSecondaryInfoNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("playlistSidebarSecondaryInfoRenderer").unwrap_or(val);
+        let owner = node.get("videoOwner").cloned();
+        let button = node.get("button").cloned();
+
+        Some(Self { owner, button })
+    }
+}
+

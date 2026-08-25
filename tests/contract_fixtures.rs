@@ -1009,6 +1009,166 @@ fn test_fixture_search_refinements_post_media_and_channel_submenus() {
     }
 }
 
+#[test]
+fn test_fixture_engagement_panel_and_navigation_actions() {
+    let show_panel_json = json!({
+        "showEngagementPanelEndpoint": {
+            "panelIdentifier": "engagement-panel-structured-description",
+            "engagementPanel": { "title": "Description" }
+        }
+    });
+    let show_panel_node = YTNode::parse(&show_panel_json).expect("ShowEngagementPanelActionNode should parse");
+    if let YTNode::ShowEngagementPanelAction(sp) = show_panel_node {
+        assert_eq!(sp.panel_identifier.as_deref(), Some("engagement-panel-structured-description"));
+        assert!(sp.content.is_some());
+    } else {
+        panic!("Expected YTNode::ShowEngagementPanelAction");
+    }
+
+    let update_panel_json = json!({
+        "updateEngagementPanelAction": {
+            "panelIdentifier": "engagement-panel-comments",
+            "content": { "commentsCount": 120 }
+        }
+    });
+    let update_panel_node = YTNode::parse(&update_panel_json).expect("UpdateEngagementPanelActionNode should parse");
+    if let YTNode::UpdateEngagementPanelAction(up) = update_panel_node {
+        assert_eq!(up.panel_identifier.as_deref(), Some("engagement-panel-comments"));
+        assert!(up.content.is_some());
+    } else {
+        panic!("Expected YTNode::UpdateEngagementPanelAction");
+    }
+
+    let navigate_json = json!({
+        "navigateAction": {
+            "endpoint": { "browseEndpoint": { "browseId": "FEwhat_to_watch" } }
+        }
+    });
+    let nav_node = YTNode::parse(&navigate_json).expect("NavigateActionNode should parse");
+    if let YTNode::NavigateAction(na) = nav_node {
+        assert!(na.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::NavigateAction");
+    }
+
+    let show_live_json = json!({
+        "showLiveChatAction": {
+            "clientId": "live_msg_sync",
+            "chatItem": { "liveChatTextMessageRenderer": { "id": "l1" } }
+        }
+    });
+    let live_node = YTNode::parse(&show_live_json).expect("ShowLiveChatActionNode should parse");
+    if let YTNode::ShowLiveChatAction(sla) = live_node {
+        assert_eq!(sla.client_id.as_deref(), Some("live_msg_sync"));
+        assert!(sla.chat_item.is_some());
+    } else {
+        panic!("Expected YTNode::ShowLiveChatAction");
+    }
+}
+
+#[test]
+fn test_fixture_player_media_and_playlist_sidebars() {
+    let captions_json = json!({
+        "playerCaptionsTracklistRenderer": {
+            "captionTracks": [{ "baseUrl": "https://youtube.com/api/timedtext", "languageCode": "en" }],
+            "audioTracks": [{ "audioTrackId": "1" }],
+            "translationLanguages": [{ "languageCode": "id", "languageName": "Indonesian" }]
+        }
+    });
+    let cap_node = YTNode::parse(&captions_json).expect("PlayerCaptionsTracklistNode should parse");
+    if let YTNode::PlayerCaptionsTracklist(pct) = cap_node {
+        assert_eq!(pct.caption_tracks.len(), 1);
+        assert_eq!(pct.audio_tracks.len(), 1);
+        assert_eq!(pct.translation_languages.len(), 1);
+    } else {
+        panic!("Expected YTNode::PlayerCaptionsTracklist");
+    }
+
+    let error_json = json!({
+        "playerErrorMessageRenderer": {
+            "reason": { "runs": [{ "text": "Video unavailable" }] },
+            "subreason": { "runs": [{ "text": "This video is private." }] },
+            "icon": { "iconType": "ERROR" }
+        }
+    });
+    let err_node = YTNode::parse(&error_json).expect("PlayerErrorMessageNode should parse");
+    if let YTNode::PlayerErrorMessage(pem) = err_node {
+        assert_eq!(pem.reason, "Video unavailable");
+        assert_eq!(pem.subreason.as_deref(), Some("This video is private."));
+        assert_eq!(pem.icon_type.as_deref(), Some("ERROR"));
+    } else {
+        panic!("Expected YTNode::PlayerErrorMessage");
+    }
+
+    let trailer_json = json!({
+        "playerLegacyDesktopYpcTrailerRenderer": {
+            "videoId": "trailer_abc",
+            "ypcMessage": { "runs": [{ "text": "Rent this movie to watch" }] }
+        }
+    });
+    let tr_node = YTNode::parse(&trailer_json).expect("PlayerLegacyDesktopYpcTrailerNode should parse");
+    if let YTNode::PlayerLegacyDesktopYpcTrailer(tr) = tr_node {
+        assert_eq!(tr.video_id.as_deref(), Some("trailer_abc"));
+        assert_eq!(tr.ypc_message.as_deref(), Some("Rent this movie to watch"));
+    } else {
+        panic!("Expected YTNode::PlayerLegacyDesktopYpcTrailer");
+    }
+
+    let pl_meta_json = json!({
+        "playlistMetadataRenderer": {
+            "title": "Favorite Coding Music",
+            "description": "Selected tracks for focus",
+            "privacy": "PUBLIC"
+        }
+    });
+    let meta_node = YTNode::parse(&pl_meta_json).expect("PlaylistMetadataNode should parse");
+    if let YTNode::PlaylistMetadata(pm) = meta_node {
+        assert_eq!(pm.title.as_deref(), Some("Favorite Coding Music"));
+        assert_eq!(pm.description.as_deref(), Some("Selected tracks for focus"));
+        assert_eq!(pm.privacy.as_deref(), Some("PUBLIC"));
+    } else {
+        panic!("Expected YTNode::PlaylistMetadata");
+    }
+
+    let pl_sidebar_primary_json = json!({
+        "playlistSidebarPrimaryInfoRenderer": {
+            "title": { "runs": [{ "text": "Rust Learning Track" }] },
+            "stats": [
+                { "runs": [{ "text": "15 videos" }] },
+                { "runs": [{ "text": "100,000 views" }] }
+            ],
+            "thumbnailRenderer": {
+                "thumbnails": [{ "url": "https://img.youtube.com/pl_thumb.jpg" }]
+            }
+        }
+    });
+    let prim_node = YTNode::parse(&pl_sidebar_primary_json).expect("PlaylistSidebarPrimaryInfoNode should parse");
+    if let YTNode::PlaylistSidebarPrimaryInfo(spi) = prim_node {
+        assert_eq!(spi.title.as_deref(), Some("Rust Learning Track"));
+        assert_eq!(spi.stats.len(), 2);
+        assert!(!spi.thumbnails.thumbnails.is_empty());
+    } else {
+        panic!("Expected YTNode::PlaylistSidebarPrimaryInfo");
+    }
+
+    let pl_sidebar_secondary_json = json!({
+        "playlistSidebarSecondaryInfoRenderer": {
+            "videoOwner": {
+                "videoOwnerRenderer": { "title": { "runs": [{ "text": "Rust Foundation" }] } }
+            },
+            "button": { "buttonRenderer": { "text": { "runs": [{ "text": "Play All" }] } } }
+        }
+    });
+    let sec_node = YTNode::parse(&pl_sidebar_secondary_json).expect("PlaylistSidebarSecondaryInfoNode should parse");
+    if let YTNode::PlaylistSidebarSecondaryInfo(ssi) = sec_node {
+        assert!(ssi.owner.is_some());
+        assert!(ssi.button.is_some());
+    } else {
+        panic!("Expected YTNode::PlaylistSidebarSecondaryInfo");
+    }
+}
+
+
 
 
 
