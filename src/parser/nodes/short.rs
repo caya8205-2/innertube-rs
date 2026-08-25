@@ -100,3 +100,35 @@ impl ShortNode {
         })
     }
 }
+
+/// Shelf containing Shorts items (`ReelShelf.ts` / `reelShelfRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ReelShelfNode {
+    pub title: Option<String>,
+    pub items: Vec<ShortNode>,
+}
+
+impl ReelShelfNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("reelShelfRenderer").unwrap_or(val);
+        if target.get("items").is_none() && target.get("title").is_none() {
+            return None;
+        }
+
+        let title = target
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let mut items = Vec::new();
+        if let Some(arr) = target.get("items").and_then(|i| i.as_array()) {
+            for item in arr {
+                if let Some(short) = ShortNode::from_value(item) {
+                    items.push(short);
+                }
+            }
+        }
+
+        Some(Self { title, items })
+    }
+}

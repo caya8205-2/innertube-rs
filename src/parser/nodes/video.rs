@@ -221,3 +221,107 @@ fn parse_duration_string_to_ms(d: &str) -> Option<u64> {
         None
     }
 }
+
+/// Primary video metadata (`VideoPrimaryInfo.ts` / `videoPrimaryInfoRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct VideoPrimaryInfoNode {
+    pub title: String,
+    pub view_count: Option<String>,
+    pub published_date: Option<String>,
+    pub relative_date: Option<String>,
+}
+
+impl VideoPrimaryInfoNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("videoPrimaryInfoRenderer").unwrap_or(val);
+        if target.get("title").is_none() && target.get("viewCount").is_none() {
+            return None;
+        }
+
+        let title = target
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+
+        let view_count = target
+            .pointer("/viewCount/videoViewCountRenderer/viewCount")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .or_else(|| {
+                target
+                    .get("viewCount")
+                    .and_then(TextNode::from_value)
+                    .map(|t| t.text)
+            });
+
+        let published_date = target
+            .get("dateText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let relative_date = target
+            .get("relativeDateText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        Some(Self {
+            title,
+            view_count,
+            published_date,
+            relative_date,
+        })
+    }
+}
+
+/// Secondary video metadata and channel owner (`VideoSecondaryInfo.ts` / `videoSecondaryInfoRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct VideoSecondaryInfoNode {
+    pub owner_name: Option<String>,
+    pub owner_channel_id: Option<String>,
+    pub subscriber_count: Option<String>,
+    pub description: Option<String>,
+}
+
+impl VideoSecondaryInfoNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("videoSecondaryInfoRenderer").unwrap_or(val);
+        if target.get("owner").is_none() && target.get("description").is_none() {
+            return None;
+        }
+
+        let owner_name = target
+            .pointer("/owner/videoOwnerRenderer/title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let owner_channel_id = target
+            .pointer("/owner/videoOwnerRenderer/navigationEndpoint/browseEndpoint/browseId")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        let subscriber_count = target
+            .pointer("/owner/videoOwnerRenderer/subscriberCountText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let description = target
+            .get("description")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .or_else(|| {
+                target
+                    .get("attributedDescription")
+                    .and_then(|v| v.get("content"))
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string)
+            });
+
+        Some(Self {
+            owner_name,
+            owner_channel_id,
+            subscriber_count,
+            description,
+        })
+    }
+}

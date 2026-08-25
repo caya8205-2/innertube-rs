@@ -71,6 +71,8 @@ pub struct GetVideoInfoOptions {
     pub client: Option<String>,
     /// Proof of Origin token (PO-Token) bound to this video.
     pub po_token: Option<String>,
+    /// Optional playback context / lact milliseconds override.
+    pub playback_context: Option<serde_json::Value>,
 }
 
 use crate::models::format::FormatFilter;
@@ -98,6 +100,22 @@ impl VideoInfo {
     /// Extract video title.
     pub fn title(&self) -> Option<&str> {
         self.player_response.video_details.as_ref().map(|v| v.title.as_str())
+    }
+
+    /// Get the video author/channel title if available.
+    pub fn author(&self) -> Option<&str> {
+        self.player_response
+            .video_details
+            .as_ref()
+            .map(|v| v.author.as_str())
+    }
+
+    /// Get the video duration in seconds if available.
+    pub fn duration_seconds(&self) -> Option<u64> {
+        self.player_response
+            .video_details
+            .as_ref()
+            .and_then(|v| v.length_seconds.parse().ok())
     }
 
     /// Select a streaming format matching the specified filter.

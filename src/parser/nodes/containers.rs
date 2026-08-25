@@ -176,3 +176,60 @@ impl RichShelfNode {
         Some(Self { title, contents })
     }
 }
+
+/// An individual chip cloud filter button (`ChipCloudChipRenderer.ts`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ChipCloudChipNode {
+    pub text: String,
+    pub is_selected: bool,
+    pub continuation_token: Option<String>,
+}
+
+impl ChipCloudChipNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("chipCloudChipRenderer").unwrap_or(val);
+        let text = target
+            .get("text")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+
+        let is_selected = target
+            .get("isSelected")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+
+        let continuation_token = target
+            .pointer("/navigationEndpoint/continuationEndpoint/continuationCommand/token")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        Some(Self {
+            text,
+            is_selected,
+            continuation_token,
+        })
+    }
+}
+
+/// A container cloud of chip filters (`ChipCloud.ts` / `chipCloudRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ChipCloudNode {
+    pub chips: Vec<ChipCloudChipNode>,
+}
+
+impl ChipCloudNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("chipCloudRenderer").unwrap_or(val);
+        let chips_arr = target.get("chips").and_then(Value::as_array)?;
+
+        let mut chips = Vec::new();
+        for item in chips_arr {
+            if let Some(chip) = ChipCloudChipNode::from_value(item) {
+                chips.push(chip);
+            }
+        }
+
+        Some(Self { chips })
+    }
+}

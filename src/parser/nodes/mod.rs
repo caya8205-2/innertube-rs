@@ -11,9 +11,10 @@ pub mod short;
 pub mod video;
 
 pub use channel::{ChannelCardNode, ChannelHeaderNode};
-pub use comments::{CommentNode, CommentThreadNode};
+pub use comments::{CommentNode, CommentThreadNode, CreatorHeartNode};
 pub use containers::{
-    ItemSectionNode, RichGridNode, RichShelfNode, SectionListNode, ShelfNode, TabNode,
+    ChipCloudChipNode, ChipCloudNode, ItemSectionNode, RichGridNode, RichShelfNode, SectionListNode,
+    ShelfNode, TabNode,
 };
 pub use continuation::ContinuationNode;
 pub use livechat::LiveChatMessageNode;
@@ -25,10 +26,10 @@ pub use misc::{
     WatchEndpointNode,
 };
 pub use music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode};
-pub use playlist::{PlaylistNode, PlaylistVideoNode};
+pub use playlist::{PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode};
 pub use post::PostNode;
-pub use short::ShortNode;
-pub use video::VideoNode;
+pub use short::{ReelShelfNode, ShortNode};
+pub use video::{VideoNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -38,9 +39,14 @@ use serde_json::Value;
 #[allow(clippy::large_enum_variant)]
 pub enum YTNode {
     Video(VideoNode),
+    VideoPrimaryInfo(VideoPrimaryInfoNode),
+    VideoSecondaryInfo(VideoSecondaryInfoNode),
     Short(ShortNode),
+    ReelShelf(ReelShelfNode),
     Playlist(PlaylistNode),
     PlaylistVideo(PlaylistVideoNode),
+    PlaylistPanel(PlaylistPanelNode),
+    PlaylistPanelVideo(PlaylistPanelVideoNode),
     ChannelHeader(ChannelHeaderNode),
     ChannelCard(ChannelCardNode),
     MusicItem(MusicResponsiveListItemNode),
@@ -48,6 +54,7 @@ pub enum YTNode {
     MusicDescriptionShelf(MusicDescriptionShelfNode),
     Comment(CommentNode),
     CommentThread(CommentThreadNode),
+    CreatorHeart(CreatorHeartNode),
     Post(PostNode),
     Continuation(ContinuationNode),
     SectionList(SectionListNode),
@@ -56,6 +63,8 @@ pub enum YTNode {
     Shelf(ShelfNode),
     RichShelf(RichShelfNode),
     Tab(TabNode),
+    ChipCloud(ChipCloudNode),
+    ChipCloudChip(ChipCloudChipNode),
     LiveChat(LiveChatMessageNode),
     Button(ButtonNode),
     ToggleButton(ToggleButtonNode),
@@ -79,6 +88,16 @@ impl YTNode {
         }
 
         // 2. Check for Video Renderers
+        if val.get("videoPrimaryInfoRenderer").is_some() {
+            if let Some(vpi) = VideoPrimaryInfoNode::from_value(val) {
+                return Some(YTNode::VideoPrimaryInfo(vpi));
+            }
+        }
+        if val.get("videoSecondaryInfoRenderer").is_some() {
+            if let Some(vsi) = VideoSecondaryInfoNode::from_value(val) {
+                return Some(YTNode::VideoSecondaryInfo(vsi));
+            }
+        }
         if val.get("videoRenderer").is_some()
             || val.get("compactVideoRenderer").is_some()
             || val.get("gridVideoRenderer").is_some()
@@ -89,6 +108,11 @@ impl YTNode {
         }
 
         // 3. Check for Shorts Renderers
+        if val.get("reelShelfRenderer").is_some() {
+            if let Some(rs) = ReelShelfNode::from_value(val) {
+                return Some(YTNode::ReelShelf(rs));
+            }
+        }
         if val.get("reelItemRenderer").is_some() || val.get("shortsLockupViewModel").is_some() {
             if let Some(s) = ShortNode::from_value(val) {
                 return Some(YTNode::Short(s));
@@ -121,6 +145,16 @@ impl YTNode {
         }
 
         // 5. Check for Playlist Renderers
+        if val.get("playlistPanelRenderer").is_some() {
+            if let Some(pp) = PlaylistPanelNode::from_value(val) {
+                return Some(YTNode::PlaylistPanel(pp));
+            }
+        }
+        if val.get("playlistPanelVideoRenderer").is_some() {
+            if let Some(ppv) = PlaylistPanelVideoNode::from_value(val) {
+                return Some(YTNode::PlaylistPanelVideo(ppv));
+            }
+        }
         if val.get("playlistVideoRenderer").is_some() {
             if let Some(pv) = PlaylistVideoNode::from_value(val) {
                 return Some(YTNode::PlaylistVideo(pv));
@@ -167,6 +201,11 @@ impl YTNode {
         }
 
         // 8. Check for Comments Renderers
+        if val.get("creatorHeartRenderer").is_some() {
+            if let Some(ch) = CreatorHeartNode::from_value(val) {
+                return Some(YTNode::CreatorHeart(ch));
+            }
+        }
         if val.get("commentThreadRenderer").is_some() {
             if let Some(ct) = CommentThreadNode::from_value(val) {
                 return Some(YTNode::CommentThread(ct));
@@ -190,6 +229,16 @@ impl YTNode {
         }
 
         // 10. Check for Containers & Layouts
+        if val.get("chipCloudRenderer").is_some() {
+            if let Some(cc) = ChipCloudNode::from_value(val) {
+                return Some(YTNode::ChipCloud(cc));
+            }
+        }
+        if val.get("chipCloudChipRenderer").is_some() {
+            if let Some(ccc) = ChipCloudChipNode::from_value(val) {
+                return Some(YTNode::ChipCloudChip(ccc));
+            }
+        }
         if val.get("sectionListRenderer").is_some() {
             if let Some(s) = SectionListNode::from_value(val) {
                 return Some(YTNode::SectionList(s));

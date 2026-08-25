@@ -48,23 +48,19 @@ Recent implementation batches:
 - `58a0afa`: Button, Menu, Overlay AST node expansions and `Actions.execute` dispatcher.
 - `a021912`: Live integration tests expanded to 10 endpoints (10/10 passing).
 - `8a7fcd8`: Documentation sync and baseline consistency.
-- Current batch: `src/parser/registry.rs` executable `ParserDispatchTarget` mapping with 546 verified entries, `tests/contract_fixtures.rs` deterministic fixture suite with 10 comprehensive tests, and public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins.
+- `aa714d6`: Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins.
+- Current batch: `src/parser/registry.rs` exhaustive 574/574 legacy parser class mapping with concrete `ParserDispatchTarget`s, `tests/api_contracts.rs` covering all 25 legacy public APIs, `tests/authenticated_integration.rs` testing mutation precondition hardening, and expanded specific AST nodes (`VideoPrimaryInfo`, `VideoSecondaryInfo`, `ReelShelf`, `PlaylistPanel`, `PlaylistPanelVideo`, `CreatorHeart`, `ChipCloud`, `ChipCloudChip`).
 
 Current evidence is deliberately **not** a 100% parity claim:
 
-- `cargo test --all-targets` passes 54 non-network unit/contract tests (44 in `src/lib.rs` + 10 in `tests/contract_fixtures.rs`).
+- `cargo test --all-targets` passes 84 non-network unit/contract tests (44 in `src/lib.rs` + 10 in `tests/contract_fixtures.rs` + 25 in `tests/api_contracts.rs` + 5 in `tests/authenticated_integration.rs`).
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
 - Ten live integration tests in `tests/live_integration.rs` were executed with
   `cargo test --test live_integration -- --ignored` and passed 10/10 against the live
   YouTube API.
-- Phase 1 (`get_info` concurrent composition & sub-manager namespaces `music()`,
-  `playlist()`, `interact()`, `actions()`, `account()`, `kids()`), Phase 2 (`Feed<T>` pagination mixin),
-  Phase 3 (Container, Button, Menu, and Endpoint AST nodes), Phase 4 (`Actions.execute` / `ApiResponse`),
-  and Phase 5 (Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, Attestation Challenge, and rich feed mixins)
-  are implemented.
-- `src/parser/registry.rs` provides an executable `ParserDispatchTarget` mapping for all 546 registered keys
-  to direct AST nodes, containers, elements, or equivalent fallbacks, verified by `test_all_registered_classes_have_executable_dispatch_target`.
-- Deterministic fixture contracts in `tests/contract_fixtures.rs` cover Search, Channel tabs, Playlists, Music lists, Comments/Posts, and Actions.
+- `src/parser/registry.rs` provides an executable `ParserDispatchTarget` mapping for all 574 registered legacy parser classes
+  to direct AST nodes, containers, elements, or equivalent fallbacks, verified by `test_all_574_legacy_classes_are_registered_with_concrete_targets`.
+- Dedicated API contracts in `tests/api_contracts.rs` cover request construction, response handling, and parameters for all 25 public `Innertube` APIs.
 - Public API rows and core rows reflect objective `In progress` or `Partial` status
   in `PARITY_MANIFEST.md`.
 

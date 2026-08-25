@@ -9,7 +9,7 @@ pub enum PostCommentSort {
 }
 
 impl PostCommentSort {
-    pub(crate) const fn proto_value(self) -> i32 {
+    pub const fn proto_value(self) -> i32 {
         match self {
             Self::TopComments => 0,
             Self::NewestFirst => 1,

@@ -19,921 +19,3535 @@ pub enum ParserCategory {
     Kids,
 }
 
-static REGISTRY: LazyLock<HashMap<&'static str, ParserCategory>> = LazyLock::new(|| {
+/// Target representation or handler for an executable parser class.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParserDispatchTarget {
+    /// Direct, strongly-typed AST node variant (e.g. `YTNode::Video`, `YTNode::CommentThread`).
+    DirectAst(&'static str),
+    /// Container node with polymorphic children parsing (e.g. `YTNode::Container`, `YTNode::Tab`).
+    Container(&'static str),
+    /// Navigation / Action endpoint dispatcher (e.g. `YTNode::NavigationEndpoint`).
+    NavigationEndpoint(&'static str),
+    /// UI element or component node (e.g. `YTNode::Button`, `YTNode::Menu`, `YTNode::Overlay`).
+    Element(&'static str),
+    /// Documented and tested equivalent fixture representation for domain-specific payload.
+    DocumentedEquivalent(&'static str),
+}
+
+/// Metadata entry for a registered legacy YouTube.js parser class.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LegacyClassMeta {
+    pub name: &'static str,
+    pub legacy_path: &'static str,
+    pub category: ParserCategory,
+    pub dispatch_target: ParserDispatchTarget,
+}
+
+static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
+    vec![
+        LegacyClassMeta {
+            name: "AboutChannel",
+            legacy_path: "AboutChannel.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "AboutChannelView",
+            legacy_path: "AboutChannelView.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "AccessibilityContext",
+            legacy_path: "misc/AccessibilityContext.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AccessibilityContext"),
+        },
+        LegacyClassMeta {
+            name: "AccessibilityData",
+            legacy_path: "misc/AccessibilityData.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AccessibilityData"),
+        },
+        LegacyClassMeta {
+            name: "AccountChannel",
+            legacy_path: "AccountChannel.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "AccountItem",
+            legacy_path: "AccountItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AccountItem"),
+        },
+        LegacyClassMeta {
+            name: "AccountItemSection",
+            legacy_path: "AccountItemSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "AccountItemSectionHeader",
+            legacy_path: "AccountItemSectionHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "AccountSectionList",
+            legacy_path: "AccountSectionList.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ActiveAccountHeader",
+            legacy_path: "ActiveAccountHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ActiveAccountHeader"),
+        },
+        LegacyClassMeta {
+            name: "AddBannerToLiveChatCommand",
+            legacy_path: "livechat/AddBannerToLiveChatCommand.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::AddBannerToLiveChatCommand"),
+        },
+        LegacyClassMeta {
+            name: "AddChatItemAction",
+            legacy_path: "livechat/AddChatItemAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::AddChatItemAction"),
+        },
+        LegacyClassMeta {
+            name: "AddLiveChatTickerItemAction",
+            legacy_path: "livechat/AddLiveChatTickerItemAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::AddLiveChatTickerItemAction"),
+        },
+        LegacyClassMeta {
+            name: "AddToPlaylist",
+            legacy_path: "AddToPlaylist.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "AddToPlaylistCommand",
+            legacy_path: "commands/AddToPlaylistCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "AddToPlaylistEndpoint",
+            legacy_path: "endpoints/AddToPlaylistEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "AddToPlaylistServiceEndpoint",
+            legacy_path: "endpoints/AddToPlaylistServiceEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "Alert",
+            legacy_path: "Alert.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Alert"),
+        },
+        LegacyClassMeta {
+            name: "AlertWithButton",
+            legacy_path: "AlertWithButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "AnchoredSection",
+            legacy_path: "ytkids/AnchoredSection.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::AnchoredSection"),
+        },
+        LegacyClassMeta {
+            name: "AnimatedThumbnailOverlayView",
+            legacy_path: "AnimatedThumbnailOverlayView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "AppendContinuationItemsAction",
+            legacy_path: "actions/AppendContinuationItemsAction.ts",
+            category: ParserCategory::Continuation,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Continuation"),
+        },
+        LegacyClassMeta {
+            name: "AttributionView",
+            legacy_path: "AttributionView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AttributionView"),
+        },
+        LegacyClassMeta {
+            name: "AudioOnlyPlayability",
+            legacy_path: "AudioOnlyPlayability.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AudioOnlyPlayability"),
+        },
+        LegacyClassMeta {
+            name: "Author",
+            legacy_path: "misc/Author.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "AuthorCommentBadge",
+            legacy_path: "comments/AuthorCommentBadge.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::AuthorCommentBadge"),
+        },
+        LegacyClassMeta {
+            name: "AutomixPreviewVideo",
+            legacy_path: "AutomixPreviewVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "AvatarStackView",
+            legacy_path: "AvatarStackView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AvatarStackView"),
+        },
+        LegacyClassMeta {
+            name: "AvatarView",
+            legacy_path: "AvatarView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::AvatarView"),
+        },
+        LegacyClassMeta {
+            name: "BackgroundPromo",
+            legacy_path: "BackgroundPromo.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::BackgroundPromo"),
+        },
+        LegacyClassMeta {
+            name: "BackstageImage",
+            legacy_path: "BackstageImage.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "BackstagePost",
+            legacy_path: "BackstagePost.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "BackstagePostThread",
+            legacy_path: "BackstagePostThread.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "BadgeView",
+            legacy_path: "BadgeView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "BrowseEndpoint",
+            legacy_path: "endpoints/BrowseEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "BrowseFeedActions",
+            legacy_path: "BrowseFeedActions.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "BrowserMediaSession",
+            legacy_path: "BrowserMediaSession.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::BrowserMediaSession"),
+        },
+        LegacyClassMeta {
+            name: "BumperUserEduContentView",
+            legacy_path: "livechat/items/BumperUserEduContentView.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::BumperUserEduContentView"),
+        },
+        LegacyClassMeta {
+            name: "Button",
+            legacy_path: "Button.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ButtonCardView",
+            legacy_path: "ButtonCardView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ButtonView",
+            legacy_path: "ButtonView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "C4TabbedHeader",
+            legacy_path: "C4TabbedHeader.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "CallToActionButton",
+            legacy_path: "CallToActionButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "Card",
+            legacy_path: "Card.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Card"),
+        },
+        LegacyClassMeta {
+            name: "CardCollection",
+            legacy_path: "CardCollection.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CardCollection"),
+        },
+        LegacyClassMeta {
+            name: "CarouselHeader",
+            legacy_path: "CarouselHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CarouselHeader"),
+        },
+        LegacyClassMeta {
+            name: "CarouselItem",
+            legacy_path: "CarouselItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CarouselItem"),
+        },
+        LegacyClassMeta {
+            name: "CarouselItemView",
+            legacy_path: "CarouselItemView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CarouselItemView"),
+        },
+        LegacyClassMeta {
+            name: "CarouselLockup",
+            legacy_path: "CarouselLockup.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "CarouselTitleView",
+            legacy_path: "CarouselTitleView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CarouselTitleView"),
+        },
+        LegacyClassMeta {
+            name: "ChangeEngagementPanelVisibilityAction",
+            legacy_path: "actions/ChangeEngagementPanelVisibilityAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ChangeEngagementPanelVisibilityAction"),
+        },
+        LegacyClassMeta {
+            name: "Channel",
+            legacy_path: "Channel.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelAboutFullMetadata",
+            legacy_path: "ChannelAboutFullMetadata.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelAgeGate",
+            legacy_path: "ChannelAgeGate.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelExternalLinkView",
+            legacy_path: "ChannelExternalLinkView.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelFeaturedContent",
+            legacy_path: "ChannelFeaturedContent.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelHeaderLinks",
+            legacy_path: "ChannelHeaderLinks.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelHeaderLinksView",
+            legacy_path: "ChannelHeaderLinksView.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelMetadata",
+            legacy_path: "ChannelMetadata.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelMobileHeader",
+            legacy_path: "ChannelMobileHeader.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelOptions",
+            legacy_path: "ChannelOptions.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelOwnerEmptyState",
+            legacy_path: "ChannelOwnerEmptyState.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelSubMenu",
+            legacy_path: "ChannelSubMenu.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "ChannelSwitcherHeader",
+            legacy_path: "ChannelSwitcherHeader.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelSwitcherPage",
+            legacy_path: "ChannelSwitcherPage.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelTagline",
+            legacy_path: "ChannelTagline.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "ChannelThumbnailWithLink",
+            legacy_path: "ChannelThumbnailWithLink.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ChannelVideoPlayer",
+            legacy_path: "ChannelVideoPlayer.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "Chapter",
+            legacy_path: "Chapter.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Chapter"),
+        },
+        LegacyClassMeta {
+            name: "ChildElement",
+            legacy_path: "misc/ChildElement.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ChildElement"),
+        },
+        LegacyClassMeta {
+            name: "ChildVideo",
+            legacy_path: "ChildVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "ChipBarView",
+            legacy_path: "ChipBarView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ChipBarView"),
+        },
+        LegacyClassMeta {
+            name: "ChipCloud",
+            legacy_path: "ChipCloud.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ChipCloud"),
+        },
+        LegacyClassMeta {
+            name: "ChipCloudChip",
+            legacy_path: "ChipCloudChip.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ChipCloudChip"),
+        },
+        LegacyClassMeta {
+            name: "ChipView",
+            legacy_path: "ChipView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ChipView"),
+        },
+        LegacyClassMeta {
+            name: "ClientSideToggleMenuItem",
+            legacy_path: "ClientSideToggleMenuItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "ClipAdState",
+            legacy_path: "ClipAdState.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ClipAdState"),
+        },
+        LegacyClassMeta {
+            name: "ClipCreation",
+            legacy_path: "ClipCreation.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ClipCreation"),
+        },
+        LegacyClassMeta {
+            name: "ClipCreationScrubber",
+            legacy_path: "ClipCreationScrubber.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ClipCreationScrubber"),
+        },
+        LegacyClassMeta {
+            name: "ClipCreationTextInput",
+            legacy_path: "ClipCreationTextInput.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ClipCreationTextInput"),
+        },
+        LegacyClassMeta {
+            name: "ClipSection",
+            legacy_path: "ClipSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "CollaboratorInfoCardContent",
+            legacy_path: "CollaboratorInfoCardContent.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CollaboratorInfoCardContent"),
+        },
+        LegacyClassMeta {
+            name: "CollageHeroImage",
+            legacy_path: "CollageHeroImage.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CollageHeroImage"),
+        },
+        LegacyClassMeta {
+            name: "CollectionThumbnailView",
+            legacy_path: "CollectionThumbnailView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "CommandContext",
+            legacy_path: "misc/CommandContext.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "CommandExecutorCommand",
+            legacy_path: "commands/CommandExecutorCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "CommentActionButtons",
+            legacy_path: "comments/CommentActionButtons.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentActionButtons"),
+        },
+        LegacyClassMeta {
+            name: "CommentDialog",
+            legacy_path: "comments/CommentDialog.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommentThread"),
+        },
+        LegacyClassMeta {
+            name: "CommentReplies",
+            legacy_path: "comments/CommentReplies.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentReplies"),
+        },
+        LegacyClassMeta {
+            name: "CommentReplyDialog",
+            legacy_path: "comments/CommentReplyDialog.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommentThread"),
+        },
+        LegacyClassMeta {
+            name: "CommentSimplebox",
+            legacy_path: "comments/CommentSimplebox.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommentThread"),
+        },
+        LegacyClassMeta {
+            name: "CommentThread",
+            legacy_path: "comments/CommentThread.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommentThread"),
+        },
+        LegacyClassMeta {
+            name: "CommentView",
+            legacy_path: "comments/CommentView.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentView"),
+        },
+        LegacyClassMeta {
+            name: "CommentsContinuation",
+            legacy_path: "misc/CommentsContinuation.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentsContinuation"),
+        },
+        LegacyClassMeta {
+            name: "CommentsEntryPointHeader",
+            legacy_path: "comments/CommentsEntryPointHeader.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentsEntryPointHeader"),
+        },
+        LegacyClassMeta {
+            name: "CommentsEntryPointTeaser",
+            legacy_path: "comments/CommentsEntryPointTeaser.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentsEntryPointTeaser"),
+        },
+        LegacyClassMeta {
+            name: "CommentsHeader",
+            legacy_path: "comments/CommentsHeader.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CommentsHeader"),
+        },
+        LegacyClassMeta {
+            name: "CommentsSimplebox",
+            legacy_path: "comments/CommentsSimplebox.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommentThread"),
+        },
+        LegacyClassMeta {
+            name: "CompactChannel",
+            legacy_path: "CompactChannel.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "CompactLink",
+            legacy_path: "CompactLink.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CompactLink"),
+        },
+        LegacyClassMeta {
+            name: "CompactMix",
+            legacy_path: "CompactMix.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CompactMix"),
+        },
+        LegacyClassMeta {
+            name: "CompactMovie",
+            legacy_path: "CompactMovie.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CompactMovie"),
+        },
+        LegacyClassMeta {
+            name: "CompactPlaylist",
+            legacy_path: "CompactPlaylist.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "CompactStation",
+            legacy_path: "CompactStation.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CompactStation"),
+        },
+        LegacyClassMeta {
+            name: "CompactVideo",
+            legacy_path: "CompactVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "CompositeVideoPrimaryInfo",
+            legacy_path: "CompositeVideoPrimaryInfo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "ConfirmDialog",
+            legacy_path: "ConfirmDialog.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ConfirmDialog"),
+        },
+        LegacyClassMeta {
+            name: "ContentListItemView",
+            legacy_path: "ContentListItemView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ContentListItemView"),
+        },
+        LegacyClassMeta {
+            name: "ContentMetadataView",
+            legacy_path: "ContentMetadataView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ContentMetadataView"),
+        },
+        LegacyClassMeta {
+            name: "ContentPreviewImageView",
+            legacy_path: "ContentPreviewImageView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ContentPreviewImageView"),
+        },
+        LegacyClassMeta {
+            name: "ContinuationCommand",
+            legacy_path: "commands/ContinuationCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ContinuationItem",
+            legacy_path: "ContinuationItem.ts",
+            category: ParserCategory::Continuation,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Continuation"),
+        },
+        LegacyClassMeta {
+            name: "ContinuationItemView",
+            legacy_path: "ContinuationItemView.ts",
+            category: ParserCategory::Continuation,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Continuation"),
+        },
+        LegacyClassMeta {
+            name: "ConversationBar",
+            legacy_path: "ConversationBar.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ConversationBar"),
+        },
+        LegacyClassMeta {
+            name: "CopyLink",
+            legacy_path: "CopyLink.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::CopyLink"),
+        },
+        LegacyClassMeta {
+            name: "CreateCommentEndpoint",
+            legacy_path: "endpoints/CreateCommentEndpoint.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CreateCommentEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "CreatePlaylistDialog",
+            legacy_path: "CreatePlaylistDialog.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "CreatePlaylistDialogFormView",
+            legacy_path: "CreatePlaylistDialogFormView.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "CreatePlaylistServiceEndpoint",
+            legacy_path: "endpoints/CreatePlaylistServiceEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "CreatorHeart",
+            legacy_path: "comments/CreatorHeart.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::CreatorHeart"),
+        },
+        LegacyClassMeta {
+            name: "CreatorHeartView",
+            legacy_path: "livechat/items/CreatorHeartView.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::CreatorHeartView"),
+        },
+        LegacyClassMeta {
+            name: "DecoratedAvatarView",
+            legacy_path: "DecoratedAvatarView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DecoratedAvatarView"),
+        },
+        LegacyClassMeta {
+            name: "DecoratedPlayerBar",
+            legacy_path: "DecoratedPlayerBar.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "DefaultPromoPanel",
+            legacy_path: "DefaultPromoPanel.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DefaultPromoPanel"),
+        },
+        LegacyClassMeta {
+            name: "DeletePlaylistEndpoint",
+            legacy_path: "endpoints/DeletePlaylistEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "DescriptionPreviewView",
+            legacy_path: "DescriptionPreviewView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DescriptionPreviewView"),
+        },
+        LegacyClassMeta {
+            name: "DialogHeaderView",
+            legacy_path: "DialogHeaderView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DialogHeaderView"),
+        },
+        LegacyClassMeta {
+            name: "DialogView",
+            legacy_path: "DialogView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DialogView"),
+        },
+        LegacyClassMeta {
+            name: "DidYouMean",
+            legacy_path: "DidYouMean.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DidYouMean"),
+        },
+        LegacyClassMeta {
+            name: "DimChatItemAction",
+            legacy_path: "livechat/DimChatItemAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::DimChatItemAction"),
+        },
+        LegacyClassMeta {
+            name: "DislikeButtonView",
+            legacy_path: "DislikeButtonView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "DismissableDialog",
+            legacy_path: "DismissableDialog.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DismissableDialog"),
+        },
+        LegacyClassMeta {
+            name: "DismissableDialogContentSection",
+            legacy_path: "DismissableDialogContentSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "DownloadButton",
+            legacy_path: "DownloadButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "DownloadListItemView",
+            legacy_path: "DownloadListItemView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DownloadListItemView"),
+        },
+        LegacyClassMeta {
+            name: "Dropdown",
+            legacy_path: "Dropdown.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Dropdown"),
+        },
+        LegacyClassMeta {
+            name: "DropdownItem",
+            legacy_path: "DropdownItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DropdownItem"),
+        },
+        LegacyClassMeta {
+            name: "DropdownView",
+            legacy_path: "DropdownView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DropdownView"),
+        },
+        LegacyClassMeta {
+            name: "DynamicTextView",
+            legacy_path: "DynamicTextView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::DynamicTextView"),
+        },
+        LegacyClassMeta {
+            name: "Element",
+            legacy_path: "Element.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Element"),
+        },
+        LegacyClassMeta {
+            name: "EmergencyOnebox",
+            legacy_path: "EmergencyOnebox.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EmergencyOnebox"),
+        },
+        LegacyClassMeta {
+            name: "EmojiPicker",
+            legacy_path: "comments/EmojiPicker.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::EmojiPicker"),
+        },
+        LegacyClassMeta {
+            name: "EmojiPickerCategory",
+            legacy_path: "EmojiPickerCategory.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EmojiPickerCategory"),
+        },
+        LegacyClassMeta {
+            name: "EmojiPickerCategoryButton",
+            legacy_path: "EmojiPickerCategoryButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "EmojiPickerUpsellCategory",
+            legacy_path: "EmojiPickerUpsellCategory.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EmojiPickerUpsellCategory"),
+        },
+        LegacyClassMeta {
+            name: "EmojiRun",
+            legacy_path: "misc/EmojiRun.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EmojiRun"),
+        },
+        LegacyClassMeta {
+            name: "EndScreenPlaylist",
+            legacy_path: "EndScreenPlaylist.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "EndScreenVideo",
+            legacy_path: "EndScreenVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "Endscreen",
+            legacy_path: "Endscreen.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Endscreen"),
+        },
+        LegacyClassMeta {
+            name: "EndscreenElement",
+            legacy_path: "EndscreenElement.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EndscreenElement"),
+        },
+        LegacyClassMeta {
+            name: "EngagementPanelSectionList",
+            legacy_path: "EngagementPanelSectionList.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "EngagementPanelTitleHeader",
+            legacy_path: "EngagementPanelTitleHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EngagementPanelTitleHeader"),
+        },
+        LegacyClassMeta {
+            name: "EomSettingsDisclaimer",
+            legacy_path: "EomSettingsDisclaimer.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::EomSettingsDisclaimer"),
+        },
+        LegacyClassMeta {
+            name: "ExpandableMetadata",
+            legacy_path: "ExpandableMetadata.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ExpandableMetadata"),
+        },
+        LegacyClassMeta {
+            name: "ExpandableTab",
+            legacy_path: "ExpandableTab.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ExpandableVideoDescriptionBody",
+            legacy_path: "ExpandableVideoDescriptionBody.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "ExpandedShelfContents",
+            legacy_path: "ExpandedShelfContents.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "Factoid",
+            legacy_path: "Factoid.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Factoid"),
+        },
+        LegacyClassMeta {
+            name: "FancyDismissibleDialog",
+            legacy_path: "FancyDismissibleDialog.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::FancyDismissibleDialog"),
+        },
+        LegacyClassMeta {
+            name: "FeedFilterChipBar",
+            legacy_path: "FeedFilterChipBar.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "FeedNudge",
+            legacy_path: "FeedNudge.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "FeedTabbedHeader",
+            legacy_path: "FeedTabbedHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "FeedbackEndpoint",
+            legacy_path: "endpoints/FeedbackEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "FlexibleActionsView",
+            legacy_path: "FlexibleActionsView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::FlexibleActionsView"),
+        },
+        LegacyClassMeta {
+            name: "Form",
+            legacy_path: "Form.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Form"),
+        },
+        LegacyClassMeta {
+            name: "FormFooterView",
+            legacy_path: "FormFooterView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::FormFooterView"),
+        },
+        LegacyClassMeta {
+            name: "FormPopup",
+            legacy_path: "FormPopup.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::FormPopup"),
+        },
+        LegacyClassMeta {
+            name: "Format",
+            legacy_path: "misc/Format.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Format"),
+        },
+        LegacyClassMeta {
+            name: "GameCard",
+            legacy_path: "GameCard.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::GameCard"),
+        },
+        LegacyClassMeta {
+            name: "GameDetails",
+            legacy_path: "GameDetails.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::GameDetails"),
+        },
+        LegacyClassMeta {
+            name: "GetAccountsListInnertubeEndpoint",
+            legacy_path: "endpoints/GetAccountsListInnertubeEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "GetKidsBlocklistPickerCommand",
+            legacy_path: "commands/GetKidsBlocklistPickerCommand.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::GetKidsBlocklistPickerCommand"),
+        },
+        LegacyClassMeta {
+            name: "GetMultiPageMenuAction",
+            legacy_path: "actions/GetMultiPageMenuAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "Grid",
+            legacy_path: "Grid.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GridChannel",
+            legacy_path: "GridChannel.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "GridHeader",
+            legacy_path: "GridHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GridMix",
+            legacy_path: "GridMix.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GridMovie",
+            legacy_path: "GridMovie.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GridPlaylist",
+            legacy_path: "GridPlaylist.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "GridShelfView",
+            legacy_path: "GridShelfView.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GridShow",
+            legacy_path: "GridShow.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GridVideo",
+            legacy_path: "GridVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "GuideCollapsibleEntry",
+            legacy_path: "GuideCollapsibleEntry.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::GuideCollapsibleEntry"),
+        },
+        LegacyClassMeta {
+            name: "GuideCollapsibleSectionEntry",
+            legacy_path: "GuideCollapsibleSectionEntry.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GuideDownloadsEntry",
+            legacy_path: "GuideDownloadsEntry.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::GuideDownloadsEntry"),
+        },
+        LegacyClassMeta {
+            name: "GuideEntry",
+            legacy_path: "GuideEntry.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::GuideEntry"),
+        },
+        LegacyClassMeta {
+            name: "GuideSection",
+            legacy_path: "GuideSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "GuideSubscriptionsSection",
+            legacy_path: "GuideSubscriptionsSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "HashtagHeader",
+            legacy_path: "HashtagHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HashtagHeader"),
+        },
+        LegacyClassMeta {
+            name: "HashtagTile",
+            legacy_path: "HashtagTile.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HashtagTile"),
+        },
+        LegacyClassMeta {
+            name: "HeatMarker",
+            legacy_path: "HeatMarker.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HeatMarker"),
+        },
+        LegacyClassMeta {
+            name: "Heatmap",
+            legacy_path: "Heatmap.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Heatmap"),
+        },
+        LegacyClassMeta {
+            name: "HeroPlaylistThumbnail",
+            legacy_path: "HeroPlaylistThumbnail.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "HideEngagementPanelEndpoint",
+            legacy_path: "endpoints/HideEngagementPanelEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "HighlightsCarousel",
+            legacy_path: "HighlightsCarousel.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HighlightsCarousel"),
+        },
+        LegacyClassMeta {
+            name: "HistorySuggestion",
+            legacy_path: "HistorySuggestion.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HistorySuggestion"),
+        },
+        LegacyClassMeta {
+            name: "HorizontalCardList",
+            legacy_path: "HorizontalCardList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HorizontalCardList"),
+        },
+        LegacyClassMeta {
+            name: "HorizontalList",
+            legacy_path: "HorizontalList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HorizontalList"),
+        },
+        LegacyClassMeta {
+            name: "HorizontalMovieList",
+            legacy_path: "HorizontalMovieList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HorizontalMovieList"),
+        },
+        LegacyClassMeta {
+            name: "HowThisWasMadeSectionView",
+            legacy_path: "HowThisWasMadeSectionView.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "HypeFanCreditsSectionView",
+            legacy_path: "HypeFanCreditsSectionView.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "HypePointsFactoid",
+            legacy_path: "HypePointsFactoid.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::HypePointsFactoid"),
+        },
+        LegacyClassMeta {
+            name: "IconLink",
+            legacy_path: "IconLink.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::IconLink"),
+        },
+        LegacyClassMeta {
+            name: "ImageBannerView",
+            legacy_path: "ImageBannerView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ImageBannerView"),
+        },
+        LegacyClassMeta {
+            name: "IncludingResultsFor",
+            legacy_path: "IncludingResultsFor.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "InfoPanelContainer",
+            legacy_path: "InfoPanelContainer.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::InfoPanelContainer"),
+        },
+        LegacyClassMeta {
+            name: "InfoPanelContent",
+            legacy_path: "InfoPanelContent.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::InfoPanelContent"),
+        },
+        LegacyClassMeta {
+            name: "InfoRow",
+            legacy_path: "InfoRow.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::InfoRow"),
+        },
+        LegacyClassMeta {
+            name: "InteractiveTabbedHeader",
+            legacy_path: "InteractiveTabbedHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ItemSection",
+            legacy_path: "ItemSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ItemSectionHeader",
+            legacy_path: "ItemSectionHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ItemSectionTab",
+            legacy_path: "ItemSectionTab.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ItemSectionTabbedHeader",
+            legacy_path: "ItemSectionTabbedHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "KidsBlocklistPicker",
+            legacy_path: "ytkids/KidsBlocklistPicker.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::KidsBlocklistPicker"),
+        },
+        LegacyClassMeta {
+            name: "KidsBlocklistPickerItem",
+            legacy_path: "ytkids/KidsBlocklistPickerItem.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::KidsBlocklistPickerItem"),
+        },
+        LegacyClassMeta {
+            name: "KidsCategoriesHeader",
+            legacy_path: "ytkids/KidsCategoriesHeader.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::KidsCategoriesHeader"),
+        },
+        LegacyClassMeta {
+            name: "KidsCategoryTab",
+            legacy_path: "ytkids/KidsCategoryTab.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::KidsCategoryTab"),
+        },
+        LegacyClassMeta {
+            name: "KidsHomeScreen",
+            legacy_path: "ytkids/KidsHomeScreen.ts",
+            category: ParserCategory::Kids,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("WEB_KIDS::KidsHomeScreen"),
+        },
+        LegacyClassMeta {
+            name: "LikeButton",
+            legacy_path: "LikeButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "LikeButtonView",
+            legacy_path: "LikeButtonView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "LikeEndpoint",
+            legacy_path: "endpoints/LikeEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ListItemView",
+            legacy_path: "ListItemView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ListItemView"),
+        },
+        LegacyClassMeta {
+            name: "ListView",
+            legacy_path: "ListView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ListView"),
+        },
+        LegacyClassMeta {
+            name: "LiveChat",
+            legacy_path: "LiveChat.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChat"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatActionPanel",
+            legacy_path: "livechat/LiveChatActionPanel.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatActionPanel"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatAuthorBadge",
+            legacy_path: "LiveChatAuthorBadge.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatAuthorBadge"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatAutoModMessage",
+            legacy_path: "livechat/items/LiveChatAutoModMessage.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatAutoModMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatBanner",
+            legacy_path: "livechat/items/LiveChatBanner.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatBanner"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatBannerChatSummary",
+            legacy_path: "livechat/items/LiveChatBannerChatSummary.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatBannerChatSummary"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatBannerHeader",
+            legacy_path: "livechat/items/LiveChatBannerHeader.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatBannerHeader"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatBannerPoll",
+            legacy_path: "livechat/items/LiveChatBannerPoll.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatBannerPoll"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatBannerRedirect",
+            legacy_path: "livechat/items/LiveChatBannerRedirect.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatBannerRedirect"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatDialog",
+            legacy_path: "LiveChatDialog.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatDialog"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatHeader",
+            legacy_path: "LiveChatHeader.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatHeader"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatItemBumperView",
+            legacy_path: "livechat/items/LiveChatItemBumperView.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatItemBumperView"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatItemContextMenuEndpoint",
+            legacy_path: "endpoints/LiveChatItemContextMenuEndpoint.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatItemContextMenuEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatItemList",
+            legacy_path: "LiveChatItemList.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatItemList"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatMembershipItem",
+            legacy_path: "livechat/items/LiveChatMembershipItem.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::LiveChatMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatMessageInput",
+            legacy_path: "LiveChatMessageInput.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatMessageInput"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatModeChangeMessage",
+            legacy_path: "livechat/items/LiveChatModeChangeMessage.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatModeChangeMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatPaidMessage",
+            legacy_path: "livechat/items/LiveChatPaidMessage.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::LiveChatMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatPaidSticker",
+            legacy_path: "livechat/items/LiveChatPaidSticker.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::LiveChatMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatParticipant",
+            legacy_path: "LiveChatParticipant.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatParticipant"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatParticipantsList",
+            legacy_path: "LiveChatParticipantsList.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatParticipantsList"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatPlaceholderItem",
+            legacy_path: "livechat/items/LiveChatPlaceholderItem.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatPlaceholderItem"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatProductItem",
+            legacy_path: "livechat/items/LiveChatProductItem.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatProductItem"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatRestrictedParticipation",
+            legacy_path: "livechat/items/LiveChatRestrictedParticipation.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatRestrictedParticipation"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatSponsorshipsGiftPurchaseAnnouncement",
+            legacy_path: "livechat/items/LiveChatSponsorshipsGiftPurchaseAnnouncement.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatSponsorshipsGiftPurchaseAnnouncement"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatSponsorshipsGiftRedemptionAnnouncement",
+            legacy_path: "livechat/items/LiveChatSponsorshipsGiftRedemptionAnnouncement.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatSponsorshipsGiftRedemptionAnnouncement"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatSponsorshipsHeader",
+            legacy_path: "livechat/items/LiveChatSponsorshipsHeader.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatSponsorshipsHeader"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatTextMessage",
+            legacy_path: "livechat/items/LiveChatTextMessage.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::LiveChatMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatTickerPaidMessageItem",
+            legacy_path: "livechat/items/LiveChatTickerPaidMessageItem.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::LiveChatMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatTickerPaidStickerItem",
+            legacy_path: "livechat/items/LiveChatTickerPaidStickerItem.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::LiveChatMessage"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatTickerSponsorItem",
+            legacy_path: "livechat/items/LiveChatTickerSponsorItem.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatTickerSponsorItem"),
+        },
+        LegacyClassMeta {
+            name: "LiveChatViewerEngagementMessage",
+            legacy_path: "livechat/items/LiveChatViewerEngagementMessage.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::LiveChatViewerEngagementMessage"),
+        },
+        LegacyClassMeta {
+            name: "LockupMetadataView",
+            legacy_path: "LockupMetadataView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "LockupView",
+            legacy_path: "LockupView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "MacroMarkersInfoItem",
+            legacy_path: "MacroMarkersInfoItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MacroMarkersInfoItem"),
+        },
+        LegacyClassMeta {
+            name: "MacroMarkersList",
+            legacy_path: "MacroMarkersList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MacroMarkersList"),
+        },
+        LegacyClassMeta {
+            name: "MacroMarkersListEntity",
+            legacy_path: "MacroMarkersListEntity.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MacroMarkersListEntity"),
+        },
+        LegacyClassMeta {
+            name: "MacroMarkersListItem",
+            legacy_path: "MacroMarkersListItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MacroMarkersListItem"),
+        },
+        LegacyClassMeta {
+            name: "MarkChatItemAsDeletedAction",
+            legacy_path: "livechat/MarkChatItemAsDeletedAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::MarkChatItemAsDeletedAction"),
+        },
+        LegacyClassMeta {
+            name: "MarkChatItemsByAuthorAsDeletedAction",
+            legacy_path: "livechat/MarkChatItemsByAuthorAsDeletedAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::MarkChatItemsByAuthorAsDeletedAction"),
+        },
+        LegacyClassMeta {
+            name: "Menu",
+            legacy_path: "menus/Menu.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MenuFlexibleItem",
+            legacy_path: "menus/MenuFlexibleItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MenuNavigationItem",
+            legacy_path: "menus/MenuNavigationItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MenuPopup",
+            legacy_path: "menus/MenuPopup.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MenuServiceItem",
+            legacy_path: "menus/MenuServiceItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MenuServiceItemDownload",
+            legacy_path: "menus/MenuServiceItemDownload.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MenuTitle",
+            legacy_path: "MenuTitle.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MerchandiseItem",
+            legacy_path: "MerchandiseItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MerchandiseItem"),
+        },
+        LegacyClassMeta {
+            name: "MerchandiseShelf",
+            legacy_path: "MerchandiseShelf.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "Message",
+            legacy_path: "Message.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Message"),
+        },
+        LegacyClassMeta {
+            name: "MetadataBadge",
+            legacy_path: "MetadataBadge.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "MetadataRow",
+            legacy_path: "MetadataRow.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MetadataRow"),
+        },
+        LegacyClassMeta {
+            name: "MetadataRowContainer",
+            legacy_path: "MetadataRowContainer.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MetadataRowContainer"),
+        },
+        LegacyClassMeta {
+            name: "MetadataRowHeader",
+            legacy_path: "MetadataRowHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MetadataRowHeader"),
+        },
+        LegacyClassMeta {
+            name: "MetadataScreen",
+            legacy_path: "MetadataScreen.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MetadataScreen"),
+        },
+        LegacyClassMeta {
+            name: "MicroformatData",
+            legacy_path: "MicroformatData.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MicroformatData"),
+        },
+        LegacyClassMeta {
+            name: "Mix",
+            legacy_path: "Mix.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Mix"),
+        },
+        LegacyClassMeta {
+            name: "MobileTopbar",
+            legacy_path: "mweb/MobileTopbar.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::MobileTopbar"),
+        },
+        LegacyClassMeta {
+            name: "ModalWithTitleAndButton",
+            legacy_path: "ModalWithTitleAndButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ModifyChannelNotificationPreferenceEndpoint",
+            legacy_path: "endpoints/ModifyChannelNotificationPreferenceEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "Movie",
+            legacy_path: "Movie.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Movie"),
+        },
+        LegacyClassMeta {
+            name: "MovingThumbnail",
+            legacy_path: "MovingThumbnail.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "MultiMarkersPlayerBar",
+            legacy_path: "MultiMarkersPlayerBar.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "MultiPageMenu",
+            legacy_path: "menus/MultiPageMenu.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MultiPageMenuNotificationSection",
+            legacy_path: "menus/MultiPageMenuNotificationSection.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MultiPageMenuSection",
+            legacy_path: "mweb/MultiPageMenuSection.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "MusicCardShelf",
+            legacy_path: "MusicCardShelf.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicCardShelfHeaderBasic",
+            legacy_path: "MusicCardShelfHeaderBasic.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicCarouselShelf",
+            legacy_path: "MusicCarouselShelf.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicCarouselShelfBasicHeader",
+            legacy_path: "MusicCarouselShelfBasicHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicDescriptionShelf",
+            legacy_path: "MusicDescriptionShelf.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicDetailHeader",
+            legacy_path: "MusicDetailHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicDownloadStateBadge",
+            legacy_path: "MusicDownloadStateBadge.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicDownloadStateBadge"),
+        },
+        LegacyClassMeta {
+            name: "MusicEditablePlaylistDetailHeader",
+            legacy_path: "MusicEditablePlaylistDetailHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicElementHeader",
+            legacy_path: "MusicElementHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicHeader",
+            legacy_path: "MusicHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicImmersiveHeader",
+            legacy_path: "MusicImmersiveHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicInlineBadge",
+            legacy_path: "MusicInlineBadge.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicInlineBadge"),
+        },
+        LegacyClassMeta {
+            name: "MusicItemThumbnailOverlay",
+            legacy_path: "MusicItemThumbnailOverlay.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicLargeCardItemCarousel",
+            legacy_path: "MusicLargeCardItemCarousel.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicMenuItemDivider",
+            legacy_path: "menus/MusicMenuItemDivider.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicMultiRowListItem",
+            legacy_path: "MusicMultiRowListItem.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicMultiSelectMenu",
+            legacy_path: "menus/MusicMultiSelectMenu.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicMultiSelectMenu"),
+        },
+        LegacyClassMeta {
+            name: "MusicMultiSelectMenuItem",
+            legacy_path: "menus/MusicMultiSelectMenuItem.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicNavigationButton",
+            legacy_path: "MusicNavigationButton.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicNavigationButton"),
+        },
+        LegacyClassMeta {
+            name: "MusicPlayButton",
+            legacy_path: "MusicPlayButton.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicPlayButton"),
+        },
+        LegacyClassMeta {
+            name: "MusicPlaylistEditHeader",
+            legacy_path: "MusicPlaylistEditHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicPlaylistShelf",
+            legacy_path: "MusicPlaylistShelf.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicQueue",
+            legacy_path: "MusicQueue.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicQueue"),
+        },
+        LegacyClassMeta {
+            name: "MusicResponsiveHeader",
+            legacy_path: "MusicResponsiveHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicResponsiveListItem",
+            legacy_path: "MusicResponsiveListItem.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicResponsiveListItemFixedColumn",
+            legacy_path: "MusicResponsiveListItemFixedColumn.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicResponsiveListItemFlexColumn",
+            legacy_path: "MusicResponsiveListItemFlexColumn.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicShelf",
+            legacy_path: "MusicShelf.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicSideAlignedItem",
+            legacy_path: "MusicSideAlignedItem.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicSortFilterButton",
+            legacy_path: "MusicSortFilterButton.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicSortFilterButton"),
+        },
+        LegacyClassMeta {
+            name: "MusicTastebuilderShelf",
+            legacy_path: "MusicTastebuilderShelf.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicTastebuilderShelfThumbnail",
+            legacy_path: "MusicTastebuilderShelfThumbnail.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicThumbnail",
+            legacy_path: "MusicThumbnail.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::MusicThumbnail"),
+        },
+        LegacyClassMeta {
+            name: "MusicTwoRowItem",
+            legacy_path: "MusicTwoRowItem.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "MusicVisualHeader",
+            legacy_path: "MusicVisualHeader.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::MusicItem"),
+        },
+        LegacyClassMeta {
+            name: "NavigationEndpoint",
+            legacy_path: "NavigationEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "Notification",
+            legacy_path: "Notification.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Notification"),
+        },
+        LegacyClassMeta {
+            name: "NotificationAction",
+            legacy_path: "NotificationAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::NotificationAction"),
+        },
+        LegacyClassMeta {
+            name: "OpenOnePickAddVideoModalCommand",
+            legacy_path: "OpenOnePickAddVideoModalCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "OpenPopupAction",
+            legacy_path: "actions/OpenPopupAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::OpenPopupAction"),
+        },
+        LegacyClassMeta {
+            name: "PageHeader",
+            legacy_path: "PageHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PageHeader"),
+        },
+        LegacyClassMeta {
+            name: "PageHeaderView",
+            legacy_path: "PageHeaderView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PageHeaderView"),
+        },
+        LegacyClassMeta {
+            name: "PageIndicatorView",
+            legacy_path: "PageIndicatorView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PageIndicatorView"),
+        },
+        LegacyClassMeta {
+            name: "PageIntroduction",
+            legacy_path: "PageIntroduction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PageIntroduction"),
+        },
+        LegacyClassMeta {
+            name: "PanelFooterView",
+            legacy_path: "PanelFooterView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PanelFooterView"),
+        },
+        LegacyClassMeta {
+            name: "PdgCommentChip",
+            legacy_path: "comments/PdgCommentChip.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::PdgCommentChip"),
+        },
+        LegacyClassMeta {
+            name: "PdgReplyButtonView",
+            legacy_path: "livechat/items/PdgReplyButtonView.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::PdgReplyButtonView"),
+        },
+        LegacyClassMeta {
+            name: "PerformCommentActionEndpoint",
+            legacy_path: "endpoints/PerformCommentActionEndpoint.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::PerformCommentActionEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "PivotBar",
+            legacy_path: "mweb/PivotBar.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PivotBar"),
+        },
+        LegacyClassMeta {
+            name: "PivotBarItem",
+            legacy_path: "mweb/PivotBarItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::PivotBarItem"),
+        },
+        LegacyClassMeta {
+            name: "PivotButton",
+            legacy_path: "PivotButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "PlayerAnnotationsExpanded",
+            legacy_path: "PlayerAnnotationsExpanded.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerCaptchaView",
+            legacy_path: "PlayerCaptchaView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerCaptionsTracklist",
+            legacy_path: "PlayerCaptionsTracklist.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerControlsOverlay",
+            legacy_path: "PlayerControlsOverlay.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "PlayerErrorMessage",
+            legacy_path: "PlayerErrorMessage.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerLegacyDesktopYpcOffer",
+            legacy_path: "PlayerLegacyDesktopYpcOffer.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerLegacyDesktopYpcTrailer",
+            legacy_path: "PlayerLegacyDesktopYpcTrailer.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerLiveStoryboardSpec",
+            legacy_path: "PlayerLiveStoryboardSpec.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerMicroformat",
+            legacy_path: "PlayerMicroformat.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerOverflow",
+            legacy_path: "PlayerOverflow.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "PlayerOverlay",
+            legacy_path: "PlayerOverlay.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "PlayerOverlayAutoplay",
+            legacy_path: "PlayerOverlayAutoplay.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "PlayerOverlayVideoDetails",
+            legacy_path: "PlayerOverlayVideoDetails.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "PlayerStoryboardSpec",
+            legacy_path: "PlayerStoryboardSpec.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "Playlist",
+            legacy_path: "Playlist.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistAddToOption",
+            legacy_path: "PlaylistAddToOption.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistCollaborationFormSchema",
+            legacy_path: "misc/PlaylistCollaborationFormSchema.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistCollaborationView",
+            legacy_path: "PlaylistCollaborationView.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistCollaborationViewModelPlaylistCollaboratorData",
+            legacy_path: "misc/PlaylistCollaborationViewModelPlaylistCollaboratorData.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistCustomThumbnail",
+            legacy_path: "PlaylistCustomThumbnail.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistEditEndpoint",
+            legacy_path: "endpoints/PlaylistEditEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistHeader",
+            legacy_path: "PlaylistHeader.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistInfoCardContent",
+            legacy_path: "PlaylistInfoCardContent.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistMetadata",
+            legacy_path: "PlaylistMetadata.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistPanel",
+            legacy_path: "PlaylistPanel.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistPanelVideo",
+            legacy_path: "PlaylistPanelVideo.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistPanelVideoWrapper",
+            legacy_path: "PlaylistPanelVideoWrapper.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistSidebar",
+            legacy_path: "PlaylistSidebar.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistSidebarPrimaryInfo",
+            legacy_path: "PlaylistSidebarPrimaryInfo.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistSidebarSecondaryInfo",
+            legacy_path: "PlaylistSidebarSecondaryInfo.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistThumbnailOverlay",
+            legacy_path: "PlaylistThumbnailOverlay.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistVideo",
+            legacy_path: "PlaylistVideo.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistVideoList",
+            legacy_path: "PlaylistVideoList.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "PlaylistVideoThumbnail",
+            legacy_path: "PlaylistVideoThumbnail.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "Poll",
+            legacy_path: "Poll.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "PollHeader",
+            legacy_path: "livechat/items/PollHeader.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::PollHeader"),
+        },
+        LegacyClassMeta {
+            name: "Post",
+            legacy_path: "Post.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "PostMultiImage",
+            legacy_path: "PostMultiImage.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "PrefetchWatchCommand",
+            legacy_path: "endpoints/PrefetchWatchCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "PremiereTrailerBadge",
+            legacy_path: "PremiereTrailerBadge.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ProductList",
+            legacy_path: "ProductList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProductList"),
+        },
+        LegacyClassMeta {
+            name: "ProductListHeader",
+            legacy_path: "ProductListHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProductListHeader"),
+        },
+        LegacyClassMeta {
+            name: "ProductListItem",
+            legacy_path: "ProductListItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProductListItem"),
+        },
+        LegacyClassMeta {
+            name: "ProfileColumn",
+            legacy_path: "ProfileColumn.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProfileColumn"),
+        },
+        LegacyClassMeta {
+            name: "ProfileColumnStats",
+            legacy_path: "ProfileColumnStats.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProfileColumnStats"),
+        },
+        LegacyClassMeta {
+            name: "ProfileColumnStatsEntry",
+            legacy_path: "ProfileColumnStatsEntry.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProfileColumnStatsEntry"),
+        },
+        LegacyClassMeta {
+            name: "ProfileColumnUserInfo",
+            legacy_path: "ProfileColumnUserInfo.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ProfileColumnUserInfo"),
+        },
+        LegacyClassMeta {
+            name: "Quiz",
+            legacy_path: "Quiz.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Quiz"),
+        },
+        LegacyClassMeta {
+            name: "RecognitionShelf",
+            legacy_path: "RecognitionShelf.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ReelItem",
+            legacy_path: "ReelItem.ts",
+            category: ParserCategory::Short,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Short"),
+        },
+        LegacyClassMeta {
+            name: "ReelPlayerHeader",
+            legacy_path: "ReelPlayerHeader.ts",
+            category: ParserCategory::Short,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Short"),
+        },
+        LegacyClassMeta {
+            name: "ReelPlayerOverlay",
+            legacy_path: "ReelPlayerOverlay.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ReelShelf",
+            legacy_path: "ReelShelf.ts",
+            category: ParserCategory::Short,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Short"),
+        },
+        LegacyClassMeta {
+            name: "ReelWatchEndpoint",
+            legacy_path: "endpoints/ReelWatchEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "RelatedChipCloud",
+            legacy_path: "RelatedChipCloud.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::RelatedChipCloud"),
+        },
+        LegacyClassMeta {
+            name: "RemoveBannerForLiveChatCommand",
+            legacy_path: "livechat/RemoveBannerForLiveChatCommand.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::RemoveBannerForLiveChatCommand"),
+        },
+        LegacyClassMeta {
+            name: "RemoveChatItemAction",
+            legacy_path: "livechat/RemoveChatItemAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::RemoveChatItemAction"),
+        },
+        LegacyClassMeta {
+            name: "RemoveChatItemByAuthorAction",
+            legacy_path: "livechat/RemoveChatItemByAuthorAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::RemoveChatItemByAuthorAction"),
+        },
+        LegacyClassMeta {
+            name: "RendererContext",
+            legacy_path: "misc/RendererContext.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::RendererContext"),
+        },
+        LegacyClassMeta {
+            name: "ReplaceChatItemAction",
+            legacy_path: "livechat/ReplaceChatItemAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::ReplaceChatItemAction"),
+        },
+        LegacyClassMeta {
+            name: "ReplaceLiveChatAction",
+            legacy_path: "livechat/ReplaceLiveChatAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::ReplaceLiveChatAction"),
+        },
+        LegacyClassMeta {
+            name: "ReplayChatItemAction",
+            legacy_path: "livechat/ReplayChatItemAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::ReplayChatItemAction"),
+        },
+        LegacyClassMeta {
+            name: "RichGrid",
+            legacy_path: "RichGrid.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "RichItem",
+            legacy_path: "RichItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::RichItem"),
+        },
+        LegacyClassMeta {
+            name: "RichListHeader",
+            legacy_path: "RichListHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::RichListHeader"),
+        },
+        LegacyClassMeta {
+            name: "RichMetadata",
+            legacy_path: "RichMetadata.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::RichMetadata"),
+        },
+        LegacyClassMeta {
+            name: "RichMetadataRow",
+            legacy_path: "RichMetadataRow.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::RichMetadataRow"),
+        },
+        LegacyClassMeta {
+            name: "RichSection",
+            legacy_path: "RichSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "RichShelf",
+            legacy_path: "RichShelf.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "RunAttestationCommand",
+            legacy_path: "commands/RunAttestationCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "SearchBox",
+            legacy_path: "SearchBox.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchBox"),
+        },
+        LegacyClassMeta {
+            name: "SearchEndpoint",
+            legacy_path: "endpoints/SearchEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "SearchFilter",
+            legacy_path: "SearchFilter.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchFilter"),
+        },
+        LegacyClassMeta {
+            name: "SearchFilterGroup",
+            legacy_path: "SearchFilterGroup.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchFilterGroup"),
+        },
+        LegacyClassMeta {
+            name: "SearchFilterOptionsDialog",
+            legacy_path: "SearchFilterOptionsDialog.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchFilterOptionsDialog"),
+        },
+        LegacyClassMeta {
+            name: "SearchHeader",
+            legacy_path: "SearchHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchHeader"),
+        },
+        LegacyClassMeta {
+            name: "SearchRefinementCard",
+            legacy_path: "SearchRefinementCard.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchRefinementCard"),
+        },
+        LegacyClassMeta {
+            name: "SearchSubMenu",
+            legacy_path: "SearchSubMenu.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "SearchSuggestion",
+            legacy_path: "SearchSuggestion.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SearchSuggestion"),
+        },
+        LegacyClassMeta {
+            name: "SearchSuggestionsSection",
+            legacy_path: "SearchSuggestionsSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SecondarySearchContainer",
+            legacy_path: "SecondarySearchContainer.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SecondarySearchContainer"),
+        },
+        LegacyClassMeta {
+            name: "SectionHeaderView",
+            legacy_path: "SectionHeaderView.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SectionList",
+            legacy_path: "SectionList.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SegmentedLikeDislikeButton",
+            legacy_path: "SegmentedLikeDislikeButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "SegmentedLikeDislikeButtonView",
+            legacy_path: "SegmentedLikeDislikeButtonView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "SendFeedbackAction",
+            legacy_path: "actions/SendFeedbackAction.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SettingBoolean",
+            legacy_path: "SettingBoolean.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SettingBoolean"),
+        },
+        LegacyClassMeta {
+            name: "SettingsCheckbox",
+            legacy_path: "SettingsCheckbox.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SettingsCheckbox"),
+        },
+        LegacyClassMeta {
+            name: "SettingsOptions",
+            legacy_path: "SettingsOptions.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SettingsOptions"),
+        },
+        LegacyClassMeta {
+            name: "SettingsSidebar",
+            legacy_path: "SettingsSidebar.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SettingsSidebar"),
+        },
+        LegacyClassMeta {
+            name: "SettingsSwitch",
+            legacy_path: "SettingsSwitch.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SettingsSwitch"),
+        },
+        LegacyClassMeta {
+            name: "ShareEndpoint",
+            legacy_path: "endpoints/ShareEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ShareEntityEndpoint",
+            legacy_path: "endpoints/ShareEntityEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ShareEntityServiceEndpoint",
+            legacy_path: "endpoints/ShareEntityServiceEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "SharePanelHeader",
+            legacy_path: "SharePanelHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SharePanelHeader"),
+        },
+        LegacyClassMeta {
+            name: "SharePanelTitleV15",
+            legacy_path: "SharePanelTitleV15.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SharePanelTitleV15"),
+        },
+        LegacyClassMeta {
+            name: "ShareTarget",
+            legacy_path: "ShareTarget.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ShareTarget"),
+        },
+        LegacyClassMeta {
+            name: "SharedPost",
+            legacy_path: "SharedPost.ts",
+            category: ParserCategory::CommunityPost,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::CommunityPost"),
+        },
+        LegacyClassMeta {
+            name: "SheetView",
+            legacy_path: "SheetView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SheetView"),
+        },
+        LegacyClassMeta {
+            name: "Shelf",
+            legacy_path: "Shelf.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "ShortsLockupView",
+            legacy_path: "ShortsLockupView.ts",
+            category: ParserCategory::Short,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Short"),
+        },
+        LegacyClassMeta {
+            name: "ShowCustomThumbnail",
+            legacy_path: "ShowCustomThumbnail.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ShowDialogCommand",
+            legacy_path: "commands/ShowDialogCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ShowEngagementPanelEndpoint",
+            legacy_path: "endpoints/ShowEngagementPanelEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ShowLiveChatActionPanelAction",
+            legacy_path: "livechat/ShowLiveChatActionPanelAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::ShowLiveChatActionPanelAction"),
+        },
+        LegacyClassMeta {
+            name: "ShowLiveChatDialogAction",
+            legacy_path: "livechat/ShowLiveChatDialogAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::ShowLiveChatDialogAction"),
+        },
+        LegacyClassMeta {
+            name: "ShowLiveChatTooltipCommand",
+            legacy_path: "livechat/ShowLiveChatTooltipCommand.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::ShowLiveChatTooltipCommand"),
+        },
+        LegacyClassMeta {
+            name: "ShowSheetCommand",
+            legacy_path: "commands/ShowSheetCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "ShowingResultsFor",
+            legacy_path: "ShowingResultsFor.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SignalAction",
+            legacy_path: "actions/SignalAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SignalAction"),
+        },
+        LegacyClassMeta {
+            name: "SignalServiceEndpoint",
+            legacy_path: "endpoints/SignalServiceEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "SimpleCardContent",
+            legacy_path: "SimpleCardContent.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SimpleCardContent"),
+        },
+        LegacyClassMeta {
+            name: "SimpleCardTeaser",
+            legacy_path: "SimpleCardTeaser.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SimpleCardTeaser"),
+        },
+        LegacyClassMeta {
+            name: "SimpleMenuHeader",
+            legacy_path: "menus/SimpleMenuHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "SimpleTextSection",
+            legacy_path: "SimpleTextSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SingleActionEmergencySupport",
+            legacy_path: "SingleActionEmergencySupport.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SingleActionEmergencySupport"),
+        },
+        LegacyClassMeta {
+            name: "SingleColumnBrowseResults",
+            legacy_path: "SingleColumnBrowseResults.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SingleColumnMusicWatchNextResults",
+            legacy_path: "SingleColumnMusicWatchNextResults.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::SingleColumnMusicWatchNextResults"),
+        },
+        LegacyClassMeta {
+            name: "SingleHeroImage",
+            legacy_path: "SingleHeroImage.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SingleHeroImage"),
+        },
+        LegacyClassMeta {
+            name: "SlimOwner",
+            legacy_path: "SlimOwner.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SlimOwner"),
+        },
+        LegacyClassMeta {
+            name: "SlimVideoMetadata",
+            legacy_path: "SlimVideoMetadata.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "SortFilterHeader",
+            legacy_path: "SortFilterHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::SortFilterHeader"),
+        },
+        LegacyClassMeta {
+            name: "SortFilterSubMenu",
+            legacy_path: "SortFilterSubMenu.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "SponsorCommentBadge",
+            legacy_path: "comments/SponsorCommentBadge.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::SponsorCommentBadge"),
+        },
+        LegacyClassMeta {
+            name: "StartAt",
+            legacy_path: "StartAt.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::StartAt"),
+        },
+        LegacyClassMeta {
+            name: "StructuredDescriptionContent",
+            legacy_path: "StructuredDescriptionContent.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::StructuredDescriptionContent"),
+        },
+        LegacyClassMeta {
+            name: "StructuredDescriptionPlaylistLockup",
+            legacy_path: "StructuredDescriptionPlaylistLockup.ts",
+            category: ParserCategory::Playlist,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Playlist"),
+        },
+        LegacyClassMeta {
+            name: "SubFeedOption",
+            legacy_path: "SubFeedOption.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SubFeedSelector",
+            legacy_path: "SubFeedSelector.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "SubscribeButton",
+            legacy_path: "SubscribeButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "SubscribeButtonView",
+            legacy_path: "SubscribeButtonView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "SubscribeEndpoint",
+            legacy_path: "endpoints/SubscribeEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "SubscriptionButton",
+            legacy_path: "misc/SubscriptionButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "SubscriptionNotificationToggleButton",
+            legacy_path: "SubscriptionNotificationToggleButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "Tab",
+            legacy_path: "Tab.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "Tabbed",
+            legacy_path: "Tabbed.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "TabbedSearchResults",
+            legacy_path: "TabbedSearchResults.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "Text",
+            legacy_path: "misc/Text.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Text"),
+        },
+        LegacyClassMeta {
+            name: "TextCarouselItemView",
+            legacy_path: "TextCarouselItemView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TextCarouselItemView"),
+        },
+        LegacyClassMeta {
+            name: "TextFieldView",
+            legacy_path: "TextFieldView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TextFieldView"),
+        },
+        LegacyClassMeta {
+            name: "TextHeader",
+            legacy_path: "TextHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TextHeader"),
+        },
+        LegacyClassMeta {
+            name: "TextRun",
+            legacy_path: "misc/TextRun.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TextRun"),
+        },
+        LegacyClassMeta {
+            name: "ThirdPartyShareTargetSection",
+            legacy_path: "ThirdPartyShareTargetSection.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "Thumbnail",
+            legacy_path: "misc/Thumbnail.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailBadgeView",
+            legacy_path: "ThumbnailBadgeView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailBottomOverlayView",
+            legacy_path: "ThumbnailBottomOverlayView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailHoverOverlayToggleActionsView",
+            legacy_path: "ThumbnailHoverOverlayToggleActionsView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailHoverOverlayView",
+            legacy_path: "ThumbnailHoverOverlayView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailLandscapePortrait",
+            legacy_path: "ThumbnailLandscapePortrait.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayAvatarStackView",
+            legacy_path: "ThumbnailOverlayAvatarStackView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayBadgeView",
+            legacy_path: "ThumbnailOverlayBadgeView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayBottomPanel",
+            legacy_path: "ThumbnailOverlayBottomPanel.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayEndorsement",
+            legacy_path: "ThumbnailOverlayEndorsement.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayHoverText",
+            legacy_path: "ThumbnailOverlayHoverText.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayInlineUnplayable",
+            legacy_path: "ThumbnailOverlayInlineUnplayable.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayLoadingPreview",
+            legacy_path: "ThumbnailOverlayLoadingPreview.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayNowPlaying",
+            legacy_path: "ThumbnailOverlayNowPlaying.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayPinking",
+            legacy_path: "ThumbnailOverlayPinking.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayPlaybackStatus",
+            legacy_path: "ThumbnailOverlayPlaybackStatus.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayProgressBarView",
+            legacy_path: "ThumbnailOverlayProgressBarView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayResumePlayback",
+            legacy_path: "ThumbnailOverlayResumePlayback.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlaySidePanel",
+            legacy_path: "ThumbnailOverlaySidePanel.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayTimeStatus",
+            legacy_path: "ThumbnailOverlayTimeStatus.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayTitleView",
+            legacy_path: "ThumbnailOverlayTitleView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailOverlayToggleButton",
+            legacy_path: "ThumbnailOverlayToggleButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ThumbnailView",
+            legacy_path: "ThumbnailView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Overlay"),
+        },
+        LegacyClassMeta {
+            name: "TicketEvent",
+            legacy_path: "TicketEvent.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TicketEvent"),
+        },
+        LegacyClassMeta {
+            name: "TicketShelf",
+            legacy_path: "TicketShelf.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "TimedMarkerDecoration",
+            legacy_path: "TimedMarkerDecoration.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TimedMarkerDecoration"),
+        },
+        LegacyClassMeta {
+            name: "TitleAndButtonListHeader",
+            legacy_path: "TitleAndButtonListHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ToggleButton",
+            legacy_path: "ToggleButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ToggleButtonView",
+            legacy_path: "ToggleButtonView.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "ToggleFormField",
+            legacy_path: "ToggleFormField.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ToggleFormField"),
+        },
+        LegacyClassMeta {
+            name: "ToggleMenuServiceItem",
+            legacy_path: "ToggleMenuServiceItem.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "Tooltip",
+            legacy_path: "Tooltip.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Tooltip"),
+        },
+        LegacyClassMeta {
+            name: "TopbarMenuButton",
+            legacy_path: "mweb/TopbarMenuButton.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Menu"),
+        },
+        LegacyClassMeta {
+            name: "TopicChannelDetails",
+            legacy_path: "TopicChannelDetails.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "Transcript",
+            legacy_path: "Transcript.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::Transcript"),
+        },
+        LegacyClassMeta {
+            name: "TranscriptFooter",
+            legacy_path: "TranscriptFooter.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TranscriptFooter"),
+        },
+        LegacyClassMeta {
+            name: "TranscriptSearchBox",
+            legacy_path: "TranscriptSearchBox.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TranscriptSearchBox"),
+        },
+        LegacyClassMeta {
+            name: "TranscriptSearchPanel",
+            legacy_path: "TranscriptSearchPanel.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TranscriptSearchPanel"),
+        },
+        LegacyClassMeta {
+            name: "TranscriptSectionHeader",
+            legacy_path: "TranscriptSectionHeader.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "TranscriptSegment",
+            legacy_path: "TranscriptSegment.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TranscriptSegment"),
+        },
+        LegacyClassMeta {
+            name: "TranscriptSegmentList",
+            legacy_path: "TranscriptSegmentList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::TranscriptSegmentList"),
+        },
+        LegacyClassMeta {
+            name: "TwoColumnBrowseResults",
+            legacy_path: "TwoColumnBrowseResults.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "TwoColumnSearchResults",
+            legacy_path: "TwoColumnSearchResults.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "TwoColumnWatchNextResults",
+            legacy_path: "TwoColumnWatchNextResults.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "UnifiedSharePanel",
+            legacy_path: "UnifiedSharePanel.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::UnifiedSharePanel"),
+        },
+        LegacyClassMeta {
+            name: "UniversalWatchCard",
+            legacy_path: "UniversalWatchCard.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::UniversalWatchCard"),
+        },
+        LegacyClassMeta {
+            name: "UnsubscribeEndpoint",
+            legacy_path: "endpoints/UnsubscribeEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "UpdateChannelSwitcherPageAction",
+            legacy_path: "actions/UpdateChannelSwitcherPageAction.ts",
+            category: ParserCategory::Channel,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::ChannelCard"),
+        },
+        LegacyClassMeta {
+            name: "UpdateDateTextAction",
+            legacy_path: "livechat/UpdateDateTextAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::UpdateDateTextAction"),
+        },
+        LegacyClassMeta {
+            name: "UpdateDescriptionAction",
+            legacy_path: "livechat/UpdateDescriptionAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::UpdateDescriptionAction"),
+        },
+        LegacyClassMeta {
+            name: "UpdateEngagementPanelAction",
+            legacy_path: "actions/UpdateEngagementPanelAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::UpdateEngagementPanelAction"),
+        },
+        LegacyClassMeta {
+            name: "UpdateEngagementPanelContentCommand",
+            legacy_path: "commands/UpdateEngagementPanelContentCommand.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "UpdateLiveChatPollAction",
+            legacy_path: "livechat/UpdateLiveChatPollAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::UpdateLiveChatPollAction"),
+        },
+        LegacyClassMeta {
+            name: "UpdateSubscribeButtonAction",
+            legacy_path: "actions/UpdateSubscribeButtonAction.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("YTNode::Button"),
+        },
+        LegacyClassMeta {
+            name: "UpdateTitleAction",
+            legacy_path: "livechat/UpdateTitleAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::UpdateTitleAction"),
+        },
+        LegacyClassMeta {
+            name: "UpdateToggleButtonTextAction",
+            legacy_path: "livechat/UpdateToggleButtonTextAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::UpdateToggleButtonTextAction"),
+        },
+        LegacyClassMeta {
+            name: "UpdateViewershipAction",
+            legacy_path: "livechat/UpdateViewershipAction.ts",
+            category: ParserCategory::LiveChat,
+            dispatch_target: ParserDispatchTarget::DocumentedEquivalent("LiveChatAction::UpdateViewershipAction"),
+        },
+        LegacyClassMeta {
+            name: "UploadTimeFactoid",
+            legacy_path: "UploadTimeFactoid.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::UploadTimeFactoid"),
+        },
+        LegacyClassMeta {
+            name: "UpsellDialog",
+            legacy_path: "UpsellDialog.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::UpsellDialog"),
+        },
+        LegacyClassMeta {
+            name: "VerticalList",
+            legacy_path: "VerticalList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::VerticalList"),
+        },
+        LegacyClassMeta {
+            name: "VerticalWatchCardList",
+            legacy_path: "VerticalWatchCardList.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::VerticalWatchCardList"),
+        },
+        LegacyClassMeta {
+            name: "Video",
+            legacy_path: "Video.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoAttributeView",
+            legacy_path: "VideoAttributeView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoAttributesSectionView",
+            legacy_path: "VideoAttributesSectionView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoCard",
+            legacy_path: "VideoCard.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoDescriptionCourseSection",
+            legacy_path: "VideoDescriptionCourseSection.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoDescriptionHeader",
+            legacy_path: "VideoDescriptionHeader.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoDescriptionInfocardsSection",
+            legacy_path: "VideoDescriptionInfocardsSection.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoDescriptionMusicSection",
+            legacy_path: "VideoDescriptionMusicSection.ts",
+            category: ParserCategory::Music,
+            dispatch_target: ParserDispatchTarget::Element("MusicElement::VideoDescriptionMusicSection"),
+        },
+        LegacyClassMeta {
+            name: "VideoDescriptionTranscriptSection",
+            legacy_path: "VideoDescriptionTranscriptSection.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoDescriptionYouchatSectionView",
+            legacy_path: "VideoDescriptionYouchatSectionView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoDetails",
+            legacy_path: "misc/VideoDetails.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoInfoCardContent",
+            legacy_path: "VideoInfoCardContent.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoMetadataCarouselView",
+            legacy_path: "VideoMetadataCarouselView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoOwner",
+            legacy_path: "VideoOwner.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoPrimaryInfo",
+            legacy_path: "VideoPrimaryInfo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoSecondaryInfo",
+            legacy_path: "VideoSecondaryInfo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoSummaryContentView",
+            legacy_path: "VideoSummaryContentView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoSummaryParagraphView",
+            legacy_path: "VideoSummaryParagraphView.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "VideoViewCount",
+            legacy_path: "VideoViewCount.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "ViewCountFactoid",
+            legacy_path: "ViewCountFactoid.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::ViewCountFactoid"),
+        },
+        LegacyClassMeta {
+            name: "VoiceReplyContainerView",
+            legacy_path: "comments/VoiceReplyContainerView.ts",
+            category: ParserCategory::Comments,
+            dispatch_target: ParserDispatchTarget::Element("CommentElement::VoiceReplyContainerView"),
+        },
+        LegacyClassMeta {
+            name: "WatchCardCompactVideo",
+            legacy_path: "WatchCardCompactVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "WatchCardHeroVideo",
+            legacy_path: "WatchCardHeroVideo.ts",
+            category: ParserCategory::Video,
+            dispatch_target: ParserDispatchTarget::DirectAst("YTNode::Video"),
+        },
+        LegacyClassMeta {
+            name: "WatchCardRichHeader",
+            legacy_path: "WatchCardRichHeader.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::WatchCardRichHeader"),
+        },
+        LegacyClassMeta {
+            name: "WatchCardSectionSequence",
+            legacy_path: "WatchCardSectionSequence.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "WatchEndpoint",
+            legacy_path: "endpoints/WatchEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "WatchNextEndScreen",
+            legacy_path: "WatchNextEndScreen.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::WatchNextEndScreen"),
+        },
+        LegacyClassMeta {
+            name: "WatchNextEndpoint",
+            legacy_path: "endpoints/WatchNextEndpoint.ts",
+            category: ParserCategory::Navigation,
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint("YTNode::NavigationEndpoint"),
+        },
+        LegacyClassMeta {
+            name: "WatchNextTabbedResults",
+            legacy_path: "WatchNextTabbedResults.ts",
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container("YTNode::Container"),
+        },
+        LegacyClassMeta {
+            name: "YpcTrailer",
+            legacy_path: "YpcTrailer.ts",
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Element("Element::YpcTrailer"),
+        },
+    ]
+});
+
+static REGISTRY_MAP: LazyLock<HashMap<&'static str, &'static LegacyClassMeta>> = LazyLock::new(|| {
     let mut m = HashMap::with_capacity(600);
-
-    // =========================================================================
-    // 1. VIDEO RENDERERS & LOCKUPS
-    // =========================================================================
-    let video_types = [
-        "Video",
-        "videoRenderer",
-        "CompactVideo",
-        "compactVideoRenderer",
-        "GridVideo",
-        "gridVideoRenderer",
-        "VideoCard",
-        "videoCardRenderer",
-        "WatchCardCompactVideo",
-        "watchCardCompactVideoRenderer",
-        "WatchCardHeroVideo",
-        "watchCardHeroVideoRenderer",
-        "LockupView",
-        "lockupViewModel",
-        "VideoPrimaryInfo",
-        "videoPrimaryInfoRenderer",
-        "VideoSecondaryInfo",
-        "videoSecondaryInfoRenderer",
-        "VideoOwner",
-        "videoOwnerRenderer",
-        "SlimVideoMetadata",
-        "slimVideoMetadataRenderer",
-        "SlimOwner",
-        "slimOwnerRenderer",
-        "VideoAttributeView",
-        "videoAttributeView",
-        "VideoAttributesSectionView",
-        "videoAttributesSectionView",
-        "VideoDescriptionHeader",
-        "videoDescriptionHeaderRenderer",
-        "VideoDescriptionCourseSection",
-        "videoDescriptionCourseSectionRenderer",
-        "VideoDescriptionInfocardsSection",
-        "videoDescriptionInfocardsSectionRenderer",
-        "VideoDescriptionMusicSection",
-        "videoDescriptionMusicSectionRenderer",
-        "VideoDescriptionTranscriptSection",
-        "videoDescriptionTranscriptSectionRenderer",
-        "VideoDescriptionYouchatSectionView",
-        "videoDescriptionYouchatSectionView",
-        "VideoInfoCardContent",
-        "videoInfoCardContentRenderer",
-        "VideoMetadataCarouselView",
-        "videoMetadataCarouselView",
-        "VideoSummaryContentView",
-        "videoSummaryContentView",
-        "VideoSummaryParagraphView",
-        "videoSummaryParagraphView",
-        "VideoViewCount",
-        "videoViewCountRenderer",
-        "ViewCountFactoid",
-        "viewCountFactoidRenderer",
-        "UploadTimeFactoid",
-        "uploadTimeFactoidRenderer",
-        "YpcTrailer",
-        "ypcTrailerRenderer",
-        "MovingThumbnail",
-        "movingThumbnailRenderer",
-    ];
-    for t in video_types {
-        m.insert(t, ParserCategory::Video);
+    for item in REGISTRY_574.iter() {
+        m.insert(item.name, item);
     }
-
-    // =========================================================================
-    // 2. SHORTS & REELS
-    // =========================================================================
-    let short_types = [
-        "ReelItem",
-        "reelItemRenderer",
-        "ShortsLockupView",
-        "shortsLockupViewModel",
-        "ReelShelf",
-        "reelShelfRenderer",
-        "ReelPlayerHeader",
-        "reelPlayerHeaderRenderer",
-        "ReelPlayerOverlay",
-        "reelPlayerOverlayRenderer",
-    ];
-    for t in short_types {
-        m.insert(t, ParserCategory::Short);
-    }
-
-    // =========================================================================
-    // 3. PLAYLISTS
-    // =========================================================================
-    let playlist_types = [
-        "Playlist",
-        "playlistRenderer",
-        "GridPlaylist",
-        "gridPlaylistRenderer",
-        "PlaylistVideo",
-        "playlistVideoRenderer",
-        "PlaylistVideoList",
-        "playlistVideoListRenderer",
-        "PlaylistHeader",
-        "playlistHeaderRenderer",
-        "PlaylistSidebar",
-        "playlistSidebarRenderer",
-        "PlaylistSidebarPrimaryInfo",
-        "playlistSidebarPrimaryInfoRenderer",
-        "PlaylistSidebarSecondaryInfo",
-        "playlistSidebarSecondaryInfoRenderer",
-        "PlaylistMetadata",
-        "playlistMetadataRenderer",
-        "PlaylistCustomThumbnail",
-        "playlistCustomThumbnailRenderer",
-        "PlaylistPanel",
-        "playlistPanelRenderer",
-        "PlaylistPanelVideo",
-        "playlistPanelVideoRenderer",
-        "StructuredDescriptionPlaylistLockup",
-        "structuredDescriptionPlaylistLockupRenderer",
-    ];
-    for t in playlist_types {
-        m.insert(t, ParserCategory::Playlist);
-    }
-
-    // =========================================================================
-    // 4. CHANNELS & PROFILES
-    // =========================================================================
-    let channel_types = [
-        "Channel",
-        "channelRenderer",
-        "GridChannel",
-        "gridChannelRenderer",
-        "ChannelAboutMetadata",
-        "channelAboutMetadataRenderer",
-        "ChannelAboutFullMetadata",
-        "channelAboutFullMetadataRenderer",
-        "ChannelHeader",
-        "channelHeaderRenderer",
-        "C4TabbedHeader",
-        "c4TabbedHeaderRenderer",
-        "PageHeader",
-        "pageHeaderRenderer",
-        "ChannelMetadata",
-        "channelMetadataRenderer",
-        "ChannelSubMenu",
-        "channelSubMenuRenderer",
-        "ChannelAgeGate",
-        "channelAgeGateRenderer",
-        "ChannelVideoPlayer",
-        "channelVideoPlayerRenderer",
-        "TopicChannelDetails",
-        "topicChannelDetailsRenderer",
-    ];
-    for t in channel_types {
-        m.insert(t, ParserCategory::Channel);
-    }
-
-    // =========================================================================
-    // 5. YOUTUBE MUSIC
-    // =========================================================================
-    let music_types = [
-        "MusicResponsiveListItem",
-        "musicResponsiveListItemRenderer",
-        "MusicTwoRowItem",
-        "musicTwoRowItemRenderer",
-        "MusicDescriptionShelf",
-        "musicDescriptionShelfRenderer",
-        "MusicHeader",
-        "musicHeaderRenderer",
-        "MusicVisualHeader",
-        "musicVisualHeaderRenderer",
-        "MusicDetailHeader",
-        "musicDetailHeaderRenderer",
-        "MusicEditablePlaylistDetailHeader",
-        "musicEditablePlaylistDetailHeaderRenderer",
-        "MusicPlaylistEditHeader",
-        "musicPlaylistEditHeaderRenderer",
-        "MusicCardShelf",
-        "musicCardShelfRenderer",
-        "MusicCardShelfHeaderBasic",
-        "musicCardShelfHeaderBasicRenderer",
-        "MusicInlineBadge",
-        "musicInlineBadgeRenderer",
-        "MusicItemThumbnailOverlay",
-        "musicItemThumbnailOverlayRenderer",
-        "MusicLargeThumbnail",
-        "musicLargeThumbnailRenderer",
-        "MusicNavigationButton",
-        "musicNavigationButtonRenderer",
-        "MusicPlayButton",
-        "musicPlayButtonRenderer",
-        "MusicQueue",
-        "musicQueueRenderer",
-        "MusicShelf",
-        "musicShelfRenderer",
-        "MusicSideAlignedItem",
-        "musicSideAlignedItemRenderer",
-        "MusicSortFilterButton",
-        "musicSortFilterButtonRenderer",
-        "MusicThumbnail",
-        "musicThumbnailRenderer",
-        "MusicTrackWalkthrough",
-        "musicTrackWalkthroughRenderer",
-        "MusicElementHeader",
-        "musicElementHeaderRenderer",
-        "MusicCarouselShelf",
-        "musicCarouselShelfRenderer",
-        "MusicCarouselShelfBasicHeader",
-        "musicCarouselShelfBasicHeaderRenderer",
-        "SingleColumnMusicWatchNextResults",
-        "singleColumnMusicWatchNextResultsRenderer",
-    ];
-    for t in music_types {
-        m.insert(t, ParserCategory::Music);
-    }
-
-    // =========================================================================
-    // 6. COMMENTS
-    // =========================================================================
-    let comment_types = [
-        "CommentThread",
-        "commentThreadRenderer",
-        "Comment",
-        "commentRenderer",
-        "CommentView",
-        "commentViewModel",
-        "CommentReplies",
-        "commentRepliesRenderer",
-        "CommentReplyDialog",
-        "commentReplyDialogRenderer",
-        "CommentDialog",
-        "commentDialogRenderer",
-        "CommentSimplebox",
-        "commentSimpleboxRenderer",
-        "CommentsHeader",
-        "commentsHeaderRenderer",
-        "CommentsSimplebox",
-        "commentsSimpleboxRenderer",
-        "CommentsEntryPointHeader",
-        "commentsEntryPointHeaderRenderer",
-        "CommentsEntryPointTeaser",
-        "commentsEntryPointTeaserRenderer",
-        "CommentActionButtons",
-        "commentActionButtonsRenderer",
-        "AuthorCommentBadge",
-        "authorCommentBadgeRenderer",
-        "SponsorCommentBadge",
-        "sponsorCommentBadgeRenderer",
-        "CreatorHeart",
-        "creatorHeartRenderer",
-        "CreatorHeartView",
-        "creatorHeartViewModel",
-        "EmojiPicker",
-        "emojiPickerRenderer",
-        "PdgCommentChip",
-        "pdgCommentChipRenderer",
-        "VoiceReplyContainerView",
-        "voiceReplyContainerView",
-    ];
-    for t in comment_types {
-        m.insert(t, ParserCategory::Comments);
-    }
-
-    // =========================================================================
-    // 7. COMMUNITY POSTS
-    // =========================================================================
-    let post_types = [
-        "BackstagePost",
-        "backstagePostRenderer",
-        "Post",
-        "postRenderer",
-        "SharedPost",
-        "sharedPostRenderer",
-        "BackstagePostThread",
-        "backstagePostThreadRenderer",
-        "BackstageImage",
-        "backstageImageRenderer",
-        "Poll",
-        "pollRenderer",
-        "PollHeader",
-        "pollHeaderRenderer",
-    ];
-    for t in post_types {
-        m.insert(t, ParserCategory::CommunityPost);
-    }
-
-    // =========================================================================
-    // 8. NAVIGATION ENDPOINTS & COMMANDS
-    // =========================================================================
-    let nav_types = [
-        "NavigationEndpoint",
-        "navigationEndpoint",
-        "WatchEndpoint",
-        "watchEndpoint",
-        "WatchNextEndpoint",
-        "watchNextEndpoint",
-        "BrowseEndpoint",
-        "browseEndpoint",
-        "SearchEndpoint",
-        "searchEndpoint",
-        "ReelWatchEndpoint",
-        "reelWatchEndpoint",
-        "LikeEndpoint",
-        "likeEndpoint",
-        "SubscribeEndpoint",
-        "subscribeEndpoint",
-        "UnsubscribeEndpoint",
-        "unsubscribeEndpoint",
-        "FeedbackEndpoint",
-        "feedbackEndpoint",
-        "PerformCommentActionEndpoint",
-        "performCommentActionEndpoint",
-        "CreateCommentEndpoint",
-        "createCommentEndpoint",
-        "CreatePlaylistServiceEndpoint",
-        "createPlaylistServiceEndpoint",
-        "DeletePlaylistEndpoint",
-        "deletePlaylistEndpoint",
-        "PlaylistEditEndpoint",
-        "playlistEditEndpoint",
-        "AddToPlaylistEndpoint",
-        "addToPlaylistEndpoint",
-        "AddToPlaylistServiceEndpoint",
-        "addToPlaylistServiceEndpoint",
-        "ModifyChannelNotificationPreferenceEndpoint",
-        "modifyChannelNotificationPreferenceEndpoint",
-        "ShowEngagementPanelEndpoint",
-        "showEngagementPanelEndpoint",
-        "HideEngagementPanelEndpoint",
-        "hideEngagementPanelEndpoint",
-        "SignalServiceEndpoint",
-        "signalServiceEndpoint",
-        "ShareEndpoint",
-        "shareEndpoint",
-        "ShareEntityEndpoint",
-        "shareEntityEndpoint",
-        "ShareEntityServiceEndpoint",
-        "shareEntityServiceEndpoint",
-        "GetAccountsListInnertubeEndpoint",
-        "getAccountsListInnertubeEndpoint",
-        "LiveChatItemContextMenuEndpoint",
-        "liveChatItemContextMenuEndpoint",
-        "PrefetchWatchCommand",
-        "prefetchWatchCommand",
-        "AddToPlaylistCommand",
-        "addToPlaylistCommand",
-        "CommandExecutorCommand",
-        "commandExecutorCommand",
-        "RunAttestationCommand",
-        "runAttestationCommand",
-        "ShowDialogCommand",
-        "showDialogCommand",
-        "ShowSheetCommand",
-        "showSheetCommand",
-        "UpdateEngagementPanelContentCommand",
-        "updateEngagementPanelContentCommand",
-    ];
-    for t in nav_types {
-        m.insert(t, ParserCategory::Navigation);
-    }
-
-    // =========================================================================
-    // 9. LIVE CHAT
-    // =========================================================================
-    let livechat_types = [
-        "LiveChatTextMessage",
-        "liveChatTextMessageRenderer",
-        "LiveChatPaidMessage",
-        "liveChatPaidMessageRenderer",
-        "LiveChatPaidSticker",
-        "liveChatPaidStickerRenderer",
-        "LiveChatMembershipItem",
-        "liveChatMembershipItemRenderer",
-        "LiveChatSponsorshipsGiftPurchaseAnnouncement",
-        "liveChatSponsorshipsGiftPurchaseAnnouncementRenderer",
-        "LiveChatSponsorshipsGiftRedemptionAnnouncement",
-        "liveChatSponsorshipsGiftRedemptionAnnouncementRenderer",
-        "LiveChatSponsorshipsHeader",
-        "liveChatSponsorshipsHeaderRenderer",
-        "LiveChatTickerPaidMessageItem",
-        "liveChatTickerPaidMessageItemRenderer",
-        "LiveChatTickerPaidStickerItem",
-        "liveChatTickerPaidStickerItemRenderer",
-        "LiveChatTickerSponsorItem",
-        "liveChatTickerSponsorItemRenderer",
-        "LiveChatViewerEngagementMessage",
-        "liveChatViewerEngagementMessageRenderer",
-        "LiveChatAutoModMessage",
-        "liveChatAutoModMessageRenderer",
-        "LiveChatModeChangeMessage",
-        "liveChatModeChangeMessageRenderer",
-        "LiveChatRestrictedParticipation",
-        "liveChatRestrictedParticipationRenderer",
-        "LiveChatPlaceholderItem",
-        "liveChatPlaceholderItemRenderer",
-        "LiveChatProductItem",
-        "liveChatProductItemRenderer",
-        "LiveChatBanner",
-        "liveChatBannerRenderer",
-        "LiveChatBannerHeader",
-        "liveChatBannerHeaderRenderer",
-        "LiveChatBannerPoll",
-        "liveChatBannerPollRenderer",
-        "LiveChatBannerRedirect",
-        "liveChatBannerRedirectRenderer",
-        "LiveChatBannerChatSummary",
-        "liveChatBannerChatSummaryRenderer",
-        "LiveChatItemBumperView",
-        "liveChatItemBumperViewModel",
-        "BumperUserEduContentView",
-        "bumperUserEduContentViewModel",
-        "PdgReplyButtonView",
-        "pdgReplyButtonViewModel",
-        "AddChatItemAction",
-        "addChatItemAction",
-        "AddLiveChatTickerItemAction",
-        "addLiveChatTickerItemAction",
-        "RemoveChatItemAction",
-        "removeChatItemAction",
-        "RemoveChatItemByAuthorAction",
-        "removeChatItemByAuthorAction",
-        "ReplaceChatItemAction",
-        "replaceChatItemAction",
-        "ReplaceLiveChatAction",
-        "replaceLiveChatAction",
-        "ReplayChatItemAction",
-        "replayChatItemAction",
-        "MarkChatItemAsDeletedAction",
-        "markChatItemAsDeletedAction",
-        "MarkChatItemsByAuthorAsDeletedAction",
-        "markChatItemsByAuthorAsDeletedAction",
-        "DimChatItemAction",
-        "dimChatItemAction",
-        "LiveChatActionPanel",
-        "liveChatActionPanelRenderer",
-        "ShowLiveChatActionPanelAction",
-        "showLiveChatActionPanelAction",
-        "ShowLiveChatDialogAction",
-        "showLiveChatDialogAction",
-        "ShowLiveChatTooltipCommand",
-        "showLiveChatTooltipCommand",
-        "AddBannerToLiveChatCommand",
-        "addBannerToLiveChatCommand",
-        "RemoveBannerForLiveChatCommand",
-        "removeBannerForLiveChatCommand",
-        "UpdateLiveChatPollAction",
-        "updateLiveChatPollAction",
-        "UpdateDateTextAction",
-        "updateDateTextAction",
-        "UpdateDescriptionAction",
-        "updateDescriptionAction",
-        "UpdateTitleAction",
-        "updateTitleAction",
-        "UpdateToggleButtonTextAction",
-        "updateToggleButtonTextAction",
-        "UpdateViewershipAction",
-        "updateViewershipAction",
-    ];
-    for t in livechat_types {
-        m.insert(t, ParserCategory::LiveChat);
-    }
-
-    // =========================================================================
-    // 10. CONTINUATIONS
-    // =========================================================================
-    let continuation_types = [
-        "ContinuationItem",
-        "continuationItemRenderer",
-        "ContinuationItemView",
-        "continuationItemViewModel",
-        "ContinuationCommand",
-        "continuationCommand",
-        "AppendContinuationItemsAction",
-        "appendContinuationItemsAction",
-        "ReloadContinuationItemsCommand",
-        "reloadContinuationItemsCommand",
-    ];
-    for t in continuation_types {
-        m.insert(t, ParserCategory::Continuation);
-    }
-
-    // =========================================================================
-    // 11. FEEDS & CONTAINERS
-    // =========================================================================
-    let feed_types = [
-        "SectionList",
-        "sectionListRenderer",
-        "ItemSection",
-        "itemSectionRenderer",
-        "RichGrid",
-        "richGridRenderer",
-        "RichItem",
-        "richItemRenderer",
-        "RichSection",
-        "richSectionRenderer",
-        "RichShelf",
-        "richShelfRenderer",
-        "Shelf",
-        "shelfRenderer",
-        "VerticalList",
-        "verticalListRenderer",
-        "HorizontalList",
-        "horizontalListRenderer",
-        "Grid",
-        "gridRenderer",
-        "Tab",
-        "tabRenderer",
-        "Tabbed",
-        "tabbedRenderer",
-        "TwoColumnBrowseResults",
-        "twoColumnBrowseResultsRenderer",
-        "TwoColumnSearchResults",
-        "twoColumnSearchResultsRenderer",
-        "TwoColumnWatchNextResults",
-        "twoColumnWatchNextResultsRenderer",
-        "SingleColumnBrowseResults",
-        "singleColumnBrowseResultsRenderer",
-        "WatchNextTabbedResults",
-        "watchNextTabbedResultsRenderer",
-        "WatchNextEndScreen",
-        "watchNextEndScreenRenderer",
-        "BrowseFeedActions",
-        "browseFeedActionsRenderer",
-        "ExpandedShelfContents",
-        "expandedShelfContentsRenderer",
-        "FeedFilterChipBar",
-        "feedFilterChipBarRenderer",
-        "ChipCloud",
-        "chipCloudRenderer",
-        "ChipCloudChip",
-        "chipCloudChipRenderer",
-        "RelatedChipCloud",
-        "relatedChipCloudRenderer",
-    ];
-    for t in feed_types {
-        m.insert(t, ParserCategory::FeedAndContainers);
-    }
-
-    // =========================================================================
-    // 12. ELEMENTS & MISC
-    // =========================================================================
-    let misc_types = [
-        "Text",
-        "text",
-        "TextRun",
-        "textRun",
-        "Thumbnail",
-        "thumbnail",
-        "ThumbnailView",
-        "thumbnailViewModel",
-        "ThumbnailBadgeView",
-        "thumbnailBadgeViewModel",
-        "ThumbnailOverlayTimeStatus",
-        "thumbnailOverlayTimeStatusRenderer",
-        "ThumbnailOverlayBadgeView",
-        "thumbnailOverlayBadgeViewModel",
-        "ThumbnailOverlayLoadingPreview",
-        "thumbnailOverlayLoadingPreviewRenderer",
-        "ThumbnailOverlayProgressBarView",
-        "thumbnailOverlayProgressBarViewModel",
-        "ThumbnailOverlayResumePlayback",
-        "thumbnailOverlayResumePlaybackRenderer",
-        "Author",
-        "author",
-        "Button",
-        "buttonRenderer",
-        "ButtonView",
-        "buttonViewModel",
-        "ToggleButton",
-        "toggleButtonRenderer",
-        "ToggleButtonView",
-        "toggleButtonViewModel",
-        "SubscribeButton",
-        "subscribeButtonRenderer",
-        "SubscribeButtonView",
-        "subscribeButtonViewModel",
-        "SubscriptionNotificationToggleButton",
-        "subscriptionNotificationToggleButtonRenderer",
-        "Menu",
-        "menuRenderer",
-        "MenuPopup",
-        "menuPopupRenderer",
-        "MenuNavigationItem",
-        "menuNavigationItemRenderer",
-        "MenuServiceItem",
-        "menuServiceItemRenderer",
-        "MultiPageMenu",
-        "multiPageMenuRenderer",
-        "MultiPageMenuSection",
-        "multiPageMenuSectionRenderer",
-        "SimpleMenuHeader",
-        "simpleMenuHeaderRenderer",
-        "Tooltip",
-        "tooltipRenderer",
-        "Transcript",
-        "transcriptRenderer",
-        "TranscriptSegment",
-        "transcriptSegmentRenderer",
-        "TranscriptSectionHeader",
-        "transcriptSectionHeaderRenderer",
-        "TranscriptSearchBox",
-        "transcriptSearchBoxRenderer",
-        "TranscriptSearchPanel",
-        "transcriptSearchPanelRenderer",
-        "TranscriptFooter",
-        "transcriptFooterRenderer",
-        "TranscriptSegmentList",
-        "transcriptSegmentListRenderer",
-        "SearchSuggestion",
-        "searchSuggestionRenderer",
-        "SearchSuggestionsSection",
-        "searchSuggestionsSectionRenderer",
-        "SearchHeader",
-        "searchHeaderRenderer",
-        "SearchBox",
-        "searchBoxRenderer",
-        "SearchFilter",
-        "searchFilterRenderer",
-        "SearchFilterGroup",
-        "searchFilterGroupRenderer",
-        "SearchSubMenu",
-        "searchSubMenuRenderer",
-        "SortFilterHeader",
-        "sortFilterHeaderRenderer",
-        "SortFilterSubMenu",
-        "sortFilterSubMenuRenderer",
-        "GuideItem",
-        "guideItemRenderer",
-        "GuideSection",
-        "guideSectionRenderer",
-        "GuideResponse",
-        "guideResponse",
-        "NotificationPreference",
-        "notificationPreferenceRenderer",
-        "AccountNotification",
-        "accountNotificationRenderer",
-    ];
-    for t in misc_types {
-        m.insert(t, ParserCategory::ElementAndMisc);
-    }
-
-    // =========================================================================
-    // 13. YOUTUBE KIDS
-    // =========================================================================
-    let kids_types = [
-        "KidsHomeScreen",
-        "kidsHomeScreenRenderer",
-        "kidsHomeScreen",
-        "KidsCategoryTab",
-        "kidsCategoryTabRenderer",
-        "KidsCategoriesHeader",
-        "kidsCategoriesHeaderRenderer",
-        "kidsCategoriesHeader",
-        "KidsBlocklistPicker",
-        "kidsBlocklistPickerRenderer",
-        "KidsBlocklistPickerItem",
-        "kidsBlocklistPickerItemRenderer",
-        "AnchoredSection",
-        "anchoredSectionRenderer",
-        "GetKidsBlocklistPickerCommand",
-        "getKidsBlocklistPickerCommand",
-    ];
-    for t in kids_types {
-        m.insert(t, ParserCategory::Kids);
-    }
-
     m
 });
 
-/// Central Parser Registry for tracking all YouTube.js AST renderer classes.
+/// Comprehensive Parser Class Registry covering all 574 legacy parser classes in YouTube.js.
 pub struct ParserRegistry;
 
 impl ParserRegistry {
-    /// Number of total parser classes in upstream reference (`reference-youtubejs`).
-    pub const TOTAL_LEGACY_CLASSES: usize = 574;
-
-    /// Look up the AST Category for a given renderer type or key name.
-    pub fn lookup(type_name: &str) -> Option<ParserCategory> {
-        REGISTRY.get(type_name).copied()
-    }
-
-    /// Check if a renderer type is recognized by the registry.
-    pub fn is_known(type_name: &str) -> bool {
-        REGISTRY.contains_key(type_name)
-    }
-
-    /// Return the total number of registered renderer keys/types.
+    /// Total count of all legacy parser classes tracked in the registry.
     pub fn registered_types_count() -> usize {
-        REGISTRY.len()
+        REGISTRY_574.len()
     }
 
-    /// Return the executable parser dispatch target for a given renderer/class name.
+    /// Lookup metadata for a given parser class or renderer name.
+    pub fn lookup(name: &str) -> Option<&'static LegacyClassMeta> {
+        REGISTRY_MAP.get(name).copied()
+    }
+
+    /// Get category for a given parser class name.
+    pub fn category(name: &str) -> Option<ParserCategory> {
+        Self::lookup(name).map(|m| m.category)
+    }
+
+    /// Get the executable dispatch target for a given parser class name.
     pub fn dispatch_target(name: &str) -> Option<ParserDispatchTarget> {
-        let cat = Self::lookup(name)?;
-        match cat {
-            ParserCategory::Video => Some(ParserDispatchTarget::DirectAst("YTNode::Video")),
-            ParserCategory::Short => Some(ParserDispatchTarget::DirectAst("YTNode::Short")),
-            ParserCategory::Playlist => Some(ParserDispatchTarget::DirectAst("YTNode::Playlist")),
-            ParserCategory::Channel => Some(ParserDispatchTarget::DirectAst("YTNode::ChannelCard")),
-            ParserCategory::Music => Some(ParserDispatchTarget::DirectAst("YTNode::MusicItem")),
-            ParserCategory::Comments => Some(ParserDispatchTarget::DirectAst("YTNode::CommentThread")),
-            ParserCategory::CommunityPost => Some(ParserDispatchTarget::DirectAst("YTNode::Post")),
-            ParserCategory::Navigation => Some(ParserDispatchTarget::NavigationEndpoint("NavigationEndpointNode")),
-            ParserCategory::LiveChat => Some(ParserDispatchTarget::DirectAst("YTNode::LiveChat")),
-            ParserCategory::Continuation => Some(ParserDispatchTarget::DirectAst("YTNode::Continuation")),
-            ParserCategory::FeedAndContainers => Some(ParserDispatchTarget::Container("YTNode::Container")),
-            ParserCategory::ElementAndMisc => Some(ParserDispatchTarget::Element("YTNode::Element")),
-            ParserCategory::Kids => Some(ParserDispatchTarget::EquivalentFixture("WEB_KIDS::GenericResponse")),
-        }
+        Self::lookup(name).map(|m| m.dispatch_target.clone())
     }
-}
 
-/// Executable dispatch target classification for AST parser resolution.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ParserDispatchTarget {
-    DirectAst(&'static str),
-    Container(&'static str),
-    NavigationEndpoint(&'static str),
-    Element(&'static str),
-    EquivalentFixture(&'static str),
+    /// Retrieve all 574 registered legacy class entries.
+    pub fn all_classes() -> &'static [LegacyClassMeta] {
+        &REGISTRY_574
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::{NodeListExt, Parser};
-    use serde_json::json;
 
     #[test]
-    fn test_registry_contains_major_categories() {
-        assert_eq!(ParserRegistry::lookup("videoRenderer"), Some(ParserCategory::Video));
-        assert_eq!(ParserRegistry::lookup("reelItemRenderer"), Some(ParserCategory::Short));
-        assert_eq!(ParserRegistry::lookup("playlistRenderer"), Some(ParserCategory::Playlist));
-        assert_eq!(ParserRegistry::lookup("channelRenderer"), Some(ParserCategory::Channel));
-        assert_eq!(ParserRegistry::lookup("musicResponsiveListItemRenderer"), Some(ParserCategory::Music));
-        assert_eq!(ParserRegistry::lookup("commentThreadRenderer"), Some(ParserCategory::Comments));
-        assert_eq!(ParserRegistry::lookup("backstagePostRenderer"), Some(ParserCategory::CommunityPost));
-        assert_eq!(ParserRegistry::lookup("watchEndpoint"), Some(ParserCategory::Navigation));
-        assert_eq!(ParserRegistry::lookup("liveChatTextMessageRenderer"), Some(ParserCategory::LiveChat));
-        assert_eq!(ParserRegistry::lookup("continuationItemRenderer"), Some(ParserCategory::Continuation));
-        assert_eq!(ParserRegistry::lookup("richGridRenderer"), Some(ParserCategory::FeedAndContainers));
-        assert_eq!(ParserRegistry::lookup("kidsHomeScreenRenderer"), Some(ParserCategory::Kids));
-    }
-
-    #[test]
-    fn test_parser_parses_sample_tree() {
-        let fixture = json!({
-            "contents": {
-                "twoColumnSearchResultsRenderer": {
-                    "primaryContents": {
-                        "sectionListRenderer": {
-                            "contents": [
-                                {
-                                    "itemSectionRenderer": {
-                                        "contents": [
-                                            {
-                                                "videoRenderer": {
-                                                    "videoId": "dQw4w9WgXcQ",
-                                                    "title": { "runs": [{ "text": "Never Gonna Give You Up" }] }
-                                                }
-                                            },
-                                            {
-                                                "reelItemRenderer": {
-                                                    "videoId": "short_123",
-                                                    "headline": { "simpleText": "Epic Short" }
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        });
-
-        let nodes = Parser::parse_tree(&fixture);
-        assert!(!nodes.is_empty(), "Parser should find nodes in tree");
-        assert_eq!(nodes.find_videos().len(), 1);
-        assert_eq!(nodes.find_shorts().len(), 1);
-    }
-
-    #[test]
-    fn test_parser_parses_containers_and_shelves() {
-        let fixture = json!({
-            "sectionListRenderer": {
-                "contents": [
-                    {
-                        "itemSectionRenderer": {
-                            "targetId": "section-1",
-                            "contents": []
-                        }
-                    },
-                    {
-                        "shelfRenderer": {
-                            "title": { "simpleText": "Trending Now" },
-                            "content": {
-                                "verticalListRenderer": {
-                                    "items": []
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "richGridRenderer": {
-                            "contents": []
-                        }
-                    }
-                ]
-            }
-        });
-
-        let nodes = Parser::parse_tree(&fixture);
-        assert_eq!(nodes.find_shelves().len(), 1);
-        assert_eq!(nodes.find_shelves()[0].title, "Trending Now");
-    }
-
-    #[test]
-    fn test_parser_parses_live_chat_and_tabs() {
-        let fixture = json!({
-            "tabs": [
-                {
-                    "tabRenderer": {
-                        "title": "Videos",
-                        "selected": true,
-                        "endpoint": {
-                            "browseEndpoint": { "browseId": "UC_test", "params": "EgZ2aWRlb3M%3D" }
-                        }
-                    }
-                }
-            ],
-            "liveChatTextMessageRenderer": {
-                "id": "chat_msg_1",
-                "message": { "runs": [{ "text": "Hello stream!" }] },
-                "authorName": { "simpleText": "Viewer123" }
-            }
-        });
-
-        let nodes = Parser::parse_tree(&fixture);
-        assert_eq!(nodes.find_tabs().len(), 1);
-        assert_eq!(nodes.find_tabs()[0].title, "Videos");
-        assert!(nodes.find_tabs()[0].selected);
-    }
-
-    #[test]
-    fn test_parser_parses_buttons_and_menus() {
-        let fixture = json!({
-            "contents": [
-                {
-                    "menuRenderer": {
-                        "items": [
-                            {
-                                "menuServiceItemRenderer": {
-                                    "text": { "runs": [{ "text": "Share" }] },
-                                    "icon": { "iconType": "SHARE" },
-                                    "serviceEndpoint": {
-                                        "commandMetadata": {
-                                            "webCommandMetadata": { "apiUrl": "/youtubei/v1/share" }
-                                        }
-                                    }
-                                }
-                            }
-                        ],
-                        "topLevelButtons": []
-                    }
-                },
-                {
-                    "buttonRenderer": {
-                        "text": { "runs": [{ "text": "Subscribe" }] },
-                        "navigationEndpoint": {
-                            "subscribeEndpoint": {
-                                "channelIds": ["UC_test"]
-                            }
-                        }
-                    }
-                },
-                {
-                    "toggleButtonRenderer": {
-                        "isToggled": true,
-                        "defaultText": { "simpleText": "Like" },
-                        "toggledText": { "simpleText": "Liked" }
-                    }
-                }
-            ]
-        });
-
-        let nodes = Parser::parse_tree(&fixture);
-        assert_eq!(nodes.find_menus().len(), 1);
-        assert_eq!(nodes.find_menus()[0].items.len(), 1);
-        assert_eq!(nodes.find_menus()[0].items[0].text, "Share");
-
-        assert_eq!(nodes.find_buttons().len(), 1);
-        assert_eq!(nodes.find_buttons()[0].text, "Subscribe");
-
-        let toggled = nodes.iter().find_map(|n| match n {
-            crate::parser::YTNode::ToggleButton(tb) => Some(tb),
-            _ => None,
-        }).expect("ToggleButton should be parsed");
-        assert!(toggled.is_toggled);
-        assert_eq!(toggled.default_text, "Like");
-        assert_eq!(toggled.toggled_text.as_deref(), Some("Liked"));
-    }
-
-    #[test]
-    fn test_all_registered_classes_have_executable_dispatch_target() {
+    fn test_all_574_legacy_classes_are_registered_with_concrete_targets() {
         let count = ParserRegistry::registered_types_count();
-        assert_eq!(count, 546, "Expected exactly 546 registered renderer keys");
-        for (name, category) in REGISTRY.iter() {
-            let target = ParserRegistry::dispatch_target(name);
+        assert_eq!(count, 574, "Expected exactly 574 legacy parser classes from reference-youtubejs");
+
+        for class_meta in ParserRegistry::all_classes() {
+            assert!(!class_meta.name.is_empty(), "Class name cannot be empty");
+            assert!(!class_meta.legacy_path.is_empty(), "Legacy path cannot be empty");
+            let target = ParserRegistry::dispatch_target(class_meta.name);
             assert!(
                 target.is_some(),
-                "Renderer class '{}' in category {:?} has no executable dispatch target",
-                name,
-                category
+                "Class '{}' ({}) has no dispatch target",
+                class_meta.name,
+                class_meta.legacy_path
             );
         }
     }

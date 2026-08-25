@@ -162,10 +162,14 @@ pub use models::video::{
     Thumbnail, VideoDetails, VideoInfo,
 };
 pub use parser::{
-    ButtonNode, ChannelCardNode, CommentThreadNode, LiveChatMessageNode, MenuItemNode, MenuNode,
-    NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserRegistry, PlaylistNode,
-    PlaylistVideoNode, PostNode, ShortNode, ThumbnailOverlayProgressBarNode,
-    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoNode, YTNode,
+    ButtonNode, ChannelCardNode, ChipCloudChipNode, ChipCloudNode, CommentNode, CommentThreadNode,
+    CreatorHeartNode, ItemSectionNode, LegacyClassMeta, LiveChatMessageNode, MenuItemNode,
+    MenuNode, MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode,
+    NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserDispatchTarget,
+    ParserRegistry, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode,
+    PostNode, ReelShelfNode, RichGridNode, RichShelfNode, SectionListNode, ShelfNode, ShortNode,
+    TabNode, ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, ToggleButtonNode,
+    VideoNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode, YTNode,
 };
 
 use crate::endpoints::account::{

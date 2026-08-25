@@ -234,3 +234,104 @@ fn parse_duration_string_to_ms(d: &str) -> Option<u64> {
         None
     }
 }
+
+/// An individual video row in a watch next playlist panel (`PlaylistPanelVideoRenderer.ts`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct PlaylistPanelVideoNode {
+    pub id: String,
+    pub title: String,
+    pub author: Option<String>,
+    pub duration: Option<String>,
+    pub selected: bool,
+}
+
+impl PlaylistPanelVideoNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("playlistPanelVideoRenderer").unwrap_or(val);
+        let id = target
+            .get("videoId")
+            .or_else(|| target.pointer("/navigationEndpoint/watchEndpoint/videoId"))
+            .and_then(Value::as_str)?
+            .to_string();
+
+        let title = target
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+
+        let author = target
+            .get("longBylineText")
+            .or_else(|| target.get("shortBylineText"))
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let duration = target
+            .get("lengthText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let selected = target
+            .get("selected")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+
+        Some(Self {
+            id,
+            title,
+            author,
+            duration,
+            selected,
+        })
+    }
+}
+
+/// Watch next playlist panel (`PlaylistPanel.ts` / `playlistPanelRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct PlaylistPanelNode {
+    pub title: String,
+    pub playlist_id: Option<String>,
+    pub num_videos_text: Option<String>,
+    pub items: Vec<PlaylistPanelVideoNode>,
+}
+
+impl PlaylistPanelNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("playlistPanelRenderer").unwrap_or(val);
+        if target.get("contents").is_none() && target.get("title").is_none() {
+            return None;
+        }
+
+        let title = target
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+
+        let playlist_id = target
+            .get("playlistId")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        let num_videos_text = target
+            .get("numVideosText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let mut items = Vec::new();
+        if let Some(arr) = target.get("contents").and_then(|c| c.as_array()) {
+            for item in arr {
+                if let Some(pv) = PlaylistPanelVideoNode::from_value(item) {
+                    items.push(pv);
+                }
+            }
+        }
+
+        Some(Self {
+            title,
+            playlist_id,
+            num_videos_text,
+            items,
+        })
+    }
+}

@@ -122,3 +122,41 @@ impl CommentThreadNode {
         })
     }
 }
+
+/// Creator heart badge attached to a comment (`CreatorHeart.ts` / `creatorHeartRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct CreatorHeartNode {
+    pub is_hearted: bool,
+    pub is_heart_enabled: bool,
+    pub creator_thumbnail: Option<String>,
+}
+
+impl CreatorHeartNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let target = val.get("creatorHeartRenderer").unwrap_or(val);
+        if target.get("creatorThumbnail").is_none() && target.get("isHearted").is_none() {
+            return None;
+        }
+
+        let is_hearted = target
+            .get("isHearted")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+
+        let is_heart_enabled = target
+            .get("isEnabled")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
+
+        let creator_thumbnail = target
+            .pointer("/creatorThumbnail/thumbnails/0/url")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        Some(Self {
+            is_hearted,
+            is_heart_enabled,
+            creator_thumbnail,
+        })
+    }
+}
