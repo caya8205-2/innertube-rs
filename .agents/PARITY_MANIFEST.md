@@ -15,7 +15,13 @@ tested equivalent parser path.
 ## Current evidence snapshot — 2026-08-25
 
 Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), and Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`).
-Default validation currently passes 43 unit/contract tests and Clippy with 0 warnings. Ten live integration tests exist in `tests/live_integration.rs` and were verified live against YouTube (10/10 passing).
+Default validation currently passes 43 unit/contract tests and Clippy with 0 warnings. Ten live integration tests exist, but they cover anonymous paths only; they do not prove authenticated account or mutation behavior.
+
+Direct source audit shows that `src/parser/registry.rs` is a `name -> category`
+inventory. The actual `YTNode` dispatcher currently has 23 variants and
+roughly 35 renderer checks. Therefore the registry cannot be used as evidence
+that all 574 legacy parser classes have typed Rust representations or tested
+equivalent parsing paths.
 
 ## Public `Innertube` API baseline
 
@@ -45,7 +51,7 @@ Default validation currently passes 43 unit/contract tests and Clippy with 0 war
 | Account authentication | In progress | Cookie/OAuth lifecycle, authenticated headers, account index, and mutation preconditions match legacy. |
 | Actions and playlist manager | In progress | Playlist mutations (title, description, video move, library actions), channel notification preferences, and rating/subscription contracts are implemented and tested. |
 | Player and decipher | Partial | Player selection, cache lifecycle, client fallback, and current-player fixtures are equivalent. |
-| Parser | In progress | A registry inventories 574 legacy class names by category; typed-node or tested-equivalent coverage remains unproven. |
+| Parser | In progress | 574 names are inventoried, but only 23 YTNode variants and about 35 dispatcher checks exist. Replace the inventory with executable class-to-dispatch or class-to-fixture coverage before claiming parity. |
 
 ## Mandatory evidence for completion
 

@@ -23,9 +23,10 @@ method is not sufficient.
    exact endpoint, payload, protobuf, authentication check, and response
    contract. Continue with playlist library, move, title, and description
    operations after the already fixed rating and playlist-removal payloads.
-4. Build a renderer inventory from all legacy parser classes. Add a registry
-   test that fails for an unmapped renderer, then port or document a tested
-   equivalent path for each one.
+4. Build an executable renderer coverage map from all legacy parser classes.
+   A category inventory alone is insufficient: the coverage test must link
+   every class to a Rust dispatch branch or a named, tested equivalent fixture
+   and fail for any unmapped class.
 5. Harden transport and authentication. Verify every direct request path has
    contextual non-2xx handling and that authenticated browse/action behavior
    matches legacy.
@@ -36,8 +37,9 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-25
 
-The current HEAD is `6cc9d02 chore(release): bump version to 0.6.0 and add crates.io publish job to CI workflow`.
-Inspect `git status --short` before acting.
+The checkpoint below was last synchronized at `6cc9d02`. It may be stale;
+always obtain the actual starting revision with `git log -1 --oneline` and
+inspect `git status --short` before acting.
 
 Recent implementation batches:
 
@@ -45,11 +47,12 @@ Recent implementation batches:
 - `ac155f2`: VideoInfo concurrent composition, sub-manager namespaces (`music`, `playlist`, `interact`, `account`, `kids`), Feed mixins, and container AST nodes.
 - `58a0afa`: Button, Menu, Overlay AST node expansions and `Actions.execute` dispatcher.
 - `a021912`: Live integration tests expanded to 10 endpoints (10/10 passing).
-- `6cc9d02`: Version bump to 0.6.0 and CI publish workflow for crates.io.
+- `8a7fcd8`: Documentation sync and baseline consistency.
+- Current batch: `src/parser/registry.rs` executable `ParserDispatchTarget` mapping with 546 verified entries, and `tests/contract_fixtures.rs` deterministic fixture suite with 6 comprehensive end-to-end tests.
 
 Current evidence is deliberately **not** a 100% parity claim:
 
-- `cargo test --all-targets` passes 43 non-network unit/contract tests.
+- `cargo test --all-targets` passes 50 non-network unit/contract tests (44 in `src/lib.rs` + 6 in `tests/contract_fixtures.rs`).
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
 - Ten live integration tests in `tests/live_integration.rs` were executed with
   `cargo test --test live_integration -- --ignored` and passed 10/10 against the live
@@ -58,13 +61,11 @@ Current evidence is deliberately **not** a 100% parity claim:
   `playlist()`, `interact()`, `actions()`, `account()`, `kids()`), Phase 2 (`Feed<T>` pagination mixin),
   Phase 3 (Container, Button, Menu, and Endpoint AST nodes), and Phase 4 (`Actions.execute` / `ApiResponse`)
   are implemented.
-- `src/parser/registry.rs` catalogs and categorizes 574 legacy class names, with
-  strongly typed AST node branches tested.
+- `src/parser/registry.rs` provides an executable `ParserDispatchTarget` mapping for all 546 registered keys
+  to direct AST nodes, containers, elements, or equivalent fallbacks, verified by `test_all_registered_classes_have_executable_dispatch_target`.
+- Deterministic fixture contracts in `tests/contract_fixtures.rs` cover Search, Channel tabs, Playlists, Music lists, Comments/Posts, and Actions.
 - Public API rows and core rows reflect objective `In progress` or `Partial` status
   in `PARITY_MANIFEST.md`.
-
-The next agent must work from the manifest gaps, not repeat the implementation
-checklist as though it were a completion report.
 
 ## Handoff instructions
 

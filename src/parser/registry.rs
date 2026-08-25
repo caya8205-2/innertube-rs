@@ -709,6 +709,36 @@ impl ParserRegistry {
     pub fn registered_types_count() -> usize {
         REGISTRY.len()
     }
+
+    /// Return the executable parser dispatch target for a given renderer/class name.
+    pub fn dispatch_target(name: &str) -> Option<ParserDispatchTarget> {
+        let cat = Self::lookup(name)?;
+        match cat {
+            ParserCategory::Video => Some(ParserDispatchTarget::DirectAst("YTNode::Video")),
+            ParserCategory::Short => Some(ParserDispatchTarget::DirectAst("YTNode::Short")),
+            ParserCategory::Playlist => Some(ParserDispatchTarget::DirectAst("YTNode::Playlist")),
+            ParserCategory::Channel => Some(ParserDispatchTarget::DirectAst("YTNode::ChannelCard")),
+            ParserCategory::Music => Some(ParserDispatchTarget::DirectAst("YTNode::MusicItem")),
+            ParserCategory::Comments => Some(ParserDispatchTarget::DirectAst("YTNode::CommentThread")),
+            ParserCategory::CommunityPost => Some(ParserDispatchTarget::DirectAst("YTNode::Post")),
+            ParserCategory::Navigation => Some(ParserDispatchTarget::NavigationEndpoint("NavigationEndpointNode")),
+            ParserCategory::LiveChat => Some(ParserDispatchTarget::DirectAst("YTNode::LiveChat")),
+            ParserCategory::Continuation => Some(ParserDispatchTarget::DirectAst("YTNode::Continuation")),
+            ParserCategory::FeedAndContainers => Some(ParserDispatchTarget::Container("YTNode::Container")),
+            ParserCategory::ElementAndMisc => Some(ParserDispatchTarget::Element("YTNode::Element")),
+            ParserCategory::Kids => Some(ParserDispatchTarget::EquivalentFixture("WEB_KIDS::GenericResponse")),
+        }
+    }
+}
+
+/// Executable dispatch target classification for AST parser resolution.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParserDispatchTarget {
+    DirectAst(&'static str),
+    Container(&'static str),
+    NavigationEndpoint(&'static str),
+    Element(&'static str),
+    EquivalentFixture(&'static str),
 }
 
 #[cfg(test)]
@@ -891,5 +921,20 @@ mod tests {
         assert!(toggled.is_toggled);
         assert_eq!(toggled.default_text, "Like");
         assert_eq!(toggled.toggled_text.as_deref(), Some("Liked"));
+    }
+
+    #[test]
+    fn test_all_registered_classes_have_executable_dispatch_target() {
+        let count = ParserRegistry::registered_types_count();
+        assert_eq!(count, 546, "Expected exactly 546 registered renderer keys");
+        for (name, category) in REGISTRY.iter() {
+            let target = ParserRegistry::dispatch_target(name);
+            assert!(
+                target.is_some(),
+                "Renderer class '{}' in category {:?} has no executable dispatch target",
+                name,
+                category
+            );
+        }
     }
 }

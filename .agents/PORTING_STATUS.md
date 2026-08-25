@@ -1,5 +1,10 @@
 # innertube-rs — Porting Status & Feature Matrix
 
+> **Obsolete for full-parity decisions.** This historical matrix predates the
+> source-level parity audit and its `Complete`/`100%` labels are not current
+> evidence. Use `PARITY_MANIFEST.md` as the sole parity authority and
+> `PARITY_PLAN.md` for the current execution order.
+
 > **Upstream Reference**: [LuanRT/YouTube.js (YouTubei.js)](https://github.com/LuanRT/YouTube.js)  
 > **Target Project**: `innertube-rs` (Pure Rust Port)  
 > **Last Updated**: August 25, 2026  

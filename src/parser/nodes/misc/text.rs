@@ -88,6 +88,11 @@ impl TextNode {
             return Some(Self::new(text_val));
         }
 
+        // direct text property
+        if let Some(t) = val.get("text").and_then(|s| s.as_str()) {
+            return Some(Self::new(t));
+        }
+
         // accessibility data fallback
         if let Some(acc) = val.pointer("/accessibility/accessibilityData/label").and_then(|l| l.as_str()) {
             return Some(Self::new(acc));

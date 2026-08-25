@@ -26,7 +26,9 @@ impl PostNode {
             .and_then(Value::as_str)?
             .to_string();
 
-        let author = AuthorNode::from_value(node);
+        let author = node.get("authorText")
+            .and_then(AuthorNode::from_value)
+            .or_else(|| AuthorNode::from_value(node));
 
         let content_text = TextNode::from_value(node.get("contentText").unwrap_or(&Value::Null))
             .map(|t| t.text)

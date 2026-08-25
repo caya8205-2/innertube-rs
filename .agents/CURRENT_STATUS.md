@@ -17,6 +17,12 @@ At this checkpoint:
 - `VideoInfo` concurrent composition (`get_info`), modular sub-managers (`client.music()`, `client.playlist()`, `client.interact()`, `client.actions()`, `client.account()`, `client.kids()`), `Feed<T>` mixin, generic action dispatcher (`Actions.execute`), and typed AST nodes (Buttons, Menus, Overlays, Containers) are implemented.
 - 574 legacy parser classes are cataloged in `src/parser/registry.rs`. Full parity exit audit is in progress.
 
+Direct source audit establishes that the registry is only a name-to-category
+lookup. The parser dispatcher has 23 `YTNode` variants and roughly 35 renderer
+checks, so cataloging cannot be counted as typed parser coverage. The live
+suite has no authenticated cookie/OAuth setup or mutation calls. The project
+is not at full parity.
+
 ---
 
 ## 1. Historical Feature Matrix (Obsolete for Parity Claims)

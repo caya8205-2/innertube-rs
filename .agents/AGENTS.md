@@ -36,8 +36,13 @@ and the default test suite. The manifest is the only completion authority.
 - **An inventory is not a parser port.** Listing renderer names or assigning
   categories does not prove a typed Rust representation or a tested equivalent
   parsing path.
+- **Audit the dispatcher, not only the registry.** Before claiming parser
+  coverage, compare each legacy renderer against an executable Rust dispatch
+  branch or an explicitly named equivalent fixture.
 - **Ignored tests are not executed tests.** They are runnable evidence only
   after they pass in an explicitly recorded run.
+- **Anonymous live tests do not prove authenticated parity.** Account feeds
+  and mutations require separate opt-in authenticated evidence.
 - **A plan item is not a completion gate.** Items 2–6 may be implemented while
   all manifest rows correctly remain `Partial` or `In progress`.
 
