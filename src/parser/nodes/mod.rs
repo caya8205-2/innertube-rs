@@ -19,17 +19,23 @@ pub use containers::{
     ShelfNode, TabNode,
 };
 pub use continuation::ContinuationNode;
-pub use livechat::LiveChatMessageNode;
-pub use misc::{
-    AuthorNode, BrowseEndpointNode, ButtonNode, ContinuationEndpointNode, DidYouMeanNode,
-    EndscreenElementNode, EndscreenNode, LikeEndpointNode, MenuItemNode, MenuNode,
-    MetadataBadgeNode, MicroformatDataNode, NavigationEndpointNode, ReelWatchEndpointNode,
-    SearchEndpointNode, SearchSubMenuNode, ShowingResultsForNode, SubscribeEndpointNode, TextNode,
-    TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayProgressBarNode,
-    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoOwnerNode, ViewCountNode,
-    WatchEndpointNode,
+pub use livechat::{
+    LiveChatBannerNode, LiveChatMembershipItemNode, LiveChatMessageNode, LiveChatPaidStickerNode,
+    LiveChatViewerEngagementMessageNode,
 };
-pub use music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode};
+pub use misc::{
+    AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode, CardNode, ClarificationNode,
+    ContinuationEndpointNode, DidYouMeanNode, EndscreenElementNode, EndscreenNode, LikeEndpointNode,
+    MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode, NavigationEndpointNode,
+    PollNode, ReelWatchEndpointNode, SearchEndpointNode, SearchSubMenuNode, ShowingResultsForNode,
+    SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
+    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, ToggleButtonNode,
+    VideoOwnerNode, ViewCountNode, WatchEndpointNode,
+};
+pub use music::{
+    MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
+    MusicResponsiveListItemNode, MusicTwoRowItemNode,
+};
 pub use playlist::{PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode};
 pub use post::PostNode;
 pub use short::{ReelShelfNode, ShortNode};
@@ -58,6 +64,9 @@ pub enum YTNode {
     MusicItem(MusicResponsiveListItemNode),
     MusicCard(MusicTwoRowItemNode),
     MusicDescriptionShelf(MusicDescriptionShelfNode),
+    MusicHeader(MusicHeaderNode),
+    MusicInlineBadge(MusicInlineBadgeNode),
+    MusicNavigationButton(MusicNavigationButtonNode),
     Comment(CommentNode),
     CommentThread(CommentThreadNode),
     CreatorHeart(CreatorHeartNode),
@@ -72,6 +81,10 @@ pub enum YTNode {
     ChipCloud(ChipCloudNode),
     ChipCloudChip(ChipCloudChipNode),
     LiveChat(LiveChatMessageNode),
+    LiveChatPaidSticker(LiveChatPaidStickerNode),
+    LiveChatMembershipItem(LiveChatMembershipItemNode),
+    LiveChatViewerEngagementMessage(LiveChatViewerEngagementMessageNode),
+    LiveChatBanner(LiveChatBannerNode),
     Button(ButtonNode),
     ToggleButton(ToggleButtonNode),
     Menu(MenuNode),
@@ -84,6 +97,10 @@ pub enum YTNode {
     ViewCount(ViewCountNode),
     VideoOwner(VideoOwnerNode),
     MicroformatData(MicroformatDataNode),
+    Alert(AlertNode),
+    Card(CardNode),
+    Clarification(ClarificationNode),
+    Poll(PollNode),
 }
 
 impl YTNode {
@@ -285,10 +302,9 @@ impl YTNode {
             }
         }
 
-        // 11. Check for Live Chat
+        // 11. Check for Live Chat Messages
         if val.get("liveChatTextMessageRenderer").is_some()
             || val.get("liveChatPaidMessageRenderer").is_some()
-            || val.get("liveChatMembershipItemRenderer").is_some()
         {
             if let Some(lc) = LiveChatMessageNode::from_value(val) {
                 return Some(YTNode::LiveChat(lc));
@@ -372,6 +388,67 @@ impl YTNode {
         if val.get("channelMetadataRenderer").is_some() {
             if let Some(cm) = ChannelMetadataNode::from_value(val) {
                 return Some(YTNode::ChannelMetadata(cm));
+            }
+        }
+
+        // 17. Check for Additional Live Chat Renderers
+        if val.get("liveChatPaidStickerRenderer").is_some() {
+            if let Some(ps) = LiveChatPaidStickerNode::from_value(val) {
+                return Some(YTNode::LiveChatPaidSticker(ps));
+            }
+        }
+        if val.get("liveChatMembershipItemRenderer").is_some() {
+            if let Some(mi) = LiveChatMembershipItemNode::from_value(val) {
+                return Some(YTNode::LiveChatMembershipItem(mi));
+            }
+        }
+        if val.get("liveChatViewerEngagementMessageRenderer").is_some() {
+            if let Some(ve) = LiveChatViewerEngagementMessageNode::from_value(val) {
+                return Some(YTNode::LiveChatViewerEngagementMessage(ve));
+            }
+        }
+        if val.get("liveChatBannerRenderer").is_some() {
+            if let Some(b) = LiveChatBannerNode::from_value(val) {
+                return Some(YTNode::LiveChatBanner(b));
+            }
+        }
+
+        // 18. Check for Music Header / Badges / Buttons
+        if val.get("musicHeaderRenderer").is_some() || val.get("musicVisualHeaderRenderer").is_some() {
+            if let Some(mh) = MusicHeaderNode::from_value(val) {
+                return Some(YTNode::MusicHeader(mh));
+            }
+        }
+        if val.get("musicInlineBadgeRenderer").is_some() {
+            if let Some(mib) = MusicInlineBadgeNode::from_value(val) {
+                return Some(YTNode::MusicInlineBadge(mib));
+            }
+        }
+        if val.get("musicNavigationButtonRenderer").is_some() {
+            if let Some(mnb) = MusicNavigationButtonNode::from_value(val) {
+                return Some(YTNode::MusicNavigationButton(mnb));
+            }
+        }
+
+        // 19. Check for Alerts, Cards, Clarifications, and Polls
+        if val.get("alertRenderer").is_some() || val.get("alertWithActionsRenderer").is_some() {
+            if let Some(a) = AlertNode::from_value(val) {
+                return Some(YTNode::Alert(a));
+            }
+        }
+        if val.get("cardRenderer").is_some() {
+            if let Some(c) = CardNode::from_value(val) {
+                return Some(YTNode::Card(c));
+            }
+        }
+        if val.get("clarificationRenderer").is_some() || val.get("emergencyOneboxRenderer").is_some() {
+            if let Some(cl) = ClarificationNode::from_value(val) {
+                return Some(YTNode::Clarification(cl));
+            }
+        }
+        if val.get("pollRenderer").is_some() {
+            if let Some(p) = PollNode::from_value(val) {
+                return Some(YTNode::Poll(p));
             }
         }
 

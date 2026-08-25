@@ -1,3 +1,4 @@
+pub mod alert;
 pub mod author;
 pub mod button;
 pub mod endscreen;
@@ -9,6 +10,7 @@ pub mod search_modifiers;
 pub mod text;
 pub mod thumbnail;
 
+pub use alert::{AlertNode, CardNode, ClarificationNode, PollNode};
 pub use author::AuthorNode;
 pub use button::{ButtonNode, ToggleButtonNode};
 pub use endscreen::{EndscreenElementNode, EndscreenNode};

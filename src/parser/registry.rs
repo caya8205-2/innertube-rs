@@ -64,6 +64,17 @@ pub enum YTNodeVariant {
     ViewCount,
     VideoOwner,
     MicroformatData,
+    LiveChatPaidSticker,
+    LiveChatMembershipItem,
+    LiveChatViewerEngagementMessage,
+    LiveChatBanner,
+    MusicHeader,
+    MusicInlineBadge,
+    MusicNavigationButton,
+    Alert,
+    Card,
+    Clarification,
+    Poll,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -231,13 +242,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Alert",
             legacy_path: "Alert.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Alert),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Alert),
         },
         LegacyClassMeta {
             name: "AlertWithButton",
             legacy_path: "AlertWithButton.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Button),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Alert),
         },
         LegacyClassMeta {
             name: "AnimatedThumbnailOverlayView",
@@ -351,7 +362,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Card",
             legacy_path: "Card.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Card),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Card),
         },
         LegacyClassMeta {
             name: "CardCollection",
@@ -795,7 +806,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "EmergencyOnebox",
             legacy_path: "EmergencyOnebox.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Alert),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Clarification),
         },
         LegacyClassMeta {
             name: "EmojiPickerCategory",
@@ -1437,7 +1448,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicHeader",
             legacy_path: "MusicHeader.ts",
             category: ParserCategory::Music,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicItem),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicHeader),
         },
         LegacyClassMeta {
             name: "MusicImmersiveHeader",
@@ -1449,7 +1460,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicInlineBadge",
             legacy_path: "MusicInlineBadge.ts",
             category: ParserCategory::Music,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicItem),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicInlineBadge),
         },
         LegacyClassMeta {
             name: "MusicItemThumbnailOverlay",
@@ -1473,7 +1484,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicNavigationButton",
             legacy_path: "MusicNavigationButton.ts",
             category: ParserCategory::Music,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicItem),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicNavigationButton),
         },
         LegacyClassMeta {
             name: "MusicPlayButton",
@@ -1569,7 +1580,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicVisualHeader",
             legacy_path: "MusicVisualHeader.ts",
             category: ParserCategory::Music,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicItem),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicHeader),
         },
         LegacyClassMeta {
             name: "NavigationEndpoint",
@@ -1821,7 +1832,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Poll",
             legacy_path: "Poll.ts",
             category: ParserCategory::CommunityPost,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Post),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Poll),
         },
         LegacyClassMeta {
             name: "Post",
@@ -2157,7 +2168,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SingleActionEmergencySupport",
             legacy_path: "SingleActionEmergencySupport.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CallToAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Clarification),
         },
         LegacyClassMeta {
             name: "SingleColumnBrowseResults",
@@ -3249,7 +3260,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatBanner",
             legacy_path: "livechat/items/LiveChatBanner.ts",
             category: ParserCategory::LiveChat,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatBanner),
         },
         LegacyClassMeta {
             name: "LiveChatBannerChatSummary",
@@ -3285,7 +3296,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatMembershipItem",
             legacy_path: "livechat/items/LiveChatMembershipItem.ts",
             category: ParserCategory::LiveChat,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatMembershipItem),
         },
         LegacyClassMeta {
             name: "LiveChatModeChangeMessage",
@@ -3303,7 +3314,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatPaidSticker",
             legacy_path: "livechat/items/LiveChatPaidSticker.ts",
             category: ParserCategory::LiveChat,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatPaidSticker),
         },
         LegacyClassMeta {
             name: "LiveChatPlaceholderItem",
@@ -3369,7 +3380,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatViewerEngagementMessage",
             legacy_path: "livechat/items/LiveChatViewerEngagementMessage.ts",
             category: ParserCategory::LiveChat,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatViewerEngagementMessage),
         },
         LegacyClassMeta {
             name: "PdgReplyButtonView",
@@ -3381,7 +3392,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PollHeader",
             legacy_path: "livechat/items/PollHeader.ts",
             category: ParserCategory::CommunityPost,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Post),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Poll),
         },
         LegacyClassMeta {
             name: "Menu",
@@ -3688,10 +3699,10 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 138);
+        assert_eq!(direct_count, 143);
         assert_eq!(container_count, 173);
-        assert_eq!(endpoint_count, 74);
-        assert_eq!(element_count, 182);
+        assert_eq!(endpoint_count, 73);
+        assert_eq!(element_count, 178);
         assert_eq!(kids_count, 7);
     }
 
@@ -3714,6 +3725,9 @@ mod tests {
             (json!({ "musicResponsiveListItemRenderer": { "flexColumns": [] } }), "MusicItem"),
             (json!({ "musicTwoRowItemRenderer": { "title": { "runs": [{ "text": "M2" }] } } }), "MusicCard"),
             (json!({ "musicDescriptionShelfRenderer": { "description": { "runs": [{ "text": "D" }] } } }), "MusicDescriptionShelf"),
+            (json!({ "musicHeaderRenderer": { "title": { "runs": [{ "text": "Album" }] } } }), "MusicHeader"),
+            (json!({ "musicInlineBadgeRenderer": { "icon": { "iconType": "EXPLICIT" } } }), "MusicInlineBadge"),
+            (json!({ "musicNavigationButtonRenderer": { "buttonText": { "runs": [{ "text": "Explore" }] } } }), "MusicNavigationButton"),
             (json!({ "commentRenderer": { "commentId": "c1", "authorText": { "simpleText": "A" }, "contentText": { "runs": [{ "text": "T" }] } } }), "Comment"),
             (json!({ "commentThreadRenderer": { "comment": { "commentRenderer": { "commentId": "ct1", "authorText": { "simpleText": "A" }, "contentText": { "runs": [{ "text": "T" }] } } } } }), "CommentThread"),
             (json!({ "creatorHeartRenderer": { "isHearted": true } }), "CreatorHeart"),
@@ -3721,6 +3735,11 @@ mod tests {
             (json!({ "continuationItemRenderer": { "continuationEndpoint": { "continuationCommand": { "token": "tok" } } } }), "Continuation"),
             (json!({ "chipCloudRenderer": { "chips": [] } }), "ChipCloud"),
             (json!({ "chipCloudChipRenderer": { "text": { "runs": [{ "text": "Chip" }] } } }), "ChipCloudChip"),
+            (json!({ "liveChatTextMessageRenderer": { "id": "msg1", "message": { "runs": [{ "text": "Hello" }] } } }), "LiveChat"),
+            (json!({ "liveChatPaidStickerRenderer": { "id": "stk1", "purchaseAmountText": { "simpleText": "$5.00" } } }), "LiveChatPaidSticker"),
+            (json!({ "liveChatMembershipItemRenderer": { "id": "mem1", "authorName": { "simpleText": "VIP" } } }), "LiveChatMembershipItem"),
+            (json!({ "liveChatViewerEngagementMessageRenderer": { "message": { "runs": [{ "text": "Welcome to chat" }] } } }), "LiveChatViewerEngagementMessage"),
+            (json!({ "liveChatBannerRenderer": { "header": { "liveChatBannerHeaderRenderer": { "text": { "simpleText": "Pinned" } } } } }), "LiveChatBanner"),
             (json!({ "buttonRenderer": { "text": { "runs": [{ "text": "Btn" }] } } }), "Button"),
             (json!({ "toggleButtonRenderer": { "defaultText": { "simpleText": "Tog" } } }), "ToggleButton"),
             (json!({ "menuRenderer": { "items": [] } }), "Menu"),
@@ -3733,6 +3752,10 @@ mod tests {
             (json!({ "viewCountRenderer": { "viewCount": { "simpleText": "1,000 views" } } }), "ViewCount"),
             (json!({ "videoOwnerRenderer": { "title": { "runs": [{ "text": "Owner" }] } } }), "VideoOwner"),
             (json!({ "microformatDataRenderer": { "urlCanonical": "https://youtube.com/watch?v=1" } }), "MicroformatData"),
+            (json!({ "alertRenderer": { "text": { "simpleText": "Warning" } } }), "Alert"),
+            (json!({ "cardRenderer": { "cardId": "c1" } }), "Card"),
+            (json!({ "clarificationRenderer": { "title": { "simpleText": "Fact check" } } }), "Clarification"),
+            (json!({ "pollRenderer": { "question": { "simpleText": "Vote" } } }), "Poll"),
         ];
 
         for (fixture, label) in test_cases {

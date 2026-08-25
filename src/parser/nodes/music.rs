@@ -209,3 +209,111 @@ fn parse_duration_string_to_ms(d: &str) -> Option<u64> {
         None
     }
 }
+
+/// Strongly typed MusicHeader AST node (`musicHeaderRenderer` / `musicVisualHeaderRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct MusicHeaderNode {
+    pub title: String,
+    pub subtitle: Option<String>,
+    pub thumbnails: ThumbnailListNode,
+    pub buttons: Vec<Value>,
+}
+
+impl MusicHeaderNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val
+            .get("musicHeaderRenderer")
+            .or_else(|| val.get("musicVisualHeaderRenderer"))
+            .unwrap_or(val);
+
+        let title = node
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .or_else(|| node.get("title").and_then(Value::as_str).map(ToString::to_string))
+            .unwrap_or_else(|| "Music Header".to_string());
+
+        let subtitle = node
+            .get("subtitle")
+            .or_else(|| node.get("description"))
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        let thumbnails = ThumbnailListNode::from_value(
+            node.get("thumbnail")
+                .or_else(|| node.pointer("/foregroundThumbnail/musicThumbnailRenderer/thumbnail"))
+                .unwrap_or(node),
+        );
+
+        let buttons = node
+            .get("buttons")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+
+        Some(Self {
+            title,
+            subtitle,
+            thumbnails,
+            buttons,
+        })
+    }
+}
+
+/// Strongly typed MusicInlineBadge AST node (`musicInlineBadgeRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct MusicInlineBadgeNode {
+    pub icon_type: Option<String>,
+    pub label: Option<String>,
+    pub tooltip: Option<String>,
+}
+
+impl MusicInlineBadgeNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("musicInlineBadgeRenderer").unwrap_or(val);
+        let icon_type = node.pointer("/icon/iconType").and_then(Value::as_str).map(ToString::to_string);
+        let label = node
+            .pointer("/accessibilityData/accessibilityData/label")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+        let tooltip = node.get("tooltip").and_then(Value::as_str).map(ToString::to_string);
+
+        Some(Self {
+            icon_type,
+            label,
+            tooltip,
+        })
+    }
+}
+
+/// Strongly typed MusicNavigationButton AST node (`musicNavigationButtonRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MusicNavigationButtonNode {
+    pub text: String,
+    pub icon_type: Option<String>,
+    pub endpoint: Option<Value>,
+}
+
+impl MusicNavigationButtonNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("musicNavigationButtonRenderer").unwrap_or(val);
+        let text = node
+            .get("buttonText")
+            .or_else(|| node.get("text"))
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+        let icon_type = node.pointer("/icon/iconType").and_then(Value::as_str).map(ToString::to_string);
+        let endpoint = node
+            .get("clickCommand")
+            .or_else(|| node.get("navigationEndpoint"))
+            .cloned();
+
+        Some(Self {
+            text,
+            icon_type,
+            endpoint,
+        })
+    }
+}
+

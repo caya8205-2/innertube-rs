@@ -162,18 +162,21 @@ pub use models::video::{
     Thumbnail, VideoDetails, VideoInfo,
 };
 pub use parser::{
-    ButtonNode, ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode,
-    ChannelMetadataNode, ChipCloudChipNode, ChipCloudNode, CommentNode, CommentThreadNode,
-    ContainerKind, CreatorHeartNode, DidYouMeanNode, ElementKind, EndpointKind,
-    EndscreenElementNode, EndscreenNode, ItemSectionNode, KidsKind, LegacyClassMeta,
-    LiveChatMessageNode, MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode,
-    MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode,
+    AlertNode, ButtonNode, CardNode, ChannelAboutFullMetadataNode, ChannelCardNode,
+    ChannelHeaderNode, ChannelMetadataNode, ChipCloudChipNode, ChipCloudNode, ClarificationNode,
+    CommentNode, CommentThreadNode, ContainerKind, CreatorHeartNode, DidYouMeanNode, ElementKind,
+    EndpointKind, EndscreenElementNode, EndscreenNode, ItemSectionNode, KidsKind, LegacyClassMeta,
+    LiveChatBannerNode, LiveChatMembershipItemNode, LiveChatMessageNode, LiveChatPaidStickerNode,
+    LiveChatViewerEngagementMessageNode, MenuItemNode, MenuNode, MetadataBadgeNode,
+    MicroformatDataNode, MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode,
+    MusicNavigationButtonNode, MusicResponsiveListItemNode, MusicTwoRowItemNode,
     NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserDispatchTarget,
     ParserRegistry, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode,
-    PostNode, ReelShelfNode, RichGridNode, RichShelfNode, SearchSubMenuNode, SectionListNode,
-    ShelfNode, ShortNode, ShowingResultsForNode, TabNode, ThumbnailOverlayProgressBarNode,
-    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoNode, VideoOwnerNode,
-    VideoPrimaryInfoNode, VideoSecondaryInfoNode, ViewCountNode, YTNode, YTNodeVariant,
+    PollNode, PostNode, ReelShelfNode, RichGridNode, RichShelfNode, SearchSubMenuNode,
+    SectionListNode, ShelfNode, ShortNode, ShowingResultsForNode, TabNode,
+    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoNode,
+    VideoOwnerNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode, ViewCountNode, YTNode,
+    YTNodeVariant,
 };
 
 use crate::endpoints::account::{

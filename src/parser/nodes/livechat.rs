@@ -121,3 +121,117 @@ impl LiveChatMessageNode {
         None
     }
 }
+
+/// Strongly typed LiveChatPaidSticker AST node (`liveChatPaidStickerRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveChatPaidStickerNode {
+    pub id: String,
+    pub author_name: Option<String>,
+    pub purchase_amount_text: String,
+    pub sticker: Option<Value>,
+}
+
+impl LiveChatPaidStickerNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("liveChatPaidStickerRenderer").unwrap_or(val);
+        let id = node.get("id").and_then(Value::as_str).unwrap_or_default().to_string();
+        let author_name = node.get("authorName").and_then(TextNode::from_value).map(|t| t.text);
+        let purchase_amount_text = node
+            .get("purchaseAmountText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+        let sticker = node.get("sticker").cloned();
+
+        Some(Self {
+            id,
+            author_name,
+            purchase_amount_text,
+            sticker,
+        })
+    }
+}
+
+/// Strongly typed LiveChatMembershipItem AST node (`liveChatMembershipItemRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveChatMembershipItemNode {
+    pub id: String,
+    pub author_name: Option<String>,
+    pub header_subtext: Option<String>,
+    pub message: Option<String>,
+}
+
+impl LiveChatMembershipItemNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("liveChatMembershipItemRenderer").unwrap_or(val);
+        let id = node.get("id").and_then(Value::as_str).unwrap_or_default().to_string();
+        let author_name = node.get("authorName").and_then(TextNode::from_value).map(|t| t.text);
+        let header_subtext = node.get("headerSubtext").and_then(TextNode::from_value).map(|t| t.text);
+        let message = node.get("message").and_then(TextNode::from_value).map(|t| t.text);
+
+        Some(Self {
+            id,
+            author_name,
+            header_subtext,
+            message,
+        })
+    }
+}
+
+/// Strongly typed LiveChatViewerEngagementMessage AST node (`liveChatViewerEngagementMessageRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveChatViewerEngagementMessageNode {
+    pub id: Option<String>,
+    pub message: String,
+    pub action_button: Option<Value>,
+    pub icon_type: Option<String>,
+}
+
+impl LiveChatViewerEngagementMessageNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("liveChatViewerEngagementMessageRenderer").unwrap_or(val);
+        let id = node.get("id").and_then(Value::as_str).map(ToString::to_string);
+        let message = node
+            .get("message")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .unwrap_or_default();
+        let action_button = node.get("actionButton").cloned();
+        let icon_type = node.pointer("/icon/iconType").and_then(Value::as_str).map(ToString::to_string);
+
+        Some(Self {
+            id,
+            message,
+            action_button,
+            icon_type,
+        })
+    }
+}
+
+/// Strongly typed LiveChatBanner AST node (`liveChatBannerRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveChatBannerNode {
+    pub header: Option<String>,
+    pub contents: Option<Value>,
+    pub action_button: Option<Value>,
+}
+
+impl LiveChatBannerNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("liveChatBannerRenderer").unwrap_or(val);
+        let header = node.pointer("/header/liveChatBannerHeaderRenderer/text").and_then(TextNode::from_value).map(|t| t.text);
+        let contents = node.get("contents").cloned();
+        let action_button = node.get("actionButton").cloned();
+
+        Some(Self {
+            header,
+            contents,
+            action_button,
+        })
+    }
+}
+

@@ -592,3 +592,131 @@ fn test_fixture_metadata_badges_and_channel_metadata_nodes() {
     }
 }
 
+#[test]
+fn test_fixture_livechat_stickers_memberships_and_banners() {
+    let sticker_json = json!({
+        "liveChatPaidStickerRenderer": {
+            "id": "stk_999",
+            "authorName": { "simpleText": "Super Fan" },
+            "purchaseAmountText": { "simpleText": "$10.00" },
+            "sticker": { "thumbnails": [{ "url": "https://yt3.ggpht.com/sticker.png" }] }
+        }
+    });
+    let sticker_node = YTNode::parse(&sticker_json).expect("LiveChatPaidStickerNode should parse");
+    if let YTNode::LiveChatPaidSticker(ps) = sticker_node {
+        assert_eq!(ps.id, "stk_999");
+        assert_eq!(ps.author_name.as_deref(), Some("Super Fan"));
+        assert_eq!(ps.purchase_amount_text, "$10.00");
+        assert!(ps.sticker.is_some());
+    } else {
+        panic!("Expected YTNode::LiveChatPaidSticker");
+    }
+
+    let membership_json = json!({
+        "liveChatMembershipItemRenderer": {
+            "id": "mem_888",
+            "authorName": { "simpleText": "Loyal Member" },
+            "headerSubtext": { "runs": [{ "text": "Member for 12 months" }] },
+            "message": { "runs": [{ "text": "Happy Anniversary!" }] }
+        }
+    });
+    let mem_node = YTNode::parse(&membership_json).expect("LiveChatMembershipItemNode should parse");
+    if let YTNode::LiveChatMembershipItem(mi) = mem_node {
+        assert_eq!(mi.id, "mem_888");
+        assert_eq!(mi.author_name.as_deref(), Some("Loyal Member"));
+        assert_eq!(mi.header_subtext.as_deref(), Some("Member for 12 months"));
+        assert_eq!(mi.message.as_deref(), Some("Happy Anniversary!"));
+    } else {
+        panic!("Expected YTNode::LiveChatMembershipItem");
+    }
+
+    let banner_json = json!({
+        "liveChatBannerRenderer": {
+            "header": {
+                "liveChatBannerHeaderRenderer": {
+                    "text": { "runs": [{ "text": "Important Announcement" }] }
+                }
+            }
+        }
+    });
+    let banner_node = YTNode::parse(&banner_json).expect("LiveChatBannerNode should parse");
+    if let YTNode::LiveChatBanner(b) = banner_node {
+        assert_eq!(b.header.as_deref(), Some("Important Announcement"));
+    } else {
+        panic!("Expected YTNode::LiveChatBanner");
+    }
+}
+
+#[test]
+fn test_fixture_music_headers_badges_alerts_and_polls() {
+    let header_json = json!({
+        "musicHeaderRenderer": {
+            "title": { "runs": [{ "text": "Chill Vibes Playlist" }] },
+            "subtitle": { "runs": [{ "text": "Curated by YouTube Music" }] },
+            "thumbnail": {
+                "thumbnails": [{ "url": "https://lh3.googleusercontent.com/header.jpg", "width": 544, "height": 544 }]
+            }
+        }
+    });
+    let header_node = YTNode::parse(&header_json).expect("MusicHeaderNode should parse");
+    if let YTNode::MusicHeader(mh) = header_node {
+        assert_eq!(mh.title, "Chill Vibes Playlist");
+        assert_eq!(mh.subtitle.as_deref(), Some("Curated by YouTube Music"));
+        assert!(!mh.thumbnails.thumbnails.is_empty());
+    } else {
+        panic!("Expected YTNode::MusicHeader");
+    }
+
+    let badge_json = json!({
+        "musicInlineBadgeRenderer": {
+            "icon": { "iconType": "MUSIC_EXPLICIT_BADGE" },
+            "accessibilityData": {
+                "accessibilityData": { "label": "Explicit track" }
+            },
+            "tooltip": "Explicit"
+        }
+    });
+    let badge_node = YTNode::parse(&badge_json).expect("MusicInlineBadgeNode should parse");
+    if let YTNode::MusicInlineBadge(mib) = badge_node {
+        assert_eq!(mib.icon_type.as_deref(), Some("MUSIC_EXPLICIT_BADGE"));
+        assert_eq!(mib.label.as_deref(), Some("Explicit track"));
+        assert_eq!(mib.tooltip.as_deref(), Some("Explicit"));
+    } else {
+        panic!("Expected YTNode::MusicInlineBadge");
+    }
+
+    let alert_json = json!({
+        "alertRenderer": {
+            "type": "WARNING",
+            "text": { "runs": [{ "text": "This video is unlisted." }] }
+        }
+    });
+    let alert_node = YTNode::parse(&alert_json).expect("AlertNode should parse");
+    if let YTNode::Alert(a) = alert_node {
+        assert_eq!(a.alert_type.as_deref(), Some("WARNING"));
+        assert_eq!(a.text, "This video is unlisted.");
+    } else {
+        panic!("Expected YTNode::Alert");
+    }
+
+    let poll_json = json!({
+        "pollRenderer": {
+            "question": { "runs": [{ "text": "What is your favorite language?" }] },
+            "choices": [
+                { "text": { "runs": [{ "text": "Rust" }] } },
+                { "text": { "runs": [{ "text": "TypeScript" }] } }
+            ],
+            "totalVotes": { "simpleText": "50,000 votes" }
+        }
+    });
+    let poll_node = YTNode::parse(&poll_json).expect("PollNode should parse");
+    if let YTNode::Poll(p) = poll_node {
+        assert_eq!(p.question, "What is your favorite language?");
+        assert_eq!(p.choices, vec!["Rust", "TypeScript"]);
+        assert_eq!(p.total_votes.as_deref(), Some("50,000 votes"));
+    } else {
+        panic!("Expected YTNode::Poll");
+    }
+}
+
+
