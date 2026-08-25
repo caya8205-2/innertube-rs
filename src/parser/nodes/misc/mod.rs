@@ -1,18 +1,24 @@
 pub mod author;
 pub mod button;
+pub mod endscreen;
 pub mod menu;
+pub mod metadata;
 pub mod navigation;
 pub mod overlay;
+pub mod search_modifiers;
 pub mod text;
 pub mod thumbnail;
 
 pub use author::AuthorNode;
 pub use button::{ButtonNode, ToggleButtonNode};
+pub use endscreen::{EndscreenElementNode, EndscreenNode};
 pub use menu::{MenuItemNode, MenuNode};
+pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, ViewCountNode};
 pub use navigation::{
     BrowseEndpointNode, ContinuationEndpointNode, LikeEndpointNode, NavigationEndpointNode,
     ReelWatchEndpointNode, SearchEndpointNode, SubscribeEndpointNode, WatchEndpointNode,
 };
 pub use overlay::{ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode};
+pub use search_modifiers::{DidYouMeanNode, SearchSubMenuNode, ShowingResultsForNode};
 pub use text::{TextNode, TextRunNode};
 pub use thumbnail::{ThumbnailListNode, ThumbnailNode};

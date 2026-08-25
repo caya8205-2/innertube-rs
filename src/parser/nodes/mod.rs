@@ -10,7 +10,9 @@ pub mod post;
 pub mod short;
 pub mod video;
 
-pub use channel::{ChannelCardNode, ChannelHeaderNode};
+pub use channel::{
+    ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode, ChannelMetadataNode,
+};
 pub use comments::{CommentNode, CommentThreadNode, CreatorHeartNode};
 pub use containers::{
     ChipCloudChipNode, ChipCloudNode, ItemSectionNode, RichGridNode, RichShelfNode, SectionListNode,
@@ -19,10 +21,12 @@ pub use containers::{
 pub use continuation::ContinuationNode;
 pub use livechat::LiveChatMessageNode;
 pub use misc::{
-    AuthorNode, BrowseEndpointNode, ButtonNode, ContinuationEndpointNode, LikeEndpointNode,
-    MenuItemNode, MenuNode, NavigationEndpointNode, ReelWatchEndpointNode, SearchEndpointNode,
-    SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
-    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, ToggleButtonNode,
+    AuthorNode, BrowseEndpointNode, ButtonNode, ContinuationEndpointNode, DidYouMeanNode,
+    EndscreenElementNode, EndscreenNode, LikeEndpointNode, MenuItemNode, MenuNode,
+    MetadataBadgeNode, MicroformatDataNode, NavigationEndpointNode, ReelWatchEndpointNode,
+    SearchEndpointNode, SearchSubMenuNode, ShowingResultsForNode, SubscribeEndpointNode, TextNode,
+    TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayProgressBarNode,
+    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoOwnerNode, ViewCountNode,
     WatchEndpointNode,
 };
 pub use music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode};
@@ -49,6 +53,8 @@ pub enum YTNode {
     PlaylistPanelVideo(PlaylistPanelVideoNode),
     ChannelHeader(ChannelHeaderNode),
     ChannelCard(ChannelCardNode),
+    ChannelAboutFullMetadata(ChannelAboutFullMetadataNode),
+    ChannelMetadata(ChannelMetadataNode),
     MusicItem(MusicResponsiveListItemNode),
     MusicCard(MusicTwoRowItemNode),
     MusicDescriptionShelf(MusicDescriptionShelfNode),
@@ -69,6 +75,15 @@ pub enum YTNode {
     Button(ButtonNode),
     ToggleButton(ToggleButtonNode),
     Menu(MenuNode),
+    DidYouMean(DidYouMeanNode),
+    ShowingResultsFor(ShowingResultsForNode),
+    SearchSubMenu(SearchSubMenuNode),
+    Endscreen(EndscreenNode),
+    EndscreenElement(EndscreenElementNode),
+    MetadataBadge(MetadataBadgeNode),
+    ViewCount(ViewCountNode),
+    VideoOwner(VideoOwnerNode),
+    MicroformatData(MicroformatDataNode),
 }
 
 impl YTNode {
@@ -294,6 +309,69 @@ impl YTNode {
         if val.get("menuRenderer").is_some() || val.get("menuPopupRenderer").is_some() {
             if let Some(m) = MenuNode::from_value(val) {
                 return Some(YTNode::Menu(m));
+            }
+        }
+
+        // 13. Check for Search Modifiers & Submenus
+        if val.get("didYouMeanRenderer").is_some() {
+            if let Some(dym) = DidYouMeanNode::from_value(val) {
+                return Some(YTNode::DidYouMean(dym));
+            }
+        }
+        if val.get("showingResultsForRenderer").is_some() {
+            if let Some(srf) = ShowingResultsForNode::from_value(val) {
+                return Some(YTNode::ShowingResultsFor(srf));
+            }
+        }
+        if val.get("searchSubMenuRenderer").is_some() {
+            if let Some(ssm) = SearchSubMenuNode::from_value(val) {
+                return Some(YTNode::SearchSubMenu(ssm));
+            }
+        }
+
+        // 14. Check for Endscreens & Overlays
+        if val.get("endscreenRenderer").is_some() {
+            if let Some(es) = EndscreenNode::from_value(val) {
+                return Some(YTNode::Endscreen(es));
+            }
+        }
+        if val.get("endscreenElementRenderer").is_some() {
+            if let Some(ese) = EndscreenElementNode::from_value(val) {
+                return Some(YTNode::EndscreenElement(ese));
+            }
+        }
+
+        // 15. Check for Metadata & Badges
+        if val.get("metadataBadgeRenderer").is_some() {
+            if let Some(mb) = MetadataBadgeNode::from_value(val) {
+                return Some(YTNode::MetadataBadge(mb));
+            }
+        }
+        if val.get("viewCountRenderer").is_some() || val.get("videoViewCountRenderer").is_some() {
+            if let Some(vc) = ViewCountNode::from_value(val) {
+                return Some(YTNode::ViewCount(vc));
+            }
+        }
+        if val.get("videoOwnerRenderer").is_some() {
+            if let Some(vo) = VideoOwnerNode::from_value(val) {
+                return Some(YTNode::VideoOwner(vo));
+            }
+        }
+        if val.get("microformatDataRenderer").is_some() {
+            if let Some(md) = MicroformatDataNode::from_value(val) {
+                return Some(YTNode::MicroformatData(md));
+            }
+        }
+
+        // 16. Check for Channel About / Metadata
+        if val.get("channelAboutFullMetadataRenderer").is_some() {
+            if let Some(cafm) = ChannelAboutFullMetadataNode::from_value(val) {
+                return Some(YTNode::ChannelAboutFullMetadata(cafm));
+            }
+        }
+        if val.get("channelMetadataRenderer").is_some() {
+            if let Some(cm) = ChannelMetadataNode::from_value(val) {
+                return Some(YTNode::ChannelMetadata(cm));
             }
         }
 

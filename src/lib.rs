@@ -162,15 +162,18 @@ pub use models::video::{
     Thumbnail, VideoDetails, VideoInfo,
 };
 pub use parser::{
-    ButtonNode, ChannelCardNode, ChipCloudChipNode, ChipCloudNode, CommentNode, CommentThreadNode,
-    ContainerKind, CreatorHeartNode, ElementKind, EndpointKind, ItemSectionNode, KidsKind,
-    LegacyClassMeta, LiveChatMessageNode, MenuItemNode, MenuNode, MusicDescriptionShelfNode,
-    MusicResponsiveListItemNode, MusicTwoRowItemNode, NavigationEndpointNode, NodeListExt, Parser,
-    ParserCategory, ParserDispatchTarget, ParserRegistry, PlaylistNode, PlaylistPanelNode,
-    PlaylistPanelVideoNode, PlaylistVideoNode, PostNode, ReelShelfNode, RichGridNode, RichShelfNode,
-    SectionListNode, ShelfNode, ShortNode, TabNode, ThumbnailOverlayProgressBarNode,
-    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoNode, VideoPrimaryInfoNode,
-    VideoSecondaryInfoNode, YTNode, YTNodeVariant,
+    ButtonNode, ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode,
+    ChannelMetadataNode, ChipCloudChipNode, ChipCloudNode, CommentNode, CommentThreadNode,
+    ContainerKind, CreatorHeartNode, DidYouMeanNode, ElementKind, EndpointKind,
+    EndscreenElementNode, EndscreenNode, ItemSectionNode, KidsKind, LegacyClassMeta,
+    LiveChatMessageNode, MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode,
+    MusicDescriptionShelfNode, MusicResponsiveListItemNode, MusicTwoRowItemNode,
+    NavigationEndpointNode, NodeListExt, Parser, ParserCategory, ParserDispatchTarget,
+    ParserRegistry, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode, PlaylistVideoNode,
+    PostNode, ReelShelfNode, RichGridNode, RichShelfNode, SearchSubMenuNode, SectionListNode,
+    ShelfNode, ShortNode, ShowingResultsForNode, TabNode, ThumbnailOverlayProgressBarNode,
+    ThumbnailOverlayTimeStatusNode, ToggleButtonNode, VideoNode, VideoOwnerNode,
+    VideoPrimaryInfoNode, VideoSecondaryInfoNode, ViewCountNode, YTNode, YTNodeVariant,
 };
 
 use crate::endpoints::account::{

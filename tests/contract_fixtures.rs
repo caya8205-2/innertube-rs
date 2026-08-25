@@ -491,3 +491,104 @@ fn test_fixture_feed_mixin_continuations() {
     };
     assert!(channel_videos.has_continuation());
 }
+
+#[test]
+fn test_fixture_search_modifiers_and_endscreen_nodes() {
+    let did_you_mean_json = json!({
+        "didYouMeanRenderer": {
+            "correctedQuery": { "runs": [{ "text": "rust programming language" }] },
+            "navigationEndpoint": {
+                "searchEndpoint": { "query": "rust programming language" }
+            }
+        }
+    });
+    let dym_node = YTNode::parse(&did_you_mean_json).expect("DidYouMeanNode should parse");
+    if let YTNode::DidYouMean(dym) = dym_node {
+        assert_eq!(dym.corrected_query, "rust programming language");
+        assert!(dym.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::DidYouMean");
+    }
+
+    let showing_results_json = json!({
+        "showingResultsForRenderer": {
+            "correctedQuery": { "simpleText": "rust lang" },
+            "originalQueryEndpoint": {
+                "searchEndpoint": { "query": "rust lage" }
+            }
+        }
+    });
+    let srf_node = YTNode::parse(&showing_results_json).expect("ShowingResultsForNode should parse");
+    if let YTNode::ShowingResultsFor(srf) = srf_node {
+        assert_eq!(srf.corrected_query, "rust lang");
+        assert!(srf.original_query_endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::ShowingResultsFor");
+    }
+
+    let endscreen_json = json!({
+        "endscreenRenderer": {
+            "startMs": "180000",
+            "elements": [
+                {
+                    "endscreenElementRenderer": {
+                        "style": "VIDEO",
+                        "title": { "runs": [{ "text": "Next Suggested Video" }] },
+                        "endpoint": { "watchEndpoint": { "videoId": "next_vid_123" } }
+                    }
+                }
+            ]
+        }
+    });
+    let es_node = YTNode::parse(&endscreen_json).expect("EndscreenNode should parse");
+    if let YTNode::Endscreen(es) = es_node {
+        assert_eq!(es.start_ms, Some(180000));
+        assert_eq!(es.elements.len(), 1);
+        assert_eq!(es.elements[0].style, "VIDEO");
+        assert_eq!(es.elements[0].title.as_deref(), Some("Next Suggested Video"));
+    } else {
+        panic!("Expected YTNode::Endscreen");
+    }
+}
+
+#[test]
+fn test_fixture_metadata_badges_and_channel_metadata_nodes() {
+    let badge_json = json!({
+        "metadataBadgeRenderer": {
+            "style": "BADGE_STYLE_TYPE_VERIFIED",
+            "label": "Verified Artist",
+            "tooltip": "Official Artist Channel",
+            "icon": { "iconType": "OFFICIAL_ARTIST_BADGE" }
+        }
+    });
+    let badge_node = YTNode::parse(&badge_json).expect("MetadataBadgeNode should parse");
+    if let YTNode::MetadataBadge(mb) = badge_node {
+        assert_eq!(mb.style.as_deref(), Some("BADGE_STYLE_TYPE_VERIFIED"));
+        assert_eq!(mb.label, "Verified Artist");
+        assert_eq!(mb.tooltip.as_deref(), Some("Official Artist Channel"));
+        assert_eq!(mb.icon_type.as_deref(), Some("OFFICIAL_ARTIST_BADGE"));
+    } else {
+        panic!("Expected YTNode::MetadataBadge");
+    }
+
+    let channel_about_json = json!({
+        "channelAboutFullMetadataRenderer": {
+            "description": { "runs": [{ "text": "Official channel description and bio." }] },
+            "viewCountText": { "simpleText": "1,234,567,890 views" },
+            "joinedDateText": { "simpleText": "Joined Jan 1, 2010" },
+            "country": { "simpleText": "United States" },
+            "canonicalChannelUrl": "https://www.youtube.com/c/example"
+        }
+    });
+    let about_node = YTNode::parse(&channel_about_json).expect("ChannelAboutFullMetadataNode should parse");
+    if let YTNode::ChannelAboutFullMetadata(cafm) = about_node {
+        assert_eq!(cafm.description.as_deref(), Some("Official channel description and bio."));
+        assert_eq!(cafm.view_count.as_deref(), Some("1,234,567,890 views"));
+        assert_eq!(cafm.joined_date.as_deref(), Some("Joined Jan 1, 2010"));
+        assert_eq!(cafm.country.as_deref(), Some("United States"));
+        assert_eq!(cafm.canonical_channel_url.as_deref(), Some("https://www.youtube.com/c/example"));
+    } else {
+        panic!("Expected YTNode::ChannelAboutFullMetadata");
+    }
+}
+

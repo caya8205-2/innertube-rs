@@ -163,3 +163,77 @@ impl ChannelCardNode {
         })
     }
 }
+
+/// Strongly typed ChannelAboutFullMetadata AST node (`channelAboutFullMetadataRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ChannelAboutFullMetadataNode {
+    pub description: Option<String>,
+    pub view_count: Option<String>,
+    pub joined_date: Option<String>,
+    pub country: Option<String>,
+    pub canonical_channel_url: Option<String>,
+}
+
+impl ChannelAboutFullMetadataNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("channelAboutFullMetadataRenderer").unwrap_or(val);
+        let description = node
+            .get("description")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+        let view_count = node
+            .get("viewCountText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+        let joined_date = node
+            .get("joinedDateText")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+        let country = node
+            .get("country")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+        let canonical_channel_url = node
+            .get("canonicalChannelUrl")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        Some(Self {
+            description,
+            view_count,
+            joined_date,
+            country,
+            canonical_channel_url,
+        })
+    }
+}
+
+/// Strongly typed ChannelMetadata AST node (`channelMetadataRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ChannelMetadataNode {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub external_id: Option<String>,
+    pub vanity_channel_url: Option<String>,
+    pub avatar: ThumbnailListNode,
+}
+
+impl ChannelMetadataNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("channelMetadataRenderer").unwrap_or(val);
+        let title = node.get("title").and_then(Value::as_str).map(ToString::to_string);
+        let description = node.get("description").and_then(Value::as_str).map(ToString::to_string);
+        let external_id = node.get("externalId").and_then(Value::as_str).map(ToString::to_string);
+        let vanity_channel_url = node.get("vanityChannelUrl").and_then(Value::as_str).map(ToString::to_string);
+        let avatar = ThumbnailListNode::from_value(node.get("avatar").unwrap_or(node));
+
+        Some(Self {
+            title,
+            description,
+            external_id,
+            vanity_channel_url,
+            avatar,
+        })
+    }
+}
+

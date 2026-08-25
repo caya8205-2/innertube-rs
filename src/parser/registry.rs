@@ -33,6 +33,8 @@ pub enum YTNodeVariant {
     PlaylistPanelVideo,
     ChannelHeader,
     ChannelCard,
+    ChannelAboutFullMetadata,
+    ChannelMetadata,
     MusicItem,
     MusicCard,
     MusicDescriptionShelf,
@@ -53,6 +55,15 @@ pub enum YTNodeVariant {
     Button,
     ToggleButton,
     Menu,
+    DidYouMean,
+    ShowingResultsFor,
+    SearchSubMenu,
+    Endscreen,
+    EndscreenElement,
+    MetadataBadge,
+    ViewCount,
+    VideoOwner,
+    MicroformatData,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -388,7 +399,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChannelAboutFullMetadata",
             legacy_path: "ChannelAboutFullMetadata.ts",
             category: ParserCategory::Channel,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelCard),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelAboutFullMetadata),
         },
         LegacyClassMeta {
             name: "ChannelAgeGate",
@@ -424,7 +435,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChannelMetadata",
             legacy_path: "ChannelMetadata.ts",
             category: ParserCategory::Channel,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelCard),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelMetadata),
         },
         LegacyClassMeta {
             name: "ChannelMobileHeader",
@@ -718,7 +729,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "DidYouMean",
             legacy_path: "DidYouMean.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::DidYouMean),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::DidYouMean),
         },
         LegacyClassMeta {
             name: "DislikeButtonView",
@@ -820,13 +831,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Endscreen",
             legacy_path: "Endscreen.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Endscreen),
         },
         LegacyClassMeta {
             name: "EndscreenElement",
             legacy_path: "EndscreenElement.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::EndscreenElement),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::EndscreenElement),
         },
         LegacyClassMeta {
             name: "EngagementPanelSectionList",
@@ -1305,8 +1316,8 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "MetadataBadge",
             legacy_path: "MetadataBadge.ts",
-            category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Tab),
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MetadataBadge),
         },
         LegacyClassMeta {
             name: "MetadataRow",
@@ -1335,8 +1346,8 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "MicroformatData",
             legacy_path: "MicroformatData.ts",
-            category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MicroformatData),
         },
         LegacyClassMeta {
             name: "Mix",
@@ -1996,7 +2007,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SearchSubMenu",
             legacy_path: "SearchSubMenu.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::SearchSubMenu),
         },
         LegacyClassMeta {
             name: "SearchSuggestion",
@@ -2122,7 +2133,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShowingResultsFor",
             legacy_path: "ShowingResultsFor.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::DidYouMean),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowingResultsFor),
         },
         LegacyClassMeta {
             name: "SimpleCardContent",
@@ -2643,8 +2654,8 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "VideoOwner",
             legacy_path: "VideoOwner.ts",
-            category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::VideoSecondaryInfo),
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::VideoOwner),
         },
         LegacyClassMeta {
             name: "VideoPrimaryInfo",
@@ -2673,8 +2684,8 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "VideoViewCount",
             legacy_path: "VideoViewCount.ts",
-            category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            category: ParserCategory::ElementAndMisc,
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ViewCount),
         },
         LegacyClassMeta {
             name: "ViewCountFactoid",
@@ -3677,10 +3688,10 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 132);
-        assert_eq!(container_count, 174);
+        assert_eq!(direct_count, 138);
+        assert_eq!(container_count, 173);
         assert_eq!(endpoint_count, 74);
-        assert_eq!(element_count, 187);
+        assert_eq!(element_count, 182);
         assert_eq!(kids_count, 7);
     }
 
@@ -3698,6 +3709,8 @@ mod tests {
             (json!({ "playlistPanelVideoRenderer": { "videoId": "ppv1", "title": { "runs": [{ "text": "PPV" }] } } }), "PlaylistPanelVideo"),
             (json!({ "channelRenderer": { "channelId": "c1", "title": { "simpleText": "C" } } }), "ChannelCard"),
             (json!({ "c4TabbedHeaderRenderer": { "title": "CH" } }), "ChannelHeader"),
+            (json!({ "channelAboutFullMetadataRenderer": { "description": { "simpleText": "About" } } }), "ChannelAboutFullMetadata"),
+            (json!({ "channelMetadataRenderer": { "title": "Meta" } }), "ChannelMetadata"),
             (json!({ "musicResponsiveListItemRenderer": { "flexColumns": [] } }), "MusicItem"),
             (json!({ "musicTwoRowItemRenderer": { "title": { "runs": [{ "text": "M2" }] } } }), "MusicCard"),
             (json!({ "musicDescriptionShelfRenderer": { "description": { "runs": [{ "text": "D" }] } } }), "MusicDescriptionShelf"),
@@ -3711,6 +3724,15 @@ mod tests {
             (json!({ "buttonRenderer": { "text": { "runs": [{ "text": "Btn" }] } } }), "Button"),
             (json!({ "toggleButtonRenderer": { "defaultText": { "simpleText": "Tog" } } }), "ToggleButton"),
             (json!({ "menuRenderer": { "items": [] } }), "Menu"),
+            (json!({ "didYouMeanRenderer": { "correctedQuery": { "simpleText": "rust" } } }), "DidYouMean"),
+            (json!({ "showingResultsForRenderer": { "correctedQuery": { "simpleText": "rust lang" } } }), "ShowingResultsFor"),
+            (json!({ "searchSubMenuRenderer": { "title": { "simpleText": "Filters" } } }), "SearchSubMenu"),
+            (json!({ "endscreenRenderer": { "elements": [] } }), "Endscreen"),
+            (json!({ "endscreenElementRenderer": { "style": "VIDEO" } }), "EndscreenElement"),
+            (json!({ "metadataBadgeRenderer": { "label": "Verified" } }), "MetadataBadge"),
+            (json!({ "viewCountRenderer": { "viewCount": { "simpleText": "1,000 views" } } }), "ViewCount"),
+            (json!({ "videoOwnerRenderer": { "title": { "runs": [{ "text": "Owner" }] } } }), "VideoOwner"),
+            (json!({ "microformatDataRenderer": { "urlCanonical": "https://youtube.com/watch?v=1" } }), "MicroformatData"),
         ];
 
         for (fixture, label) in test_cases {

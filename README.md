@@ -24,12 +24,15 @@ An asynchronous Rust client for YouTube's internal API (InnerTube), ported from 
 
 ## Installation
 
-Add `innertube-rs` to your `Cargo.toml`:
+```bash
+cargo install innertube-rs
+```
+Running the above command will globally install the innertube binary.
 
-```toml
-[dependencies]
-innertube-rs = "0.5"
-tokio = { version = "1", features = ["full"] }
+### Install as library
+Run the following Cargo command in your project directory:
+```bash
+cargo add innertube-rs
 ```
 
 ---
