@@ -35,6 +35,11 @@ Run the following Cargo command in your project directory:
 cargo add innertube-rs
 ```
 
+Or add the following line to your Cargo.toml:
+```bash
+innertube-rs = "0.6.0"
+```
+
 ---
 
 ## Usage
