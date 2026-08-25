@@ -207,7 +207,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           <div className="flex items-center gap-2 mb-6">
             <span className="w-2.5 h-2.5 bg-[var(--color-accent)] inline-block"></span>
             <span className="font-mono text-xs uppercase tracking-widest text-[var(--color-ink-muted)] font-semibold">
-              VIDEO, MUSIC, CHANNELS, LIVE CHAT
+              STREAMS · SEARCH · MUSIC · FEEDS · PLAYLISTS · COMMUNITY · ACCOUNT
             </span>
           </div>
 
@@ -218,7 +218,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
           {/* Subtext */}
           <p className="text-base sm:text-xl text-[var(--color-ink-muted)] max-w-3xl leading-relaxed mb-10 font-normal">
-            Fetch video metadata, resolve playable stream URLs, browse YouTube Music, read channel data, and poll live chat—all from Rust, without a Node.js or Python process to run.
+            Read videos, feeds, channels, playlists, comments, live chat, transcripts, and YouTube Music. Resolve streams, search, authenticate, and perform account actions from Rust—without a Node.js or Python process.
           </p>
 
           {/* Cargo commands */}
@@ -317,8 +317,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     <tr>
                       <td className="p-3.5 font-semibold text-[var(--color-ink)]">Video</td>
                       <td className="p-3.5 text-[var(--color-accent)] font-bold">Metadata + streams</td>
-                      <td className="p-3.5">Typed formats</td>
+                      <td className="p-3.5">Video info + formats</td>
                       <td className="p-3.5 text-[var(--color-ink-faint)]">get_video_info</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Discovery</td>
+                      <td className="p-3.5 text-[var(--color-accent)] font-bold">Search + suggestions + feeds</td>
+                      <td className="p-3.5">Search + feed models</td>
+                      <td className="p-3.5 text-[var(--color-ink-faint)]">search_with_filters</td>
                     </tr>
                     <tr>
                       <td className="p-3.5 font-semibold text-[var(--color-ink)]">Music</td>
@@ -327,16 +333,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                       <td className="p-3.5 text-[var(--color-ink-faint)]">get_music_artist</td>
                     </tr>
                     <tr>
-                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Channels</td>
-                      <td className="p-3.5 text-[var(--color-accent)] font-bold">Videos + posts + comments</td>
-                      <td className="p-3.5">Parsed nodes</td>
-                      <td className="p-3.5 text-[var(--color-ink-faint)]">get_community_posts</td>
+                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Community</td>
+                      <td className="p-3.5 text-[var(--color-accent)] font-bold">Channels + posts + comments</td>
+                      <td className="p-3.5">Channel + post models</td>
+                      <td className="p-3.5 text-[var(--color-ink-faint)]">get_channel_videos</td>
                     </tr>
                     <tr>
-                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Live</td>
-                      <td className="p-3.5 text-[var(--color-accent)] font-bold">Watch next + chat polling</td>
-                      <td className="p-3.5">Typed messages</td>
-                      <td className="p-3.5 text-[var(--color-ink-faint)]">test_live_chat</td>
+                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Playlists</td>
+                      <td className="p-3.5 text-[var(--color-accent)] font-bold">Read + create + edit</td>
+                      <td className="p-3.5">Playlist models</td>
+                      <td className="p-3.5 text-[var(--color-ink-faint)]">get_playlist</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Live + text</td>
+                      <td className="p-3.5 text-[var(--color-accent)] font-bold">Chat + transcripts</td>
+                      <td className="p-3.5">Messages + timed text</td>
+                      <td className="p-3.5 text-[var(--color-ink-faint)]">get_live_chat</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3.5 font-semibold text-[var(--color-ink)]">Account</td>
+                      <td className="p-3.5 text-[var(--color-accent)] font-bold">History + library + actions</td>
+                      <td className="p-3.5">Feeds + action results</td>
+                      <td className="p-3.5 text-[var(--color-ink-faint)]">get_history</td>
                     </tr>
                   </tbody>
                 </table>
@@ -381,14 +399,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           {/* Code Window Container */}
           <div className="border border-[var(--color-rule)] bg-[var(--color-surface)] shadow-xs">
             
-            <div className="border-b border-[var(--color-rule)] px-4 py-2.5 bg-[var(--color-surface-subtle)] flex items-center justify-between font-mono text-xs text-[var(--color-ink-muted)]">
-              <div className="flex items-center gap-2">
-                <FileCode className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-                <span className="font-semibold text-[var(--color-ink)]">{codeSnippets[activeTab].file}</span>
+            <div className="border-b border-[var(--color-rule)] px-3 sm:px-4 py-2.5 bg-[var(--color-surface-subtle)] flex min-w-0 items-center justify-between gap-3 font-mono text-xs text-[var(--color-ink-muted)]">
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                <FileCode className="w-3.5 h-3.5 shrink-0 text-[var(--color-accent)]" />
+                <span
+                  className="block min-w-0 truncate font-semibold text-[var(--color-ink)]"
+                  title={codeSnippets[activeTab].file}
+                >
+                  {codeSnippets[activeTab].file}
+                </span>
               </div>
               <button
                 onClick={handleCopyCode}
-                className="flex items-center gap-1 px-2 py-0.5 border border-[var(--color-rule)] bg-[var(--color-surface)] hover:bg-[var(--color-ink)] hover:text-[var(--color-on-strong)] transition-colors text-[11px]"
+                className="flex shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 border border-[var(--color-rule)] bg-[var(--color-surface)] hover:bg-[var(--color-ink)] hover:text-[var(--color-on-strong)] transition-colors text-[11px]"
               >
                 {copiedCode ? (
                   <>
@@ -425,13 +448,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             <div className="p-6 flex flex-col justify-between">
               <div>
                 <div className="font-mono text-xs text-[var(--color-accent)] font-bold mb-3">
-                  SIGNATURES
+                  STREAMS & SIGNATURES
                 </div>
                 <h3 className="font-display text-lg font-bold text-[var(--color-ink)] mb-2">
-                  Signature deciphering
+                  Stream URL resolution
                 </h3>
                 <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
-                  Runs YouTube signature and n-token transforms inside the embedded QuickJS runtime, without starting another process.
+                  Select audio or video formats, resolve ciphered URLs, and apply signature and n-token transforms through embedded QuickJS.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[var(--color-rule)] font-mono text-[11px] text-[var(--color-ink-faint)]">
@@ -443,17 +466,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             <div className="p-6 flex flex-col justify-between">
               <div>
                 <div className="font-mono text-xs text-[var(--color-accent)] font-bold mb-3">
-                  RESPONSE PARSING
+                  SEARCH & FEEDS
                 </div>
                 <h3 className="font-display text-lg font-bold text-[var(--color-ink)] mb-2">
-                  Typed response parsing
+                  Discovery endpoints
                 </h3>
                 <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
-                  Maps InnerTube renderers and view models into the typed <code>YTNode</code> variants used throughout the library.
+                  Run filtered search, request suggestions, and browse home, trending, hashtag, subscription, channel, and playlist feeds.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[var(--color-rule)] font-mono text-[11px] text-[var(--color-ink-faint)]">
-                REF: <code>src/parser/nodes/</code>
+                REF: <code>src/endpoints/search.rs + feed.rs</code>
               </div>
             </div>
 
@@ -483,17 +506,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             <div className="p-6 flex flex-col justify-between">
               <div>
                 <div className="font-mono text-xs text-[var(--color-accent)] font-bold mb-3">
-                  LIVE CHAT
+                  CHANNELS & COMMUNITY
                 </div>
                 <h3 className="font-display text-lg font-bold text-[var(--color-ink)] mb-2">
-                  Live Chat & Community
+                  Channels, comments & live chat
                 </h3>
                 <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
-                  Read live chat messages and Super Chats, plus channel community posts and polls, through continuation tokens.
+                  Read videos, Shorts, posts, polls, comments, replies, live chat messages, and Super Chats through continuation tokens.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[var(--color-rule)] font-mono text-[11px] text-[var(--color-ink-faint)]">
-                REF: <code>src/endpoints/live_chat.rs</code>
+                REF: <code>src/endpoints/channel.rs + live_chat.rs</code>
               </div>
             </div>
 
@@ -501,17 +524,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             <div className="p-6 flex flex-col justify-between">
               <div>
                 <div className="font-mono text-xs text-[var(--color-accent)] font-bold mb-3">
-                  AUTHENTICATION
+                  ACCOUNT & ACTIONS
                 </div>
                 <h3 className="font-display text-lg font-bold text-[var(--color-ink)] mb-2">
-                  OAuth2 Device Flow
+                  Authenticated reads and writes
                 </h3>
                 <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
-                  Sign in through Google’s TV device flow, then refresh access tokens and manage session cookies.
+                  Read history, library, and notifications; rate videos, subscribe, comment, and create or edit playlists.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[var(--color-rule)] font-mono text-[11px] text-[var(--color-ink-faint)]">
-                REF: <code>src/core/oauth.rs</code>
+                REF: <code>src/core/actions.rs</code>
               </div>
             </div>
 
@@ -519,7 +542,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             <div className="p-6 flex flex-col justify-between">
               <div>
                 <div className="font-mono text-xs text-[var(--color-accent)] font-bold mb-3">
-                  TRANSCRIPTS & STREAMING
+                  TRANSCRIPTS & MANIFESTS
                 </div>
                 <h3 className="font-display text-lg font-bold text-[var(--color-ink)] mb-2">
                   Transcripts & Manifests
