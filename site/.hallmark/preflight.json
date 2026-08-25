@@ -1,0 +1,8 @@
+{
+  "date": "2026-08-24",
+  "font_stack": "Space Grotesk + Plus Jakarta Sans + JetBrains Mono",
+  "palette": "CSS custom properties with hard-coded Tailwind colours in App.tsx",
+  "motion": "motion-cut; CSS transitions only",
+  "spacing": "Tailwind default utility scale",
+  "framework": "React 19 + Vite 8 + Tailwind CSS 4"
+}

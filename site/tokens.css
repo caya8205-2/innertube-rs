@@ -1,0 +1,55 @@
+/* Hallmark · theme: Grid Dark (user override) · paper-band: dark · display-style: grotesk-heavy · accent-hue: warm */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 */
+:root {
+  --color-paper: oklch(14% 0.012 255);
+  --color-surface: oklch(18% 0.012 255);
+  --color-surface-subtle: oklch(21% 0.012 255);
+  --color-ink: oklch(94% 0.006 255);
+  --color-ink-muted: oklch(76% 0.012 255);
+  --color-ink-faint: oklch(62% 0.014 255);
+  --color-rule: oklch(30% 0.014 255);
+  --color-rule-strong: oklch(42% 0.016 255);
+  --color-accent: oklch(66% 0.22 24);
+  --color-accent-ink: var(--color-paper);
+  --color-focus: var(--color-accent);
+  --color-on-strong: var(--color-paper);
+  --color-success: oklch(76% 0.16 154);
+  --color-code-keyword: oklch(74% 0.19 20);
+  --color-code-function: oklch(78% 0.14 225);
+  --color-code-type: oklch(80% 0.15 78);
+  --color-code-string: oklch(78% 0.14 155);
+  --color-code-macro: oklch(78% 0.17 300);
+  --color-code-number: oklch(78% 0.17 52);
+
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5rem;
+  --text-xl: 2rem;
+  --text-display: clamp(2.25rem, 6vw, 4.5rem);
+
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --tracking-display: -0.035em;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 200ms;
+  --rule-hairline: 1px;
+  --rule-focus: 2px;
+  --radius-card: 0px;
+  --radius-control: 0px;
+}

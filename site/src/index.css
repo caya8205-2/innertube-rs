@@ -1,38 +1,70 @@
+/* Hallmark · macrostructure: Component Playground · tone: technical-austere · anchor hue: signal red · theme: Grid Dark (user override) · contrast: pass (40–41) · mobile: pass (34, 49–57) */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 */
 @import "tailwindcss";
+@import "../tokens.css";
 
 @layer base {
   :root {
-    --font-display: 'Syne', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    color-scheme: dark;
+  }
 
-    /* Hallmark Theme 21: Grid (Swiss International) Palette */
-    --paper: #F6F6F4;
-    --paper-card: #FFFFFF;
-    --paper-subtle: #EDEDEB;
-    --ink: #111215;
-    --ink-muted: #5A5D64;
-    --ink-faint: #8E929B;
-    --grid-line: #E2E2DF;
-    --grid-line-strong: #C8C8C4;
-    
-    --accent-red: #E11D48;
-    --accent-dark: #111215;
+  html,
+  body {
+    overflow-x: clip;
   }
 
   body {
     font-family: var(--font-body);
-    background-color: var(--paper);
-    color: var(--ink);
-    overflow-x: clip;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4 {
-    font-family: var(--font-heading);
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
     font-style: normal;
-    letter-spacing: -0.035em;
+    letter-spacing: var(--tracking-display);
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  button,
+  a {
+    white-space: nowrap;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline: var(--rule-focus) solid var(--color-focus);
+    outline-offset: var(--space-2xs);
+  }
+
+  button:active,
+  a:active {
+    opacity: 0.78;
+  }
+
+  button:disabled,
+  a[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
@@ -42,22 +74,36 @@
 }
 
 .swiss-border {
-  border: 1px solid var(--grid-line);
+  border: var(--rule-hairline) solid var(--color-rule);
 }
 
 .swiss-border-b {
-  border-bottom: 1px solid var(--grid-line);
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
 }
 
 .swiss-border-r {
-  border-right: 1px solid var(--grid-line);
+  border-right: var(--rule-hairline) solid var(--color-rule);
 }
 
 /* Code Highlighting in Swiss Sheet */
-.hl-kw { color: #D90429; font-weight: 700; }
-.hl-fn { color: #0284C7; font-weight: 600; }
-.hl-type { color: #B45309; }
-.hl-str { color: #059669; }
-.hl-macro { color: #7C3AED; }
-.hl-comm { color: #8E929B; font-style: italic; }
-.hl-num { color: #EA580C; }
+.hl-kw { color: var(--color-code-keyword); font-weight: 700; }
+.hl-fn { color: var(--color-code-function); font-weight: 600; }
+.hl-type { color: var(--color-code-type); }
+.hl-str { color: var(--color-code-string); }
+.hl-macro { color: var(--color-code-macro); }
+.hl-comm { color: var(--color-ink-faint); font-style: italic; }
+.hl-num { color: var(--color-code-number); }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-08-24",
+    "macrostructure": "Component Playground",
+    "theme": "Grid Dark (user override)",
+    "theme_axes": "dark / grotesk-heavy / warm",
+    "enrichment": "none",
+    "brief": "Convert the existing innertube-rs Grid landing page to dark mode"
+  }
+]
