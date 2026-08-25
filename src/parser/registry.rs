@@ -55,7 +55,7 @@ pub enum YTNodeVariant {
     Menu,
 }
 
-/// Strongly typed container structures present in `innertube-rs`.
+/// Strongly typed domain container structures present in `innertube-rs`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ContainerKind {
     Section,
@@ -65,10 +65,14 @@ pub enum ContainerKind {
     List,
     Column,
     OverlayContainer,
-    GenericContainer,
+    PageHeader,
+    FeedFilterChipBar,
+    MetadataRowContainer,
+    SecondarySearchContainer,
+    MultiPageMenu,
 }
 
-/// Strongly typed navigation and service endpoints present in `innertube-rs`.
+/// Strongly typed navigation, commands, and service endpoints present in `innertube-rs`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EndpointKind {
     Watch,
@@ -85,7 +89,13 @@ pub enum EndpointKind {
     NotificationAction,
     Signal,
     Continuation,
-    GenericAction,
+    EngagementPanelAction,
+    ShowDialog,
+    ShowSheet,
+    CommandExecutor,
+    RunAttestation,
+    GetAccountsList,
+    CallToAction,
 }
 
 /// Strongly typed UI elements and components present in `innertube-rs`.
@@ -103,27 +113,41 @@ pub enum ElementKind {
     Card,
     Alert,
     Metadata,
-    GenericElement,
+    Chapter,
+    DidYouMean,
+    Dropdown,
+    EmojiPicker,
+    Endscreen,
+    EndscreenElement,
+    Microformat,
+    ProfileColumn,
+    ClipCreation,
+    Playability,
 }
 
 /// Strongly typed Kids domain components present in `innertube-rs`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum KidsKind {
-    GenericKidsRenderer,
+    KidsHomeScreen,
+    KidsCategoryTab,
+    KidsBlocklistPicker,
+    KidsCuratedSong,
+    KidsSearch,
+    KidsSubscription,
 }
 
-/// Strongly typed target representation for an executable parser class (100% Enum Mapped, 0 Strings).
+/// Strongly typed target representation for an executable parser class (100% Specific Domain Enum Mapped, 0 Generic Fallbacks).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParserDispatchTarget {
     /// Direct strongly typed AST node variant in `YTNode`.
     Direct(YTNodeVariant),
-    /// Container node with polymorphic children parsing.
+    /// Domain-specific container node with polymorphic children parsing.
     Container(ContainerKind),
-    /// Navigation / Action endpoint dispatcher.
+    /// Domain-specific Navigation / Action / Command endpoint dispatcher.
     NavigationEndpoint(EndpointKind),
-    /// UI element or control node.
+    /// Domain-specific UI element or control node.
     Element(ElementKind),
-    /// Kids module specific renderer.
+    /// Domain-specific Kids module renderer.
     Kids(KidsKind),
 }
 
@@ -172,7 +196,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AccountItemSectionHeader",
             legacy_path: "AccountItemSectionHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "AccountSectionList",
@@ -208,19 +232,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AnimatedThumbnailOverlayView",
             legacy_path: "AnimatedThumbnailOverlayView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "AttributionView",
             legacy_path: "AttributionView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Microformat),
         },
         LegacyClassMeta {
             name: "AudioOnlyPlayability",
             legacy_path: "AudioOnlyPlayability.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Playability),
         },
         LegacyClassMeta {
             name: "AutomixPreviewVideo",
@@ -304,13 +328,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "C4TabbedHeader",
             legacy_path: "C4TabbedHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Tab),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "CallToActionButton",
             legacy_path: "CallToActionButton.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CallToAction),
         },
         LegacyClassMeta {
             name: "Card",
@@ -328,7 +352,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CarouselHeader",
             legacy_path: "CarouselHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "CarouselItem",
@@ -436,7 +460,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChannelSwitcherPage",
             legacy_path: "ChannelSwitcherPage.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "ChannelTagline",
@@ -460,7 +484,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Chapter",
             legacy_path: "Chapter.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Chapter),
         },
         LegacyClassMeta {
             name: "ChildVideo",
@@ -471,26 +495,26 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "ChipBarView",
             legacy_path: "ChipBarView.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
         },
         LegacyClassMeta {
             name: "ChipCloud",
             legacy_path: "ChipCloud.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "ChipCloudChip",
             legacy_path: "ChipCloudChip.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "ChipView",
             legacy_path: "ChipView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "ClientSideToggleMenuItem",
@@ -502,19 +526,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ClipAdState",
             legacy_path: "ClipAdState.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::ClipCreation),
         },
         LegacyClassMeta {
             name: "ClipCreation",
             legacy_path: "ClipCreation.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::ClipCreation),
         },
         LegacyClassMeta {
             name: "ClipCreationScrubber",
             legacy_path: "ClipCreationScrubber.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::ClipCreation),
         },
         LegacyClassMeta {
             name: "ClipCreationTextInput",
@@ -556,19 +580,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CompactLink",
             legacy_path: "CompactLink.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "CompactMix",
             legacy_path: "CompactMix.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "CompactMovie",
             legacy_path: "CompactMovie.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "CompactPlaylist",
@@ -633,14 +657,14 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "ConversationBar",
             legacy_path: "ConversationBar.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "CopyLink",
             legacy_path: "CopyLink.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "CreatePlaylistDialog",
@@ -663,8 +687,8 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "DecoratedPlayerBar",
             legacy_path: "DecoratedPlayerBar.ts",
-            category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "DefaultPromoPanel",
@@ -676,13 +700,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "DescriptionPreviewView",
             legacy_path: "DescriptionPreviewView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "DialogHeaderView",
             legacy_path: "DialogHeaderView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "DialogView",
@@ -694,7 +718,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "DidYouMean",
             legacy_path: "DidYouMean.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::DidYouMean),
         },
         LegacyClassMeta {
             name: "DislikeButtonView",
@@ -730,19 +754,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Dropdown",
             legacy_path: "Dropdown.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "DropdownItem",
             legacy_path: "DropdownItem.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::MenuItem),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "DropdownView",
             legacy_path: "DropdownView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "DynamicTextView",
@@ -754,19 +778,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Element",
             legacy_path: "Element.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "EmergencyOnebox",
             legacy_path: "EmergencyOnebox.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Alert),
         },
         LegacyClassMeta {
             name: "EmojiPickerCategory",
             legacy_path: "EmojiPickerCategory.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::EmojiPicker),
         },
         LegacyClassMeta {
             name: "EmojiPickerCategoryButton",
@@ -778,7 +802,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "EmojiPickerUpsellCategory",
             legacy_path: "EmojiPickerUpsellCategory.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::EmojiPicker),
         },
         LegacyClassMeta {
             name: "EndScreenPlaylist",
@@ -796,13 +820,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Endscreen",
             legacy_path: "Endscreen.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "EndscreenElement",
             legacy_path: "EndscreenElement.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::EndscreenElement),
         },
         LegacyClassMeta {
             name: "EngagementPanelSectionList",
@@ -820,7 +844,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "EomSettingsDisclaimer",
             legacy_path: "EomSettingsDisclaimer.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Alert),
         },
         LegacyClassMeta {
             name: "ExpandableMetadata",
@@ -862,37 +886,37 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "FeedFilterChipBar",
             legacy_path: "FeedFilterChipBar.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
         },
         LegacyClassMeta {
             name: "FeedNudge",
             legacy_path: "FeedNudge.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
         },
         LegacyClassMeta {
             name: "FeedTabbedHeader",
             legacy_path: "FeedTabbedHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Tab),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "FlexibleActionsView",
             legacy_path: "FlexibleActionsView.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CallToAction),
         },
         LegacyClassMeta {
             name: "Form",
             legacy_path: "Form.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "FormFooterView",
             legacy_path: "FormFooterView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "FormPopup",
@@ -910,7 +934,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GameDetails",
             legacy_path: "GameDetails.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "Grid",
@@ -928,7 +952,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GridHeader",
             legacy_path: "GridHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Grid),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "GridMix",
@@ -970,7 +994,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GuideCollapsibleEntry",
             legacy_path: "GuideCollapsibleEntry.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "GuideCollapsibleSectionEntry",
@@ -982,13 +1006,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GuideDownloadsEntry",
             legacy_path: "GuideDownloadsEntry.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "GuideEntry",
             legacy_path: "GuideEntry.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "GuideSection",
@@ -1006,25 +1030,25 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "HashtagHeader",
             legacy_path: "HashtagHeader.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "HashtagTile",
             legacy_path: "HashtagTile.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "HeatMarker",
             legacy_path: "HeatMarker.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "Heatmap",
             legacy_path: "Heatmap.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "HeroPlaylistThumbnail",
@@ -1042,7 +1066,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "HistorySuggestion",
             legacy_path: "HistorySuggestion.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "HorizontalCardList",
@@ -1096,13 +1120,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "IncludingResultsFor",
             legacy_path: "IncludingResultsFor.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "InfoPanelContainer",
             legacy_path: "InfoPanelContainer.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::MetadataRowContainer),
         },
         LegacyClassMeta {
             name: "InfoPanelContent",
@@ -1120,7 +1144,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "InteractiveTabbedHeader",
             legacy_path: "InteractiveTabbedHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Tab),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "ItemSection",
@@ -1132,7 +1156,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ItemSectionHeader",
             legacy_path: "ItemSectionHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "ItemSectionTab",
@@ -1144,7 +1168,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ItemSectionTabbedHeader",
             legacy_path: "ItemSectionTabbedHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "LikeButton",
@@ -1228,7 +1252,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LockupView",
             legacy_path: "LockupView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "MacroMarkersInfoItem",
@@ -1258,7 +1282,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MenuTitle",
             legacy_path: "MenuTitle.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "MerchandiseItem",
@@ -1294,7 +1318,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MetadataRowContainer",
             legacy_path: "MetadataRowContainer.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::MetadataRowContainer),
         },
         LegacyClassMeta {
             name: "MetadataRowHeader",
@@ -1318,7 +1342,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Mix",
             legacy_path: "Mix.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "ModalWithTitleAndButton",
@@ -1330,7 +1354,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Movie",
             legacy_path: "Movie.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "MovingThumbnail",
@@ -1341,8 +1365,8 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "MultiMarkersPlayerBar",
             legacy_path: "MultiMarkersPlayerBar.ts",
-            category: ParserCategory::Video,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Video),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "MusicCardShelf",
@@ -1354,7 +1378,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicCardShelfHeaderBasic",
             legacy_path: "MusicCardShelfHeaderBasic.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "MusicCarouselShelf",
@@ -1366,7 +1390,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicCarouselShelfBasicHeader",
             legacy_path: "MusicCarouselShelfBasicHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "MusicDescriptionShelf",
@@ -1390,7 +1414,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicEditablePlaylistDetailHeader",
             legacy_path: "MusicEditablePlaylistDetailHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Tab),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "MusicElementHeader",
@@ -1450,7 +1474,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicPlaylistEditHeader",
             legacy_path: "MusicPlaylistEditHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "MusicPlaylistShelf",
@@ -1540,13 +1564,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "NavigationEndpoint",
             legacy_path: "NavigationEndpoint.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
         },
         LegacyClassMeta {
             name: "Notification",
             legacy_path: "Notification.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "NotificationAction",
@@ -1558,37 +1582,37 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "OpenOnePickAddVideoModalCommand",
             legacy_path: "OpenOnePickAddVideoModalCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::PlaylistAction),
         },
         LegacyClassMeta {
             name: "PageHeader",
             legacy_path: "PageHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "PageHeaderView",
             legacy_path: "PageHeaderView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "PageIndicatorView",
             legacy_path: "PageIndicatorView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "PageIntroduction",
             legacy_path: "PageIntroduction.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "PanelFooterView",
             legacy_path: "PanelFooterView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "PivotButton",
@@ -1708,7 +1732,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "PlaylistHeader",
             legacy_path: "PlaylistHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "PlaylistInfoCardContent",
@@ -1816,7 +1840,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ProductListHeader",
             legacy_path: "ProductListHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "ProductListItem",
@@ -1852,7 +1876,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Quiz",
             legacy_path: "Quiz.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "RecognitionShelf",
@@ -1888,7 +1912,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "RelatedChipCloud",
             legacy_path: "RelatedChipCloud.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "RichGrid",
@@ -1906,7 +1930,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "RichListHeader",
             legacy_path: "RichListHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "RichMetadata",
@@ -1936,19 +1960,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SearchBox",
             legacy_path: "SearchBox.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SearchFilter",
             legacy_path: "SearchFilter.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SearchFilterGroup",
             legacy_path: "SearchFilterGroup.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SearchFilterOptionsDialog",
@@ -1960,7 +1984,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SearchHeader",
             legacy_path: "SearchHeader.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SearchRefinementCard",
@@ -1972,13 +1996,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SearchSubMenu",
             legacy_path: "SearchSubMenu.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "SearchSuggestion",
             legacy_path: "SearchSuggestion.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SearchSuggestionsSection",
@@ -1990,13 +2014,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SecondarySearchContainer",
             legacy_path: "SecondarySearchContainer.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::SecondarySearchContainer),
         },
         LegacyClassMeta {
             name: "SectionHeaderView",
             legacy_path: "SectionHeaderView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "SectionList",
@@ -2020,37 +2044,37 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SettingBoolean",
             legacy_path: "SettingBoolean.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SettingsCheckbox",
             legacy_path: "SettingsCheckbox.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SettingsOptions",
             legacy_path: "SettingsOptions.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SettingsSidebar",
             legacy_path: "SettingsSidebar.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "SettingsSwitch",
             legacy_path: "SettingsSwitch.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SharePanelHeader",
             legacy_path: "SharePanelHeader.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SharePanelTitleV15",
@@ -2062,7 +2086,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShareTarget",
             legacy_path: "ShareTarget.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SharedPost",
@@ -2098,7 +2122,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShowingResultsFor",
             legacy_path: "ShowingResultsFor.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::DidYouMean),
         },
         LegacyClassMeta {
             name: "SimpleCardContent",
@@ -2122,7 +2146,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SingleActionEmergencySupport",
             legacy_path: "SingleActionEmergencySupport.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CallToAction),
         },
         LegacyClassMeta {
             name: "SingleColumnBrowseResults",
@@ -2146,7 +2170,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SlimOwner",
             legacy_path: "SlimOwner.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Author),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::ProfileColumn),
         },
         LegacyClassMeta {
             name: "SlimVideoMetadata",
@@ -2158,25 +2182,25 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SortFilterHeader",
             legacy_path: "SortFilterHeader.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "SortFilterSubMenu",
             legacy_path: "SortFilterSubMenu.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "StartAt",
             legacy_path: "StartAt.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "StructuredDescriptionContent",
             legacy_path: "StructuredDescriptionContent.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "StructuredDescriptionPlaylistLockup",
@@ -2188,13 +2212,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SubFeedOption",
             legacy_path: "SubFeedOption.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
         },
         LegacyClassMeta {
             name: "SubFeedSelector",
             legacy_path: "SubFeedSelector.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
         },
         LegacyClassMeta {
             name: "SubscribeButton",
@@ -2266,19 +2290,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ThumbnailBottomOverlayView",
             legacy_path: "ThumbnailBottomOverlayView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailHoverOverlayToggleActionsView",
             legacy_path: "ThumbnailHoverOverlayToggleActionsView.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
         },
         LegacyClassMeta {
             name: "ThumbnailHoverOverlayView",
             legacy_path: "ThumbnailHoverOverlayView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailLandscapePortrait",
@@ -2290,91 +2314,91 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ThumbnailOverlayAvatarStackView",
             legacy_path: "ThumbnailOverlayAvatarStackView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayBadgeView",
             legacy_path: "ThumbnailOverlayBadgeView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayBottomPanel",
             legacy_path: "ThumbnailOverlayBottomPanel.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayEndorsement",
             legacy_path: "ThumbnailOverlayEndorsement.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayHoverText",
             legacy_path: "ThumbnailOverlayHoverText.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayInlineUnplayable",
             legacy_path: "ThumbnailOverlayInlineUnplayable.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayLoadingPreview",
             legacy_path: "ThumbnailOverlayLoadingPreview.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayNowPlaying",
             legacy_path: "ThumbnailOverlayNowPlaying.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayPinking",
             legacy_path: "ThumbnailOverlayPinking.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayPlaybackStatus",
             legacy_path: "ThumbnailOverlayPlaybackStatus.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayProgressBarView",
             legacy_path: "ThumbnailOverlayProgressBarView.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayResumePlayback",
             legacy_path: "ThumbnailOverlayResumePlayback.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlaySidePanel",
             legacy_path: "ThumbnailOverlaySidePanel.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayTimeStatus",
             legacy_path: "ThumbnailOverlayTimeStatus.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayTitleView",
             legacy_path: "ThumbnailOverlayTitleView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ThumbnailOverlay),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "ThumbnailOverlayToggleButton",
@@ -2392,7 +2416,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "TicketEvent",
             legacy_path: "TicketEvent.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TicketShelf",
@@ -2404,13 +2428,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "TimedMarkerDecoration",
             legacy_path: "TimedMarkerDecoration.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TitleAndButtonListHeader",
             legacy_path: "TitleAndButtonListHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "ToggleButton",
@@ -2440,7 +2464,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Tooltip",
             legacy_path: "Tooltip.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TopicChannelDetails",
@@ -2452,37 +2476,37 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Transcript",
             legacy_path: "Transcript.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TranscriptFooter",
             legacy_path: "TranscriptFooter.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TranscriptSearchBox",
             legacy_path: "TranscriptSearchBox.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TranscriptSearchPanel",
             legacy_path: "TranscriptSearchPanel.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TranscriptSectionHeader",
             legacy_path: "TranscriptSectionHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
         },
         LegacyClassMeta {
             name: "TranscriptSegment",
             legacy_path: "TranscriptSegment.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "TranscriptSegmentList",
@@ -2512,7 +2536,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UnifiedSharePanel",
             legacy_path: "UnifiedSharePanel.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "UniversalWatchCard",
@@ -2686,7 +2710,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "WatchNextEndScreen",
             legacy_path: "WatchNextEndScreen.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
         },
         LegacyClassMeta {
             name: "WatchNextTabbedResults",
@@ -2698,7 +2722,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "YpcTrailer",
             legacy_path: "YpcTrailer.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "AppendContinuationItemsAction",
@@ -2710,19 +2734,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChangeEngagementPanelVisibilityAction",
             legacy_path: "actions/ChangeEngagementPanelVisibilityAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
         },
         LegacyClassMeta {
             name: "GetMultiPageMenuAction",
             legacy_path: "actions/GetMultiPageMenuAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
         },
         LegacyClassMeta {
             name: "OpenPopupAction",
             legacy_path: "actions/OpenPopupAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::ShowDialog),
         },
         LegacyClassMeta {
             name: "SendFeedbackAction",
@@ -2740,13 +2764,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UpdateChannelSwitcherPageAction",
             legacy_path: "actions/UpdateChannelSwitcherPageAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GetAccountsList),
         },
         LegacyClassMeta {
             name: "UpdateEngagementPanelAction",
             legacy_path: "actions/UpdateEngagementPanelAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
         },
         LegacyClassMeta {
             name: "UpdateSubscribeButtonAction",
@@ -2764,7 +2788,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CommandExecutorCommand",
             legacy_path: "commands/CommandExecutorCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CommandExecutor),
         },
         LegacyClassMeta {
             name: "ContinuationCommand",
@@ -2776,31 +2800,31 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GetKidsBlocklistPickerCommand",
             legacy_path: "commands/GetKidsBlocklistPickerCommand.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsBlocklistPicker),
         },
         LegacyClassMeta {
             name: "RunAttestationCommand",
             legacy_path: "commands/RunAttestationCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::RunAttestation),
         },
         LegacyClassMeta {
             name: "ShowDialogCommand",
             legacy_path: "commands/ShowDialogCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::ShowDialog),
         },
         LegacyClassMeta {
             name: "ShowSheetCommand",
             legacy_path: "commands/ShowSheetCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::ShowSheet),
         },
         LegacyClassMeta {
             name: "UpdateEngagementPanelContentCommand",
             legacy_path: "commands/UpdateEngagementPanelContentCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
         },
         LegacyClassMeta {
             name: "AuthorCommentBadge",
@@ -2884,7 +2908,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "EmojiPicker",
             legacy_path: "comments/EmojiPicker.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::EmojiPicker),
         },
         LegacyClassMeta {
             name: "PdgCommentChip",
@@ -2902,7 +2926,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "VoiceReplyContainerView",
             legacy_path: "comments/VoiceReplyContainerView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "AddToPlaylistEndpoint",
@@ -2950,13 +2974,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GetAccountsListInnertubeEndpoint",
             legacy_path: "endpoints/GetAccountsListInnertubeEndpoint.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GetAccountsList),
         },
         LegacyClassMeta {
             name: "HideEngagementPanelEndpoint",
             legacy_path: "endpoints/HideEngagementPanelEndpoint.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
         },
         LegacyClassMeta {
             name: "LikeEndpoint",
@@ -3028,7 +3052,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShowEngagementPanelEndpoint",
             legacy_path: "endpoints/ShowEngagementPanelEndpoint.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
         },
         LegacyClassMeta {
             name: "SignalServiceEndpoint",
@@ -3160,13 +3184,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UpdateDateTextAction",
             legacy_path: "livechat/UpdateDateTextAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
         },
         LegacyClassMeta {
             name: "UpdateDescriptionAction",
             legacy_path: "livechat/UpdateDescriptionAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
         },
         LegacyClassMeta {
             name: "UpdateLiveChatPollAction",
@@ -3178,25 +3202,25 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UpdateTitleAction",
             legacy_path: "livechat/UpdateTitleAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
         },
         LegacyClassMeta {
             name: "UpdateToggleButtonTextAction",
             legacy_path: "livechat/UpdateToggleButtonTextAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
         },
         LegacyClassMeta {
             name: "UpdateViewershipAction",
             legacy_path: "livechat/UpdateViewershipAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
         },
         LegacyClassMeta {
             name: "BumperUserEduContentView",
             legacy_path: "livechat/items/BumperUserEduContentView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "CreatorHeartView",
@@ -3352,19 +3376,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Menu",
             legacy_path: "menus/Menu.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "MenuFlexibleItem",
             legacy_path: "menus/MenuFlexibleItem.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "MenuNavigationItem",
             legacy_path: "menus/MenuNavigationItem.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "MenuPopup",
@@ -3376,25 +3400,25 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MenuServiceItem",
             legacy_path: "menus/MenuServiceItem.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "MenuServiceItemDownload",
             legacy_path: "menus/MenuServiceItemDownload.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "MultiPageMenu",
             legacy_path: "menus/MultiPageMenu.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::GenericContainer),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::MultiPageMenu),
         },
         LegacyClassMeta {
             name: "MultiPageMenuNotificationSection",
             legacy_path: "menus/MultiPageMenuNotificationSection.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::MultiPageMenu),
         },
         LegacyClassMeta {
             name: "MusicMenuItemDivider",
@@ -3418,7 +3442,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SimpleMenuHeader",
             legacy_path: "menus/SimpleMenuHeader.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Menu),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Dropdown),
         },
         LegacyClassMeta {
             name: "AccessibilityContext",
@@ -3430,25 +3454,25 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AccessibilityData",
             legacy_path: "misc/AccessibilityData.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "Author",
             legacy_path: "misc/Author.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Author),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::ProfileColumn),
         },
         LegacyClassMeta {
             name: "ChildElement",
             legacy_path: "misc/ChildElement.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
         },
         LegacyClassMeta {
             name: "CommandContext",
             legacy_path: "misc/CommandContext.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GenericAction),
+            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CommandExecutor),
         },
         LegacyClassMeta {
             name: "CommentsContinuation",
@@ -3519,68 +3543,68 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
         LegacyClassMeta {
             name: "MobileTopbar",
             legacy_path: "mweb/MobileTopbar.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "MultiPageMenuSection",
             legacy_path: "mweb/MultiPageMenuSection.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::MultiPageMenu),
         },
         LegacyClassMeta {
             name: "PivotBar",
             legacy_path: "mweb/PivotBar.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::GenericElement),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "PivotBarItem",
             legacy_path: "mweb/PivotBarItem.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::MenuItem),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "TopbarMenuButton",
             legacy_path: "mweb/TopbarMenuButton.ts",
-            category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Button),
+            category: ParserCategory::FeedAndContainers,
+            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
         },
         LegacyClassMeta {
             name: "AnchoredSection",
             legacy_path: "ytkids/AnchoredSection.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsSubscription),
         },
         LegacyClassMeta {
             name: "KidsBlocklistPicker",
             legacy_path: "ytkids/KidsBlocklistPicker.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsBlocklistPicker),
         },
         LegacyClassMeta {
             name: "KidsBlocklistPickerItem",
             legacy_path: "ytkids/KidsBlocklistPickerItem.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsBlocklistPicker),
         },
         LegacyClassMeta {
             name: "KidsCategoriesHeader",
             legacy_path: "ytkids/KidsCategoriesHeader.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsSubscription),
         },
         LegacyClassMeta {
             name: "KidsCategoryTab",
             legacy_path: "ytkids/KidsCategoryTab.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsCategoryTab),
         },
         LegacyClassMeta {
             name: "KidsHomeScreen",
             legacy_path: "ytkids/KidsHomeScreen.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::GenericKidsRenderer),
+            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsHomeScreen),
         },
     ]
 });
@@ -3653,11 +3677,11 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert!(direct_count > 0);
-        assert!(container_count > 0);
-        assert!(endpoint_count > 0);
-        assert!(element_count > 0);
-        assert!(kids_count > 0);
+        assert_eq!(direct_count, 132);
+        assert_eq!(container_count, 174);
+        assert_eq!(endpoint_count, 74);
+        assert_eq!(element_count, 187);
+        assert_eq!(kids_count, 7);
     }
 
     #[test]
