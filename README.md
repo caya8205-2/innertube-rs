@@ -157,6 +157,20 @@ cargo run --example download_audio
 
 ---
 
+## Testing
+
+Run any of the included testers:
+
+```bash
+# Full-suite test
+cargo test --all-targets
+
+# Test that require network access
+cargo test --test live_integration -- --ignored
+```
+
+---
+
 ## Documentation
 
 Full API reference is available at [docs.rs/innertube-rs](https://docs.rs/innertube-rs).

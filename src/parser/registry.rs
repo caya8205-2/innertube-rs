@@ -115,6 +115,16 @@ pub enum YTNodeVariant {
     KidsHomeScreen,
     MusicQueue,
     MusicPlayButton,
+    ClipCreation,
+    ClipCreationScrubber,
+    BadgeView,
+    CallToActionButton,
+    ButtonCardView,
+    AvatarView,
+    CompactLink,
+    AccountItemSection,
+    AccountItemSectionHeader,
+    FeedFilterChipBar,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -252,13 +262,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AccountItemSection",
             legacy_path: "AccountItemSection.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AccountItemSection),
         },
         LegacyClassMeta {
             name: "AccountItemSectionHeader",
             legacy_path: "AccountItemSectionHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AccountItemSectionHeader),
         },
         LegacyClassMeta {
             name: "AccountSectionList",
@@ -324,7 +334,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AvatarView",
             legacy_path: "AvatarView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Thumbnail),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AvatarView),
         },
         LegacyClassMeta {
             name: "BackgroundPromo",
@@ -354,7 +364,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "BadgeView",
             legacy_path: "BadgeView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Badge),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::BadgeView),
         },
         LegacyClassMeta {
             name: "BrowseFeedActions",
@@ -378,7 +388,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ButtonCardView",
             legacy_path: "ButtonCardView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Button),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ButtonCardView),
         },
         LegacyClassMeta {
             name: "ButtonView",
@@ -396,7 +406,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CallToActionButton",
             legacy_path: "CallToActionButton.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::CallToAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CallToActionButton),
         },
         LegacyClassMeta {
             name: "Card",
@@ -594,13 +604,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ClipCreation",
             legacy_path: "ClipCreation.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ClipCreation),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ClipCreation),
         },
         LegacyClassMeta {
             name: "ClipCreationScrubber",
             legacy_path: "ClipCreationScrubber.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ClipCreation),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ClipCreationScrubber),
         },
         LegacyClassMeta {
             name: "ClipCreationTextInput",
@@ -642,7 +652,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CompactLink",
             legacy_path: "CompactLink.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CompactLink),
         },
         LegacyClassMeta {
             name: "CompactMix",
@@ -948,7 +958,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "FeedFilterChipBar",
             legacy_path: "FeedFilterChipBar.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::FeedFilterChipBar),
         },
         LegacyClassMeta {
             name: "FeedNudge",
@@ -3739,10 +3749,10 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 175);
-        assert_eq!(container_count, 161);
-        assert_eq!(endpoint_count, 64);
-        assert_eq!(element_count, 170);
+        assert_eq!(direct_count, 185);
+        assert_eq!(container_count, 158);
+        assert_eq!(endpoint_count, 63);
+        assert_eq!(element_count, 164);
         assert_eq!(kids_count, 4);
     }
 
@@ -3783,6 +3793,7 @@ mod tests {
             (json!({ "continuationItemRenderer": { "continuationEndpoint": { "continuationCommand": { "token": "tok" } } } }), "Continuation"),
             (json!({ "chipCloudRenderer": { "chips": [] } }), "ChipCloud"),
             (json!({ "chipCloudChipRenderer": { "text": { "runs": [{ "text": "Chip" }] } } }), "ChipCloudChip"),
+            (json!({ "feedFilterChipBarRenderer": { "contents": [] } }), "FeedFilterChipBar"),
             (json!({ "liveChatTextMessageRenderer": { "id": "msg1", "message": { "runs": [{ "text": "Hello" }] } } }), "LiveChat"),
             (json!({ "liveChatPaidStickerRenderer": { "id": "stk1", "purchaseAmountText": { "simpleText": "$5.00" } } }), "LiveChatPaidSticker"),
             (json!({ "liveChatMembershipItemRenderer": { "id": "mem1", "authorName": { "simpleText": "VIP" } } }), "LiveChatMembershipItem"),
@@ -3834,8 +3845,17 @@ mod tests {
             (json!({ "historySuggestionRenderer": { "suggestion": { "runs": [{ "text": "rust async" }] } } }), "HistorySuggestion"),
             (json!({ "accountSectionListRenderer": { "contents": [] } }), "AccountSectionList"),
             (json!({ "accountItemRenderer": { "accountName": { "simpleText": "Caya" } } }), "AccountItem"),
+            (json!({ "accountItemSectionRenderer": { "contents": [] } }), "AccountItemSection"),
+            (json!({ "accountItemSectionHeaderRenderer": { "title": { "simpleText": "Switch account" } } }), "AccountItemSectionHeader"),
             (json!({ "kidsCategoriesHeaderRenderer": { "categoryTabs": [] } }), "KidsCategoriesHeader"),
             (json!({ "kidsHomeScreenRenderer": { "anchors": [] } }), "KidsHomeScreen"),
+            (json!({ "clipCreationRenderer": { "videoId": "clip_v1" } }), "ClipCreation"),
+            (json!({ "clipCreationScrubberRenderer": { "minLengthMs": 5000 } }), "ClipCreationScrubber"),
+            (json!({ "badgeView": { "badgeText": "Live" } }), "BadgeView"),
+            (json!({ "callToActionButtonRenderer": { "label": { "simpleText": "Join" } } }), "CallToActionButton"),
+            (json!({ "buttonCardView": { "title": { "simpleText": "Subscribe" } } }), "ButtonCardView"),
+            (json!({ "avatarView": { "avatarImageSize": "AVATAR_SIZE_LARGE" } }), "AvatarView"),
+            (json!({ "compactLinkRenderer": { "title": { "simpleText": "Settings" } } }), "CompactLink"),
         ];
 
         for (fixture, label) in test_cases {

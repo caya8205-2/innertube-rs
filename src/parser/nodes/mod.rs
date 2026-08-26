@@ -16,8 +16,8 @@ pub use channel::{
 };
 pub use comments::{CommentNode, CommentThreadNode, CreatorHeartNode};
 pub use containers::{
-    ChipCloudChipNode, ChipCloudNode, ItemSectionNode, RichGridNode, RichShelfNode, SectionListNode,
-    ShelfNode, TabNode,
+    ChipCloudChipNode, ChipCloudNode, FeedFilterChipBarNode, ItemSectionNode, RichGridNode,
+    RichShelfNode, SectionListNode, ShelfNode, TabNode,
 };
 pub use continuation::ContinuationNode;
 pub use livechat::{
@@ -27,8 +27,10 @@ pub use livechat::{
     MarkChatItemAsDeletedActionNode,
 };
 pub use misc::{
-    AccountItemNode, AccountSectionListNode, AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode,
-    CardNode, ChapterNode, ClarificationNode, ContinuationEndpointNode, DidYouMeanNode,
+    AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
+    AlertNode, AuthorNode, AvatarViewNode, BadgeViewNode, BrowseEndpointNode, ButtonCardViewNode,
+    ButtonNode, CallToActionButtonNode, CardNode, ChapterNode, ClarificationNode, ClipCreationNode,
+    ClipCreationScrubberNode, CompactLinkNode, ContinuationEndpointNode, DidYouMeanNode,
     EndscreenElementNode, EndscreenNode, ExpandableTabNode, HeatmapNode, HistorySuggestionNode,
     HorizontalCardListNode, KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode,
     MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
@@ -102,6 +104,7 @@ pub enum YTNode {
     Tab(TabNode),
     ChipCloud(ChipCloudNode),
     ChipCloudChip(ChipCloudChipNode),
+    FeedFilterChipBar(FeedFilterChipBarNode),
     LiveChat(LiveChatMessageNode),
     LiveChatPaidSticker(LiveChatPaidStickerNode),
     LiveChatMembershipItem(LiveChatMembershipItemNode),
@@ -153,8 +156,17 @@ pub enum YTNode {
     HistorySuggestion(HistorySuggestionNode),
     AccountSectionList(AccountSectionListNode),
     AccountItem(AccountItemNode),
+    AccountItemSection(AccountItemSectionNode),
+    AccountItemSectionHeader(AccountItemSectionHeaderNode),
     KidsCategoriesHeader(KidsCategoriesHeaderNode),
     KidsHomeScreen(KidsHomeScreenNode),
+    ClipCreation(ClipCreationNode),
+    ClipCreationScrubber(ClipCreationScrubberNode),
+    BadgeView(BadgeViewNode),
+    CallToActionButton(CallToActionButtonNode),
+    ButtonCardView(ButtonCardViewNode),
+    AvatarView(AvatarViewNode),
+    CompactLink(CompactLinkNode),
 }
 
 impl YTNode {
@@ -735,6 +747,62 @@ impl YTNode {
         if val.get("musicPlayButtonRenderer").is_some() {
             if let Some(mpb) = MusicPlayButtonNode::from_value(val) {
                 return Some(YTNode::MusicPlayButton(mpb));
+            }
+        }
+
+        // 32. Check for Clip Creation Components
+        if val.get("clipCreationRenderer").is_some() {
+            if let Some(cc) = ClipCreationNode::from_value(val) {
+                return Some(YTNode::ClipCreation(cc));
+            }
+        }
+        if val.get("clipCreationScrubberRenderer").is_some() {
+            if let Some(ccs) = ClipCreationScrubberNode::from_value(val) {
+                return Some(YTNode::ClipCreationScrubber(ccs));
+            }
+        }
+
+        // 33. Check for Interactive Views & Buttons
+        if val.get("badgeView").is_some() {
+            if let Some(bv) = BadgeViewNode::from_value(val) {
+                return Some(YTNode::BadgeView(bv));
+            }
+        }
+        if val.get("callToActionButtonRenderer").is_some() {
+            if let Some(cta) = CallToActionButtonNode::from_value(val) {
+                return Some(YTNode::CallToActionButton(cta));
+            }
+        }
+        if val.get("buttonCardView").is_some() {
+            if let Some(bcv) = ButtonCardViewNode::from_value(val) {
+                return Some(YTNode::ButtonCardView(bcv));
+            }
+        }
+        if val.get("avatarView").is_some() {
+            if let Some(av) = AvatarViewNode::from_value(val) {
+                return Some(YTNode::AvatarView(av));
+            }
+        }
+        if val.get("compactLinkRenderer").is_some() {
+            if let Some(cl) = CompactLinkNode::from_value(val) {
+                return Some(YTNode::CompactLink(cl));
+            }
+        }
+
+        // 34. Check for Account Sections & Feed Filter Bars
+        if val.get("accountItemSectionRenderer").is_some() {
+            if let Some(ais) = AccountItemSectionNode::from_value(val) {
+                return Some(YTNode::AccountItemSection(ais));
+            }
+        }
+        if val.get("accountItemSectionHeaderRenderer").is_some() {
+            if let Some(aish) = AccountItemSectionHeaderNode::from_value(val) {
+                return Some(YTNode::AccountItemSectionHeader(aish));
+            }
+        }
+        if val.get("feedFilterChipBarRenderer").is_some() {
+            if let Some(ffcb) = FeedFilterChipBarNode::from_value(val) {
+                return Some(YTNode::FeedFilterChipBar(ffcb));
             }
         }
 

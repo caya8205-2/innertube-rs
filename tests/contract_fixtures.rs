@@ -1327,6 +1327,175 @@ fn test_fixture_search_filters_kids_and_music_queue() {
     }
 }
 
+#[test]
+fn test_fixture_clip_creation_and_scrubber() {
+    let clip_json = json!({
+        "clipCreationRenderer": {
+            "videoId": "clip_source_123",
+            "title": { "runs": [{ "text": "Best moment ever" }] },
+            "durationText": { "runs": [{ "text": "0:15" }] },
+            "scrubber": { "clipCreationScrubberRenderer": { "minLengthMs": 5000, "maxLengthMs": 60000 } }
+        }
+    });
+    let clip_node = YTNode::parse(&clip_json).expect("ClipCreationNode should parse");
+    if let YTNode::ClipCreation(cc) = clip_node {
+        assert_eq!(cc.video_id.as_deref(), Some("clip_source_123"));
+        assert_eq!(cc.title.as_deref(), Some("Best moment ever"));
+        assert_eq!(cc.duration_text.as_deref(), Some("0:15"));
+        assert!(cc.scrubber.is_some());
+    } else {
+        panic!("Expected YTNode::ClipCreation");
+    }
+
+    let scrubber_json = json!({
+        "clipCreationScrubberRenderer": {
+            "minLengthMs": 5000,
+            "maxLengthMs": 60000,
+            "defaultLengthMs": 15000,
+            "windowSizeMs": 120000,
+            "startLabel": "0:00"
+        }
+    });
+    let sc_node = YTNode::parse(&scrubber_json).expect("ClipCreationScrubberNode should parse");
+    if let YTNode::ClipCreationScrubber(ccs) = sc_node {
+        assert_eq!(ccs.min_length_ms, Some(5000));
+        assert_eq!(ccs.max_length_ms, Some(60000));
+        assert_eq!(ccs.default_length_ms, Some(15000));
+        assert_eq!(ccs.window_size_ms, Some(120000));
+        assert_eq!(ccs.start_label.as_deref(), Some("0:00"));
+    } else {
+        panic!("Expected YTNode::ClipCreationScrubber");
+    }
+}
+
+#[test]
+fn test_fixture_views_buttons_and_account_sections() {
+    let badge_json = json!({
+        "badgeView": {
+            "badgeText": "PREMIERE",
+            "badgeStyle": "BADGE_STYLE_TYPE_LIVE_NOW",
+            "accessibilityText": "Premiere now"
+        }
+    });
+    let badge_node = YTNode::parse(&badge_json).expect("BadgeViewNode should parse");
+    if let YTNode::BadgeView(bv) = badge_node {
+        assert_eq!(bv.badge_text, "PREMIERE");
+        assert_eq!(bv.badge_style.as_deref(), Some("BADGE_STYLE_TYPE_LIVE_NOW"));
+        assert_eq!(bv.accessibility_label.as_deref(), Some("Premiere now"));
+    } else {
+        panic!("Expected YTNode::BadgeView");
+    }
+
+    let cta_json = json!({
+        "callToActionButtonRenderer": {
+            "label": { "runs": [{ "text": "Install Now" }] },
+            "style": "STYLE_PRIMARY",
+            "icon": { "iconType": "DOWNLOAD" },
+            "navigationEndpoint": { "urlEndpoint": { "url": "https://example.com" } }
+        }
+    });
+    let cta_node = YTNode::parse(&cta_json).expect("CallToActionButtonNode should parse");
+    if let YTNode::CallToActionButton(cta) = cta_node {
+        assert_eq!(cta.label, "Install Now");
+        assert_eq!(cta.style.as_deref(), Some("STYLE_PRIMARY"));
+        assert_eq!(cta.icon_type.as_deref(), Some("DOWNLOAD"));
+        assert!(cta.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::CallToActionButton");
+    }
+
+    let bcv_json = json!({
+        "buttonCardView": {
+            "title": { "runs": [{ "text": "Channel Membership" }] },
+            "iconName": "SPONSORSHIPS",
+            "onTap": { "command": { "action": "open" } }
+        }
+    });
+    let bcv_node = YTNode::parse(&bcv_json).expect("ButtonCardViewNode should parse");
+    if let YTNode::ButtonCardView(bcv) = bcv_node {
+        assert_eq!(bcv.title, "Channel Membership");
+        assert_eq!(bcv.icon_name.as_deref(), Some("SPONSORSHIPS"));
+        assert!(bcv.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::ButtonCardView");
+    }
+
+    let av_json = json!({
+        "avatarView": {
+            "image": { "thumbnails": [{ "url": "https://yt3.ggpht.com/avatar_test.jpg" }] },
+            "avatarImageSize": "AVATAR_SIZE_MEDIUM"
+        }
+    });
+    let av_node = YTNode::parse(&av_json).expect("AvatarViewNode should parse");
+    if let YTNode::AvatarView(av) = av_node {
+        assert!(!av.image.thumbnails.is_empty());
+        assert_eq!(av.avatar_image_size.as_deref(), Some("AVATAR_SIZE_MEDIUM"));
+    } else {
+        panic!("Expected YTNode::AvatarView");
+    }
+
+    let link_json = json!({
+        "compactLinkRenderer": {
+            "title": { "runs": [{ "text": "Your data in YouTube" }] },
+            "subtitle": { "runs": [{ "text": "Privacy controls" }] },
+            "style": "COMPACT_LINK_STYLE_DEFAULT",
+            "icon": { "iconType": "PRIVACY" },
+            "navigationEndpoint": { "urlEndpoint": { "url": "https://youtube.com/privacy" } }
+        }
+    });
+    let link_node = YTNode::parse(&link_json).expect("CompactLinkNode should parse");
+    if let YTNode::CompactLink(cl) = link_node {
+        assert_eq!(cl.title, "Your data in YouTube");
+        assert_eq!(cl.subtitle.as_deref(), Some("Privacy controls"));
+        assert_eq!(cl.icon_type.as_deref(), Some("PRIVACY"));
+        assert!(cl.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::CompactLink");
+    }
+
+    let section_json = json!({
+        "accountItemSectionRenderer": {
+            "contents": [{ "accountItemRenderer": { "accountName": { "simpleText": "Caya" } } }],
+            "header": { "accountItemSectionHeaderRenderer": { "title": { "simpleText": "Other accounts" } } }
+        }
+    });
+    let sec_node = YTNode::parse(&section_json).expect("AccountItemSectionNode should parse");
+    if let YTNode::AccountItemSection(ais) = sec_node {
+        assert_eq!(ais.contents.len(), 1);
+        assert!(ais.header.is_some());
+    } else {
+        panic!("Expected YTNode::AccountItemSection");
+    }
+
+    let hdr_json = json!({
+        "accountItemSectionHeaderRenderer": {
+            "title": { "runs": [{ "text": "Other accounts" }] }
+        }
+    });
+    let hdr_node = YTNode::parse(&hdr_json).expect("AccountItemSectionHeaderNode should parse");
+    if let YTNode::AccountItemSectionHeader(aish) = hdr_node {
+        assert_eq!(aish.title, "Other accounts");
+    } else {
+        panic!("Expected YTNode::AccountItemSectionHeader");
+    }
+
+    let chip_bar_json = json!({
+        "feedFilterChipBarRenderer": {
+            "contents": [
+                { "chipCloudChipRenderer": { "text": { "runs": [{ "text": "All" }] } } },
+                { "chipCloudChipRenderer": { "text": { "runs": [{ "text": "Podcasts" }] } } }
+            ]
+        }
+    });
+    let chip_bar_node = YTNode::parse(&chip_bar_json).expect("FeedFilterChipBarNode should parse");
+    if let YTNode::FeedFilterChipBar(ffcb) = chip_bar_node {
+        assert_eq!(ffcb.contents.len(), 2);
+    } else {
+        panic!("Expected YTNode::FeedFilterChipBar");
+    }
+}
+
+
 
 
 

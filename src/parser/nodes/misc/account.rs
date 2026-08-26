@@ -118,3 +118,44 @@ impl AccountItemNode {
         })
     }
 }
+
+/// Strongly typed AccountItemSection AST node (`accountItemSectionRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountItemSectionNode {
+    pub contents: Vec<Value>,
+    pub header: Option<Value>,
+}
+
+impl AccountItemSectionNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("accountItemSectionRenderer").unwrap_or(val);
+        let contents = node.get("contents").and_then(Value::as_array).cloned().unwrap_or_default();
+        let header = node.get("header").cloned();
+
+        Some(Self { contents, header })
+    }
+}
+
+/// Strongly typed AccountItemSectionHeader AST node (`accountItemSectionHeaderRenderer`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountItemSectionHeaderNode {
+    pub title: String,
+}
+
+impl AccountItemSectionHeaderNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("accountItemSectionHeaderRenderer").unwrap_or(val);
+
+        let title = node
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .or_else(|| node.get("title").and_then(Value::as_str).map(ToString::to_string))
+            .unwrap_or_default();
+
+        Some(Self { title })
+    }
+}
+

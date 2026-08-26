@@ -233,3 +233,24 @@ impl ChipCloudNode {
         Some(Self { chips })
     }
 }
+
+/// Strongly typed FeedFilterChipBar AST node (`feedFilterChipBarRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FeedFilterChipBarNode {
+    pub contents: Vec<Value>,
+}
+
+impl FeedFilterChipBarNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("feedFilterChipBarRenderer").unwrap_or(val);
+        let contents = node
+            .get("contents")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+
+        Some(Self { contents })
+    }
+}
+
