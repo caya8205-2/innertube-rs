@@ -1,9 +1,11 @@
+pub mod account;
 pub mod actions;
 pub mod alert;
 pub mod author;
 pub mod button;
 pub mod cards;
 pub mod endscreen;
+pub mod kids;
 pub mod markers;
 pub mod menu;
 pub mod metadata;
@@ -16,6 +18,7 @@ pub mod search_modifiers;
 pub mod text;
 pub mod thumbnail;
 
+pub use account::{AccountItemNode, AccountSectionListNode, HistorySuggestionNode, NotificationNode};
 pub use actions::{
     NavigateActionNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
     UpdateEngagementPanelActionNode,
@@ -25,6 +28,7 @@ pub use author::AuthorNode;
 pub use button::{ButtonNode, ToggleButtonNode};
 pub use cards::{ExpandableTabNode, HorizontalCardListNode, SearchRefinementCardNode};
 pub use endscreen::{EndscreenElementNode, EndscreenNode};
+pub use kids::{KidsCategoriesHeaderNode, KidsHomeScreenNode};
 pub use markers::{ChapterNode, HeatmapNode, MacroMarkersListItemNode, MacroMarkersListNode};
 pub use menu::{MenuItemNode, MenuNode};
 pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, ViewCountNode};
@@ -38,6 +42,9 @@ pub use player_media::{
 };
 pub use player_overlay::{PlayerOverlayNode, PlayerStoryboardSpecNode, TimedMarkerDecorationNode};
 pub use profile::{ProfileColumnNode, ProfileColumnUserInfoNode, VerticalListNode};
-pub use search_modifiers::{DidYouMeanNode, SearchSubMenuNode, ShowingResultsForNode};
+pub use search_modifiers::{
+    DidYouMeanNode, SearchFilterGroupNode, SearchFilterNode, SearchSubMenuNode,
+    ShowingResultsForNode,
+};
 pub use text::{TextNode, TextRunNode};
 pub use thumbnail::{ThumbnailListNode, ThumbnailNode};

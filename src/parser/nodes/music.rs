@@ -317,3 +317,44 @@ impl MusicNavigationButtonNode {
     }
 }
 
+/// Strongly typed MusicQueue AST node (`musicQueueRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicQueueNode {
+    pub content: Option<Value>,
+}
+
+impl MusicQueueNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("musicQueueRenderer").unwrap_or(val);
+        let content = node.get("content").cloned();
+
+        Some(Self { content })
+    }
+}
+
+/// Strongly typed MusicPlayButton AST node (`musicPlayButtonRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicPlayButtonNode {
+    pub play_navigation_endpoint: Option<Value>,
+    pub icon_type: Option<String>,
+}
+
+impl MusicPlayButtonNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("musicPlayButtonRenderer").unwrap_or(val);
+        let play_navigation_endpoint = node
+            .get("playNavigationEndpoint")
+            .or_else(|| node.get("navigationEndpoint"))
+            .cloned();
+        let icon_type = node.pointer("/icon/iconType").and_then(Value::as_str).map(ToString::to_string);
+
+        Some(Self {
+            play_navigation_endpoint,
+            icon_type,
+        })
+    }
+}
+
+

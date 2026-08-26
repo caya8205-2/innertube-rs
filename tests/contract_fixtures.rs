@@ -1168,6 +1168,166 @@ fn test_fixture_player_media_and_playlist_sidebars() {
     }
 }
 
+#[test]
+fn test_fixture_notifications_and_account_components() {
+    let notif_json = json!({
+        "notificationRenderer": {
+            "notificationId": "notif_xyz123",
+            "primaryText": { "runs": [{ "text": "New release available" }] },
+            "thumbnail": { "thumbnails": [{ "url": "https://img.youtube.com/notif.jpg" }] },
+            "navigationEndpoint": { "watchEndpoint": { "videoId": "v_new" } },
+            "unread": true
+        }
+    });
+    let notif_node = YTNode::parse(&notif_json).expect("NotificationNode should parse");
+    if let YTNode::Notification(n) = notif_node {
+        assert_eq!(n.notification_id.as_deref(), Some("notif_xyz123"));
+        assert_eq!(n.primary_text, "New release available");
+        assert!(!n.thumbnails.thumbnails.is_empty());
+        assert!(n.endpoint.is_some());
+        assert!(n.unread);
+    } else {
+        panic!("Expected YTNode::Notification");
+    }
+
+    let history_sugg_json = json!({
+        "historySuggestionRenderer": {
+            "suggestion": { "runs": [{ "text": "rust async tokio stream" }] },
+            "navigationEndpoint": { "searchEndpoint": { "query": "rust async tokio stream" } }
+        }
+    });
+    let sugg_node = YTNode::parse(&history_sugg_json).expect("HistorySuggestionNode should parse");
+    if let YTNode::HistorySuggestion(hs) = sugg_node {
+        assert_eq!(hs.suggestion, "rust async tokio stream");
+        assert!(hs.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::HistorySuggestion");
+    }
+
+    let account_sec_json = json!({
+        "accountSectionListRenderer": {
+            "contents": [{ "accountItemRenderer": { "accountName": { "simpleText": "Caya" } } }],
+            "header": { "title": "Accounts" }
+        }
+    });
+    let sec_node = YTNode::parse(&account_sec_json).expect("AccountSectionListNode should parse");
+    if let YTNode::AccountSectionList(asl) = sec_node {
+        assert_eq!(asl.contents.len(), 1);
+        assert!(asl.header.is_some());
+    } else {
+        panic!("Expected YTNode::AccountSectionList");
+    }
+
+    let account_item_json = json!({
+        "accountItemRenderer": {
+            "accountName": { "runs": [{ "text": "Caya Rustacean" }] },
+            "accountPhoto": { "thumbnails": [{ "url": "https://yt3.ggpht.com/avatar.jpg" }] },
+            "isSelected": true
+        }
+    });
+    let item_node = YTNode::parse(&account_item_json).expect("AccountItemNode should parse");
+    if let YTNode::AccountItem(ai) = item_node {
+        assert_eq!(ai.account_name, "Caya Rustacean");
+        assert!(!ai.account_photo.thumbnails.is_empty());
+        assert!(ai.is_selected);
+    } else {
+        panic!("Expected YTNode::AccountItem");
+    }
+}
+
+#[test]
+fn test_fixture_search_filters_kids_and_music_queue() {
+    let sfg_json = json!({
+        "searchFilterGroupRenderer": {
+            "title": { "runs": [{ "text": "Upload Date" }] },
+            "filters": [
+                { "searchFilterRenderer": { "label": { "runs": [{ "text": "Last hour" }] }, "status": "FILTER_STATUS_SELECTED" } },
+                { "searchFilterRenderer": { "label": { "runs": [{ "text": "Today" }] }, "status": "FILTER_STATUS_UNSELECTED" } }
+            ]
+        }
+    });
+    let sfg_node = YTNode::parse(&sfg_json).expect("SearchFilterGroupNode should parse");
+    if let YTNode::SearchFilterGroup(sfg) = sfg_node {
+        assert_eq!(sfg.title.as_deref(), Some("Upload Date"));
+        assert_eq!(sfg.filters.len(), 2);
+    } else {
+        panic!("Expected YTNode::SearchFilterGroup");
+    }
+
+    let sf_json = json!({
+        "searchFilterRenderer": {
+            "label": { "runs": [{ "text": "4K Video" }] },
+            "status": "FILTER_STATUS_SELECTED",
+            "tooltip": "Search for 4K quality",
+            "navigationEndpoint": { "searchEndpoint": { "params": "CA4%3D" } }
+        }
+    });
+    let sf_node = YTNode::parse(&sf_json).expect("SearchFilterNode should parse");
+    if let YTNode::SearchFilter(sf) = sf_node {
+        assert_eq!(sf.label, "4K Video");
+        assert!(sf.selected);
+        assert_eq!(sf.tooltip.as_deref(), Some("Search for 4K quality"));
+        assert!(sf.endpoint.is_some());
+    } else {
+        panic!("Expected YTNode::SearchFilter");
+    }
+
+    let kids_hdr_json = json!({
+        "kidsCategoriesHeaderRenderer": {
+            "categoryTabs": [
+                { "title": "Shows" },
+                { "title": "Music" },
+                { "title": "Gaming" }
+            ]
+        }
+    });
+    let k_node = YTNode::parse(&kids_hdr_json).expect("KidsCategoriesHeaderNode should parse");
+    if let YTNode::KidsCategoriesHeader(kh) = k_node {
+        assert_eq!(kh.category_tabs.len(), 3);
+    } else {
+        panic!("Expected YTNode::KidsCategoriesHeader");
+    }
+
+    let kids_home_json = json!({
+        "kidsHomeScreenRenderer": {
+            "anchors": [{ "anchor": { "title": "Popular" } }]
+        }
+    });
+    let kh_node = YTNode::parse(&kids_home_json).expect("KidsHomeScreenNode should parse");
+    if let YTNode::KidsHomeScreen(khs) = kh_node {
+        assert_eq!(khs.anchors.len(), 1);
+    } else {
+        panic!("Expected YTNode::KidsHomeScreen");
+    }
+
+    let music_queue_json = json!({
+        "musicQueueRenderer": {
+            "content": { "playlistPanelRenderer": { "title": { "simpleText": "Queue" } } }
+        }
+    });
+    let mq_node = YTNode::parse(&music_queue_json).expect("MusicQueueNode should parse");
+    if let YTNode::MusicQueue(mq) = mq_node {
+        assert!(mq.content.is_some());
+    } else {
+        panic!("Expected YTNode::MusicQueue");
+    }
+
+    let music_play_btn_json = json!({
+        "musicPlayButtonRenderer": {
+            "playNavigationEndpoint": { "watchEndpoint": { "videoId": "music_track_1" } },
+            "icon": { "iconType": "MUSIC_PLAY" }
+        }
+    });
+    let mpb_node = YTNode::parse(&music_play_btn_json).expect("MusicPlayButtonNode should parse");
+    if let YTNode::MusicPlayButton(mpb) = mpb_node {
+        assert!(mpb.play_navigation_endpoint.is_some());
+        assert_eq!(mpb.icon_type.as_deref(), Some("MUSIC_PLAY"));
+    } else {
+        panic!("Expected YTNode::MusicPlayButton");
+    }
+}
+
+
 
 
 

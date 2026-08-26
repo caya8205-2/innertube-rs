@@ -105,6 +105,16 @@ pub enum YTNodeVariant {
     PlaylistMetadata,
     PlaylistSidebarPrimaryInfo,
     PlaylistSidebarSecondaryInfo,
+    Notification,
+    HistorySuggestion,
+    AccountSectionList,
+    AccountItem,
+    SearchFilterGroup,
+    SearchFilter,
+    KidsCategoriesHeader,
+    KidsHomeScreen,
+    MusicQueue,
+    MusicPlayButton,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -236,7 +246,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AccountItem",
             legacy_path: "AccountItem.ts",
             category: ParserCategory::Channel,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelCard),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AccountItem),
         },
         LegacyClassMeta {
             name: "AccountItemSection",
@@ -254,7 +264,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AccountSectionList",
             legacy_path: "AccountSectionList.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Section),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AccountSectionList),
         },
         LegacyClassMeta {
             name: "ActiveAccountHeader",
@@ -1118,7 +1128,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "HistorySuggestion",
             legacy_path: "HistorySuggestion.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::HistorySuggestion),
         },
         LegacyClassMeta {
             name: "HorizontalCardList",
@@ -1520,7 +1530,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicPlayButton",
             legacy_path: "MusicPlayButton.ts",
             category: ParserCategory::Music,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicItem),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicPlayButton),
         },
         LegacyClassMeta {
             name: "MusicPlaylistEditHeader",
@@ -1538,7 +1548,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "MusicQueue",
             legacy_path: "MusicQueue.ts",
             category: ParserCategory::Music,
-            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicItem),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::MusicQueue),
         },
         LegacyClassMeta {
             name: "MusicResponsiveHeader",
@@ -1622,7 +1632,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "Notification",
             legacy_path: "Notification.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::Notification),
         },
         LegacyClassMeta {
             name: "NotificationAction",
@@ -2018,13 +2028,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "SearchFilter",
             legacy_path: "SearchFilter.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::SearchFilter),
         },
         LegacyClassMeta {
             name: "SearchFilterGroup",
             legacy_path: "SearchFilterGroup.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::SearchFilterGroup),
         },
         LegacyClassMeta {
             name: "SearchFilterOptionsDialog",
@@ -3644,19 +3654,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "KidsCategoriesHeader",
             legacy_path: "ytkids/KidsCategoriesHeader.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsSubscription),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::KidsCategoriesHeader),
         },
         LegacyClassMeta {
             name: "KidsCategoryTab",
             legacy_path: "ytkids/KidsCategoryTab.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsCategoryTab),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::KidsCategoriesHeader),
         },
         LegacyClassMeta {
             name: "KidsHomeScreen",
             legacy_path: "ytkids/KidsHomeScreen.ts",
             category: ParserCategory::Kids,
-            dispatch_target: ParserDispatchTarget::Kids(KidsKind::KidsHomeScreen),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::KidsHomeScreen),
         },
     ]
 });
@@ -3729,11 +3739,11 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 167);
-        assert_eq!(container_count, 162);
+        assert_eq!(direct_count, 175);
+        assert_eq!(container_count, 161);
         assert_eq!(endpoint_count, 64);
-        assert_eq!(element_count, 174);
-        assert_eq!(kids_count, 7);
+        assert_eq!(element_count, 170);
+        assert_eq!(kids_count, 4);
     }
 
     #[test]
@@ -3762,6 +3772,8 @@ mod tests {
             (json!({ "musicHeaderRenderer": { "title": { "runs": [{ "text": "Album" }] } } }), "MusicHeader"),
             (json!({ "musicInlineBadgeRenderer": { "icon": { "iconType": "EXPLICIT" } } }), "MusicInlineBadge"),
             (json!({ "musicNavigationButtonRenderer": { "buttonText": { "runs": [{ "text": "Explore" }] } } }), "MusicNavigationButton"),
+            (json!({ "musicQueueRenderer": { "content": {} } }), "MusicQueue"),
+            (json!({ "musicPlayButtonRenderer": { "playNavigationEndpoint": {} } }), "MusicPlayButton"),
             (json!({ "commentRenderer": { "commentId": "c1", "authorText": { "simpleText": "A" }, "contentText": { "runs": [{ "text": "T" }] } } }), "Comment"),
             (json!({ "commentThreadRenderer": { "comment": { "commentRenderer": { "commentId": "ct1", "authorText": { "simpleText": "A" }, "contentText": { "runs": [{ "text": "T" }] } } } } }), "CommentThread"),
             (json!({ "creatorHeartRenderer": { "isHearted": true } }), "CreatorHeart"),
@@ -3790,6 +3802,8 @@ mod tests {
             (json!({ "didYouMeanRenderer": { "correctedQuery": { "simpleText": "rust" } } }), "DidYouMean"),
             (json!({ "showingResultsForRenderer": { "correctedQuery": { "simpleText": "rust lang" } } }), "ShowingResultsFor"),
             (json!({ "searchSubMenuRenderer": { "title": { "simpleText": "Filters" } } }), "SearchSubMenu"),
+            (json!({ "searchFilterGroupRenderer": { "title": { "simpleText": "Upload date" } } }), "SearchFilterGroup"),
+            (json!({ "searchFilterRenderer": { "label": { "simpleText": "Today" } } }), "SearchFilter"),
             (json!({ "endscreenRenderer": { "elements": [] } }), "Endscreen"),
             (json!({ "endscreenElementRenderer": { "style": "VIDEO" } }), "EndscreenElement"),
             (json!({ "metadataBadgeRenderer": { "label": "Verified" } }), "MetadataBadge"),
@@ -3816,6 +3830,12 @@ mod tests {
             (json!({ "searchRefinementCardRenderer": { "query": { "simpleText": "rust tutorial" } } }), "SearchRefinementCard"),
             (json!({ "horizontalCardListRenderer": { "cards": [] } }), "HorizontalCardList"),
             (json!({ "expandableTabRenderer": { "title": { "simpleText": "Videos" } } }), "ExpandableTab"),
+            (json!({ "notificationRenderer": { "notificationId": "n1", "primaryText": { "runs": [{ "text": "New video" }] } } }), "Notification"),
+            (json!({ "historySuggestionRenderer": { "suggestion": { "runs": [{ "text": "rust async" }] } } }), "HistorySuggestion"),
+            (json!({ "accountSectionListRenderer": { "contents": [] } }), "AccountSectionList"),
+            (json!({ "accountItemRenderer": { "accountName": { "simpleText": "Caya" } } }), "AccountItem"),
+            (json!({ "kidsCategoriesHeaderRenderer": { "categoryTabs": [] } }), "KidsCategoriesHeader"),
+            (json!({ "kidsHomeScreenRenderer": { "anchors": [] } }), "KidsHomeScreen"),
         ];
 
         for (fixture, label) in test_cases {

@@ -27,23 +27,25 @@ pub use livechat::{
     MarkChatItemAsDeletedActionNode,
 };
 pub use misc::{
-    AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode, CardNode, ChapterNode,
-    ClarificationNode, ContinuationEndpointNode, DidYouMeanNode, EndscreenElementNode,
-    EndscreenNode, ExpandableTabNode, HeatmapNode, HorizontalCardListNode, LikeEndpointNode,
+    AccountItemNode, AccountSectionListNode, AlertNode, AuthorNode, BrowseEndpointNode, ButtonNode,
+    CardNode, ChapterNode, ClarificationNode, ContinuationEndpointNode, DidYouMeanNode,
+    EndscreenElementNode, EndscreenNode, ExpandableTabNode, HeatmapNode, HistorySuggestionNode,
+    HorizontalCardListNode, KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode,
     MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
-    MicroformatDataNode, NavigateActionNode, NavigationEndpointNode, PlayerCaptionsTracklistNode,
-    PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode,
-    PlayerStoryboardSpecNode, PollNode, ProfileColumnNode, ProfileColumnUserInfoNode,
-    ReelWatchEndpointNode, SearchEndpointNode, SearchRefinementCardNode, SearchSubMenuNode,
-    ShowingResultsForNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
-    SubscribeEndpointNode, TextNode, TextRunNode, ThumbnailListNode, ThumbnailNode,
-    ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode, TimedMarkerDecorationNode,
-    ToggleButtonNode, UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode,
-    ViewCountNode, WatchEndpointNode,
+    MicroformatDataNode, NavigateActionNode, NavigationEndpointNode, NotificationNode,
+    PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
+    PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode, ProfileColumnNode,
+    ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode, SearchFilterGroupNode,
+    SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode, ShowingResultsForNode,
+    ShowEngagementPanelActionNode, ShowLiveChatActionNode, SubscribeEndpointNode, TextNode,
+    TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayProgressBarNode,
+    ThumbnailOverlayTimeStatusNode, TimedMarkerDecorationNode, ToggleButtonNode,
+    UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode, ViewCountNode,
+    WatchEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
-    MusicResponsiveListItemNode, MusicTwoRowItemNode,
+    MusicPlayButtonNode, MusicQueueNode, MusicResponsiveListItemNode, MusicTwoRowItemNode,
 };
 pub use playlist::{
     PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
@@ -83,6 +85,8 @@ pub enum YTNode {
     MusicHeader(MusicHeaderNode),
     MusicInlineBadge(MusicInlineBadgeNode),
     MusicNavigationButton(MusicNavigationButtonNode),
+    MusicQueue(MusicQueueNode),
+    MusicPlayButton(MusicPlayButtonNode),
     Comment(CommentNode),
     CommentThread(CommentThreadNode),
     CreatorHeart(CreatorHeartNode),
@@ -117,6 +121,8 @@ pub enum YTNode {
     DidYouMean(DidYouMeanNode),
     ShowingResultsFor(ShowingResultsForNode),
     SearchSubMenu(SearchSubMenuNode),
+    SearchFilterGroup(SearchFilterGroupNode),
+    SearchFilter(SearchFilterNode),
     Endscreen(EndscreenNode),
     EndscreenElement(EndscreenElementNode),
     MetadataBadge(MetadataBadgeNode),
@@ -143,6 +149,12 @@ pub enum YTNode {
     SearchRefinementCard(SearchRefinementCardNode),
     HorizontalCardList(HorizontalCardListNode),
     ExpandableTab(ExpandableTabNode),
+    Notification(NotificationNode),
+    HistorySuggestion(HistorySuggestionNode),
+    AccountSectionList(AccountSectionListNode),
+    AccountItem(AccountItemNode),
+    KidsCategoriesHeader(KidsCategoriesHeaderNode),
+    KidsHomeScreen(KidsHomeScreenNode),
 }
 
 impl YTNode {
@@ -665,6 +677,64 @@ impl YTNode {
         if val.get("playlistSidebarSecondaryInfoRenderer").is_some() {
             if let Some(ssi) = PlaylistSidebarSecondaryInfoNode::from_value(val) {
                 return Some(YTNode::PlaylistSidebarSecondaryInfo(ssi));
+            }
+        }
+
+        // 29. Check for Notifications & Account Components
+        if val.get("notificationRenderer").is_some() {
+            if let Some(notif) = NotificationNode::from_value(val) {
+                return Some(YTNode::Notification(notif));
+            }
+        }
+        if val.get("historySuggestionRenderer").is_some() {
+            if let Some(hs) = HistorySuggestionNode::from_value(val) {
+                return Some(YTNode::HistorySuggestion(hs));
+            }
+        }
+        if val.get("accountSectionListRenderer").is_some() {
+            if let Some(asl) = AccountSectionListNode::from_value(val) {
+                return Some(YTNode::AccountSectionList(asl));
+            }
+        }
+        if val.get("accountItemRenderer").is_some() {
+            if let Some(ai) = AccountItemNode::from_value(val) {
+                return Some(YTNode::AccountItem(ai));
+            }
+        }
+
+        // 30. Check for Search Filters & Groups
+        if val.get("searchFilterGroupRenderer").is_some() {
+            if let Some(sfg) = SearchFilterGroupNode::from_value(val) {
+                return Some(YTNode::SearchFilterGroup(sfg));
+            }
+        }
+        if val.get("searchFilterRenderer").is_some() {
+            if let Some(sf) = SearchFilterNode::from_value(val) {
+                return Some(YTNode::SearchFilter(sf));
+            }
+        }
+
+        // 31. Check for Kids & Music Specialty Renderers
+        if val.get("kidsCategoriesHeaderRenderer").is_some()
+            || val.get("kidsCategoryTabRenderer").is_some()
+        {
+            if let Some(kch) = KidsCategoriesHeaderNode::from_value(val) {
+                return Some(YTNode::KidsCategoriesHeader(kch));
+            }
+        }
+        if val.get("kidsHomeScreenRenderer").is_some() {
+            if let Some(khs) = KidsHomeScreenNode::from_value(val) {
+                return Some(YTNode::KidsHomeScreen(khs));
+            }
+        }
+        if val.get("musicQueueRenderer").is_some() {
+            if let Some(mq) = MusicQueueNode::from_value(val) {
+                return Some(YTNode::MusicQueue(mq));
+            }
+        }
+        if val.get("musicPlayButtonRenderer").is_some() {
+            if let Some(mpb) = MusicPlayButtonNode::from_value(val) {
+                return Some(YTNode::MusicPlayButton(mpb));
             }
         }
 
