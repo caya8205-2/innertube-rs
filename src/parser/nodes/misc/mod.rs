@@ -4,9 +4,11 @@ pub mod alert;
 pub mod author;
 pub mod button;
 pub mod cards;
+pub mod carousels;
 pub mod clip;
 pub mod endscreen;
 pub mod engagement;
+pub mod interactive_cards;
 pub mod kids;
 pub mod markers;
 pub mod menu;
@@ -34,6 +36,11 @@ pub use alert::{AlertNode, CardNode, ClarificationNode, PollNode};
 pub use author::AuthorNode;
 pub use button::{ButtonNode, ToggleButtonNode};
 pub use cards::{ExpandableTabNode, HorizontalCardListNode, SearchRefinementCardNode};
+pub use carousels::{
+    AnimatedThumbnailOverlayViewNode, AttributionViewNode, AvatarStackViewNode, BackgroundPromoNode,
+    CarouselHeaderNode, CarouselItemNode, CarouselItemViewNode, CarouselLockupNode,
+    CarouselTitleViewNode, ChipBarViewNode, ChipViewNode, ContentListItemViewNode,
+};
 pub use clip::{ClipCreationNode, ClipCreationScrubberNode};
 pub use endscreen::{EndscreenElementNode, EndscreenNode};
 pub use engagement::{
@@ -41,6 +48,12 @@ pub use engagement::{
     CommentSimpleboxNode, CommentsEntryPointHeaderNode, CommentsHeaderNode,
     EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, FeedNudgeNode, InfoRowNode,
     SubscriptionNotificationToggleButtonNode, TextHeaderNode,
+};
+pub use interactive_cards::{
+    AddToPlaylistNode, AudioOnlyPlayabilityNode, C4TabbedHeaderNode, CardCollectionNode,
+    ChannelSwitcherPageNode, ClientSideToggleMenuItemNode, ClipAdStateNode,
+    ClipCreationTextInputNode, CollaboratorInfoCardContentNode, CollectionThumbnailViewNode,
+    CompactMovieNode, CompactStationNode,
 };
 pub use kids::{KidsCategoriesHeaderNode, KidsHomeScreenNode};
 pub use markers::{ChapterNode, HeatmapNode, MacroMarkersListItemNode, MacroMarkersListNode};

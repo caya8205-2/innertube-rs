@@ -177,6 +177,58 @@ pub enum YTNodeVariant {
     FeedNudge,
     ChannelOwnerEmptyState,
     TextHeader,
+    // Batch 9: Carousels & Views
+    CarouselHeader,
+    CarouselItem,
+    CarouselItemView,
+    CarouselLockup,
+    CarouselTitleView,
+    ChipBarView,
+    ChipView,
+    ContentListItemView,
+    BackgroundPromo,
+    AttributionView,
+    AvatarStackView,
+    AnimatedThumbnailOverlayView,
+    // Batch 9: Cards & Interactive Items
+    CardCollection,
+    CollaboratorInfoCardContent,
+    CollectionThumbnailView,
+    ClipAdState,
+    ClipCreationTextInput,
+    ClientSideToggleMenuItem,
+    AudioOnlyPlayability,
+    CompactMovie,
+    CompactStation,
+    AddToPlaylist,
+    C4TabbedHeader,
+    ChannelSwitcherPage,
+    // Batch 9: LiveChat Extras
+    LiveChatItemList,
+    LiveChatParticipantsList,
+    LiveChatActionPanel,
+    AddBannerToLiveChatCommand,
+    RemoveBannerForLiveChatCommand,
+    AddLiveChatTickerItemAction,
+    DimChatItemAction,
+    RemoveChatItemAction,
+    RemoveChatItemByAuthorAction,
+    ReplaceChatItemAction,
+    ReplayChatItemAction,
+    UpdateLiveChatPollAction,
+    // Batch 9: Commands & Actions
+    AppendContinuationItemsAction,
+    GetMultiPageMenuAction,
+    OpenPopupAction,
+    SendFeedbackAction,
+    SignalAction,
+    UpdateChannelSwitcherPageAction,
+    UpdateSubscribeButtonAction,
+    AddToPlaylistCommand,
+    ContinuationCommand,
+    ShowSheetCommand,
+    UpdateEngagementPanelContentCommand,
+    RunAttestationCommand,
 }
 
 /// Strongly typed domain container structures present in `innertube-rs`.
@@ -338,7 +390,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AddToPlaylist",
             legacy_path: "AddToPlaylist.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AddToPlaylist),
         },
         LegacyClassMeta {
             name: "Alert",
@@ -356,19 +408,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AnimatedThumbnailOverlayView",
             legacy_path: "AnimatedThumbnailOverlayView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Endscreen),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AnimatedThumbnailOverlayView),
         },
         LegacyClassMeta {
             name: "AttributionView",
             legacy_path: "AttributionView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Microformat),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AttributionView),
         },
         LegacyClassMeta {
             name: "AudioOnlyPlayability",
             legacy_path: "AudioOnlyPlayability.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Playability),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AudioOnlyPlayability),
         },
         LegacyClassMeta {
             name: "AutomixPreviewVideo",
@@ -380,7 +432,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AvatarStackView",
             legacy_path: "AvatarStackView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Thumbnail),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AvatarStackView),
         },
         LegacyClassMeta {
             name: "AvatarView",
@@ -392,7 +444,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "BackgroundPromo",
             legacy_path: "BackgroundPromo.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Alert),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::BackgroundPromo),
         },
         LegacyClassMeta {
             name: "BackstageImage",
@@ -452,7 +504,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "C4TabbedHeader",
             legacy_path: "C4TabbedHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::C4TabbedHeader),
         },
         LegacyClassMeta {
             name: "CallToActionButton",
@@ -470,37 +522,37 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CardCollection",
             legacy_path: "CardCollection.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Card),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CardCollection),
         },
         LegacyClassMeta {
             name: "CarouselHeader",
             legacy_path: "CarouselHeader.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::PageHeader),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CarouselHeader),
         },
         LegacyClassMeta {
             name: "CarouselItem",
             legacy_path: "CarouselItem.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CarouselItem),
         },
         LegacyClassMeta {
             name: "CarouselItemView",
             legacy_path: "CarouselItemView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CarouselItemView),
         },
         LegacyClassMeta {
             name: "CarouselLockup",
             legacy_path: "CarouselLockup.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CarouselLockup),
         },
         LegacyClassMeta {
             name: "CarouselTitleView",
             legacy_path: "CarouselTitleView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::Shelf),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CarouselTitleView),
         },
         LegacyClassMeta {
             name: "Channel",
@@ -584,7 +636,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChannelSwitcherPage",
             legacy_path: "ChannelSwitcherPage.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::OverlayContainer),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChannelSwitcherPage),
         },
         LegacyClassMeta {
             name: "ChannelTagline",
@@ -620,7 +672,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChipBarView",
             legacy_path: "ChipBarView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::FeedFilterChipBar),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChipBarView),
         },
         LegacyClassMeta {
             name: "ChipCloud",
@@ -638,19 +690,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ChipView",
             legacy_path: "ChipView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ChipView),
         },
         LegacyClassMeta {
             name: "ClientSideToggleMenuItem",
             legacy_path: "ClientSideToggleMenuItem.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ToggleButton),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ClientSideToggleMenuItem),
         },
         LegacyClassMeta {
             name: "ClipAdState",
             legacy_path: "ClipAdState.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::ClipCreation),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ClipAdState),
         },
         LegacyClassMeta {
             name: "ClipCreation",
@@ -668,7 +720,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ClipCreationTextInput",
             legacy_path: "ClipCreationTextInput.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Text),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ClipCreationTextInput),
         },
         LegacyClassMeta {
             name: "ClipSection",
@@ -680,7 +732,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CollaboratorInfoCardContent",
             legacy_path: "CollaboratorInfoCardContent.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Card),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CollaboratorInfoCardContent),
         },
         LegacyClassMeta {
             name: "CollageHeroImage",
@@ -692,7 +744,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CollectionThumbnailView",
             legacy_path: "CollectionThumbnailView.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Thumbnail),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CollectionThumbnailView),
         },
         LegacyClassMeta {
             name: "CompactChannel",
@@ -716,7 +768,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CompactMovie",
             legacy_path: "CompactMovie.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CompactMovie),
         },
         LegacyClassMeta {
             name: "CompactPlaylist",
@@ -728,7 +780,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "CompactStation",
             legacy_path: "CompactStation.ts",
             category: ParserCategory::ElementAndMisc,
-            dispatch_target: ParserDispatchTarget::Element(ElementKind::Metadata),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::CompactStation),
         },
         LegacyClassMeta {
             name: "CompactVideo",
@@ -752,7 +804,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ContentListItemView",
             legacy_path: "ContentListItemView.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ContentListItemView),
         },
         LegacyClassMeta {
             name: "ContentMetadataView",
@@ -1346,7 +1398,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatItemList",
             legacy_path: "LiveChatItemList.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatItemList),
         },
         LegacyClassMeta {
             name: "LiveChatMessageInput",
@@ -1364,7 +1416,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "LiveChatParticipantsList",
             legacy_path: "LiveChatParticipantsList.ts",
             category: ParserCategory::FeedAndContainers,
-            dispatch_target: ParserDispatchTarget::Container(ContainerKind::List),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatParticipantsList),
         },
         LegacyClassMeta {
             name: "LockupMetadataView",
@@ -2852,7 +2904,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AppendContinuationItemsAction",
             legacy_path: "actions/AppendContinuationItemsAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Continuation),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AppendContinuationItemsAction),
         },
         LegacyClassMeta {
             name: "ChangeEngagementPanelVisibilityAction",
@@ -2864,31 +2916,31 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "GetMultiPageMenuAction",
             legacy_path: "actions/GetMultiPageMenuAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Browse),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::GetMultiPageMenuAction),
         },
         LegacyClassMeta {
             name: "OpenPopupAction",
             legacy_path: "actions/OpenPopupAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::ShowDialog),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::OpenPopupAction),
         },
         LegacyClassMeta {
             name: "SendFeedbackAction",
             legacy_path: "actions/SendFeedbackAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Feedback),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::SendFeedbackAction),
         },
         LegacyClassMeta {
             name: "SignalAction",
             legacy_path: "actions/SignalAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Signal),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::SignalAction),
         },
         LegacyClassMeta {
             name: "UpdateChannelSwitcherPageAction",
             legacy_path: "actions/UpdateChannelSwitcherPageAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::GetAccountsList),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::UpdateChannelSwitcherPageAction),
         },
         LegacyClassMeta {
             name: "UpdateEngagementPanelAction",
@@ -2900,13 +2952,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UpdateSubscribeButtonAction",
             legacy_path: "actions/UpdateSubscribeButtonAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Subscribe),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::UpdateSubscribeButtonAction),
         },
         LegacyClassMeta {
             name: "AddToPlaylistCommand",
             legacy_path: "commands/AddToPlaylistCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::PlaylistAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AddToPlaylistCommand),
         },
         LegacyClassMeta {
             name: "CommandExecutorCommand",
@@ -2918,7 +2970,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ContinuationCommand",
             legacy_path: "commands/ContinuationCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::Continuation),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ContinuationCommand),
         },
         LegacyClassMeta {
             name: "GetKidsBlocklistPickerCommand",
@@ -2930,7 +2982,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "RunAttestationCommand",
             legacy_path: "commands/RunAttestationCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::RunAttestation),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::RunAttestationCommand),
         },
         LegacyClassMeta {
             name: "ShowDialogCommand",
@@ -2942,13 +2994,13 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ShowSheetCommand",
             legacy_path: "commands/ShowSheetCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::ShowSheet),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ShowSheetCommand),
         },
         LegacyClassMeta {
             name: "UpdateEngagementPanelContentCommand",
             legacy_path: "commands/UpdateEngagementPanelContentCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::EngagementPanelAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::UpdateEngagementPanelContentCommand),
         },
         LegacyClassMeta {
             name: "AuthorCommentBadge",
@@ -3212,7 +3264,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AddBannerToLiveChatCommand",
             legacy_path: "livechat/AddBannerToLiveChatCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AddBannerToLiveChatCommand),
         },
         LegacyClassMeta {
             name: "AddChatItemAction",
@@ -3224,19 +3276,19 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "AddLiveChatTickerItemAction",
             legacy_path: "livechat/AddLiveChatTickerItemAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::AddLiveChatTickerItemAction),
         },
         LegacyClassMeta {
             name: "DimChatItemAction",
             legacy_path: "livechat/DimChatItemAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::DimChatItemAction),
         },
         LegacyClassMeta {
             name: "LiveChatActionPanel",
             legacy_path: "livechat/LiveChatActionPanel.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::LiveChatActionPanel),
         },
         LegacyClassMeta {
             name: "MarkChatItemAsDeletedAction",
@@ -3254,25 +3306,25 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "RemoveBannerForLiveChatCommand",
             legacy_path: "livechat/RemoveBannerForLiveChatCommand.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::RemoveBannerForLiveChatCommand),
         },
         LegacyClassMeta {
             name: "RemoveChatItemAction",
             legacy_path: "livechat/RemoveChatItemAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::RemoveChatItemAction),
         },
         LegacyClassMeta {
             name: "RemoveChatItemByAuthorAction",
             legacy_path: "livechat/RemoveChatItemByAuthorAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::RemoveChatItemByAuthorAction),
         },
         LegacyClassMeta {
             name: "ReplaceChatItemAction",
             legacy_path: "livechat/ReplaceChatItemAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ReplaceChatItemAction),
         },
         LegacyClassMeta {
             name: "ReplaceLiveChatAction",
@@ -3284,7 +3336,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "ReplayChatItemAction",
             legacy_path: "livechat/ReplayChatItemAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::ReplayChatItemAction),
         },
         LegacyClassMeta {
             name: "ShowLiveChatActionPanelAction",
@@ -3320,7 +3372,7 @@ static REGISTRY_574: LazyLock<Vec<LegacyClassMeta>> = LazyLock::new(|| {
             name: "UpdateLiveChatPollAction",
             legacy_path: "livechat/UpdateLiveChatPollAction.ts",
             category: ParserCategory::Navigation,
-            dispatch_target: ParserDispatchTarget::NavigationEndpoint(EndpointKind::LiveChatAction),
+            dispatch_target: ParserDispatchTarget::Direct(YTNodeVariant::UpdateLiveChatPollAction),
         },
         LegacyClassMeta {
             name: "UpdateTitleAction",
@@ -3801,10 +3853,10 @@ mod tests {
         }
 
         assert_eq!(direct_count + container_count + endpoint_count + element_count + kids_count, 574);
-        assert_eq!(direct_count, 219);
-        assert_eq!(container_count, 141);
-        assert_eq!(endpoint_count, 62);
-        assert_eq!(element_count, 148);
+        assert_eq!(direct_count, 267);
+        assert_eq!(container_count, 129);
+        assert_eq!(endpoint_count, 40);
+        assert_eq!(element_count, 134);
         assert_eq!(kids_count, 4);
     }
 
@@ -3960,6 +4012,58 @@ mod tests {
             (json!({ "feedNudgeRenderer": { "title": { "runs": [{ "text": "Nudge" }] } } }), "FeedNudge"),
             (json!({ "channelOwnerEmptyStateRenderer": { "description": { "runs": [{ "text": "Empty" }] } } }), "ChannelOwnerEmptyState"),
             (json!({ "textHeaderRenderer": { "title": { "runs": [{ "text": "Header" }] } } }), "TextHeader"),
+            // Batch 9: Carousels & Views
+            (json!({ "carouselHeaderRenderer": { "contents": [] } }), "CarouselHeader"),
+            (json!({ "carouselItemRenderer": { "carouselItems": [] } }), "CarouselItem"),
+            (json!({ "carouselItemView": { "itemType": "CARD" } }), "CarouselItemView"),
+            (json!({ "carouselLockupRenderer": { "infoRows": [] } }), "CarouselLockup"),
+            (json!({ "carouselTitleView": { "title": "Featured" } }), "CarouselTitleView"),
+            (json!({ "chipBarView": { "chips": [] } }), "ChipBarView"),
+            (json!({ "chipView": { "text": "Music" } }), "ChipView"),
+            (json!({ "contentListItemView": { "title": { "runs": [{ "text": "Item" }] } } }), "ContentListItemView"),
+            (json!({ "backgroundPromoRenderer": { "title": { "runs": [{ "text": "Promo" }] } } }), "BackgroundPromo"),
+            (json!({ "attributionView": { "text": { "runs": [{ "text": "Attr" }] } } }), "AttributionView"),
+            (json!({ "avatarStackView": { "avatars": [] } }), "AvatarStackView"),
+            (json!({ "animatedThumbnailOverlayView": { "thumbnail": {} } }), "AnimatedThumbnailOverlayView"),
+            // Batch 9: Cards & Interactive Items
+            (json!({ "cardCollectionRenderer": { "cards": [] } }), "CardCollection"),
+            (json!({ "collaboratorInfoCardContentRenderer": { "channelAvatar": {} } }), "CollaboratorInfoCardContent"),
+            (json!({ "collectionThumbnailView": { "primaryThumbnail": {} } }), "CollectionThumbnailView"),
+            (json!({ "clipAdStateRenderer": { "title": { "runs": [{ "text": "Ad" }] } } }), "ClipAdState"),
+            (json!({ "clipCreationTextInputRenderer": { "maxCharacterLimit": 140 } }), "ClipCreationTextInput"),
+            (json!({ "clientSideToggleMenuItemRenderer": { "text": { "runs": [{ "text": "Toggle" }] } } }), "ClientSideToggleMenuItem"),
+            (json!({ "audioOnlyPlayabilityRenderer": { "audioOnlyAvailability": "AVAILABLE" } }), "AudioOnlyPlayability"),
+            (json!({ "compactMovieRenderer": { "videoId": "cm1" } }), "CompactMovie"),
+            (json!({ "compactStationRenderer": { "title": { "runs": [{ "text": "Station" }] } } }), "CompactStation"),
+            (json!({ "addToPlaylistRenderer": { "actions": [] } }), "AddToPlaylist"),
+            (json!({ "c4TabbedHeaderRenderer": { "channelId": "UC789" } }), "C4TabbedHeader"),
+            (json!({ "channelSwitcherPageRenderer": { "contents": [] } }), "ChannelSwitcherPage"),
+            // Batch 9: LiveChat Extras
+            (json!({ "liveChatItemListRenderer": { "maxItemsToDisplay": "100" } }), "LiveChatItemList"),
+            (json!({ "liveChatParticipantsListRenderer": { "participants": [] } }), "LiveChatParticipantsList"),
+            (json!({ "liveChatActionPanelRenderer": { "id": "panel1" } }), "LiveChatActionPanel"),
+            (json!({ "addBannerToLiveChatCommand": { "banner": {} } }), "AddBannerToLiveChatCommand"),
+            (json!({ "removeBannerForLiveChatCommand": { "targetActionId": "act1" } }), "RemoveBannerForLiveChatCommand"),
+            (json!({ "addLiveChatTickerItemAction": { "durationSec": "10" } }), "AddLiveChatTickerItemAction"),
+            (json!({ "dimChatItemAction": { "clientAssignedId": "client1" } }), "DimChatItemAction"),
+            (json!({ "removeChatItemAction": { "targetItemId": "item1" } }), "RemoveChatItemAction"),
+            (json!({ "removeChatItemByAuthorAction": { "externalChannelId": "UCauth" } }), "RemoveChatItemByAuthorAction"),
+            (json!({ "replaceChatItemAction": { "targetItemId": "item2" } }), "ReplaceChatItemAction"),
+            (json!({ "replayChatItemAction": { "actions": [] } }), "ReplayChatItemAction"),
+            (json!({ "updateLiveChatPollAction": { "pollToUpdate": {} } }), "UpdateLiveChatPollAction"),
+            // Batch 9: Commands & Actions
+            (json!({ "appendContinuationItemsAction": { "target": "section1" } }), "AppendContinuationItemsAction"),
+            (json!({ "getMultiPageMenuAction": { "menu": {} } }), "GetMultiPageMenuAction"),
+            (json!({ "openPopupAction": { "popupType": "DIALOG" } }), "OpenPopupAction"),
+            (json!({ "sendFeedbackAction": { "bucket": "main" } }), "SendFeedbackAction"),
+            (json!({ "signalAction": { "signal": "REFRESH" } }), "SignalAction"),
+            (json!({ "updateChannelSwitcherPageAction": { "contents": [] } }), "UpdateChannelSwitcherPageAction"),
+            (json!({ "updateSubscribeButtonAction": { "subscribed": true } }), "UpdateSubscribeButtonAction"),
+            (json!({ "addToPlaylistCommand": { "openMiniplayer": true } }), "AddToPlaylistCommand"),
+            (json!({ "continuationCommand": { "token": "tok2" } }), "ContinuationCommand"),
+            (json!({ "showSheetCommand": { "removeDefaultPadding": true } }), "ShowSheetCommand"),
+            (json!({ "updateEngagementPanelContentCommand": {} }), "UpdateEngagementPanelContentCommand"),
+            (json!({ "runAttestationCommand": { "engagementType": "ENGAGEMENT_TYPE_LIKE" } }), "RunAttestationCommand"),
         ];
 
         for (fixture, label) in test_cases {

@@ -1,9 +1,11 @@
 pub mod channel;
+pub mod commands_ext;
 pub mod comments;
 pub mod containers;
 pub mod continuation;
 pub mod grid;
 pub mod livechat;
+pub mod livechat_ext;
 pub mod misc;
 pub mod music;
 pub mod music_extended;
@@ -15,6 +17,12 @@ pub mod video;
 pub use channel::{
     ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode, ChannelMetadataNode,
     ChannelSubMenuNode,
+};
+pub use commands_ext::{
+    AddToPlaylistCommandNode, AppendContinuationItemsActionNode, ContinuationCommandNode,
+    GetMultiPageMenuActionNode, OpenPopupActionNode, RunAttestationCommandNode, SendFeedbackActionNode,
+    ShowSheetCommandNode, SignalActionNode, UpdateChannelSwitcherPageActionNode,
+    UpdateEngagementPanelContentCommandNode, UpdateSubscribeButtonActionNode,
 };
 pub use comments::{CommentNode, CommentThreadNode, CreatorHeartNode};
 pub use containers::{
@@ -33,13 +41,26 @@ pub use livechat::{
     LiveChatPaidStickerNode, LiveChatViewerEngagementMessageNode,
     MarkChatItemAsDeletedActionNode,
 };
+pub use livechat_ext::{
+    AddBannerToLiveChatCommandNode, AddLiveChatTickerItemActionNode, DimChatItemActionNode,
+    LiveChatActionPanelNode, LiveChatItemListNode, LiveChatParticipantsListNode,
+    RemoveBannerForLiveChatCommandNode, RemoveChatItemActionNode, RemoveChatItemByAuthorActionNode,
+    ReplaceChatItemActionNode, ReplayChatItemActionNode, UpdateLiveChatPollActionNode,
+};
 pub use misc::{
     AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
-    AlertNode, AuthorNode, AvatarViewNode, BadgeViewNode, BrowseEndpointNode, ButtonCardViewNode,
-    ButtonNode, CallToActionButtonNode, CardNode, ChannelOwnerEmptyStateNode, ChapterNode,
-    ClarificationNode, ClipCreationNode, ClipCreationScrubberNode, CollageHeroImageNode,
-    CommentActionButtonsNode, CommentSimpleboxNode, CommentsEntryPointHeaderNode,
-    CommentsHeaderNode, CompactLinkNode, ConfirmDialogNode, ContinuationEndpointNode,
+    AddToPlaylistNode, AlertNode, AnimatedThumbnailOverlayViewNode, AttributionViewNode,
+    AudioOnlyPlayabilityNode,
+    AuthorNode, AvatarStackViewNode, AvatarViewNode, BackgroundPromoNode, BadgeViewNode,
+    BrowseEndpointNode, ButtonCardViewNode, ButtonNode, C4TabbedHeaderNode,
+    CallToActionButtonNode, CardCollectionNode, CardNode, CarouselHeaderNode, CarouselItemNode,
+    CarouselItemViewNode, CarouselLockupNode, CarouselTitleViewNode, ChannelOwnerEmptyStateNode,
+    ChannelSwitcherPageNode, ChapterNode, ChipBarViewNode, ChipViewNode, ClarificationNode,
+    ClientSideToggleMenuItemNode, ClipAdStateNode, ClipCreationNode, ClipCreationScrubberNode,
+    ClipCreationTextInputNode, CollaboratorInfoCardContentNode, CollectionThumbnailViewNode,
+    CollageHeroImageNode, CommentActionButtonsNode, CommentSimpleboxNode,
+    CommentsEntryPointHeaderNode, CommentsHeaderNode, CompactLinkNode, CompactMovieNode,
+    CompactStationNode, ConfirmDialogNode, ContentListItemViewNode, ContinuationEndpointNode,
     DecoratedPlayerBarNode, DialogNode, DidYouMeanNode, EndscreenElementNode, EndscreenNode,
     EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, ExpandableTabNode,
     FeedNudgeNode, HeatmapNode, HistorySuggestionNode, HorizontalCardListNode, InfoRowNode,
@@ -241,6 +262,58 @@ pub enum YTNode {
     FeedNudge(FeedNudgeNode),
     ChannelOwnerEmptyState(ChannelOwnerEmptyStateNode),
     TextHeader(TextHeaderNode),
+    // Batch 9: Carousels & Views
+    CarouselHeader(CarouselHeaderNode),
+    CarouselItem(CarouselItemNode),
+    CarouselItemView(CarouselItemViewNode),
+    CarouselLockup(CarouselLockupNode),
+    CarouselTitleView(CarouselTitleViewNode),
+    ChipBarView(ChipBarViewNode),
+    ChipView(ChipViewNode),
+    ContentListItemView(ContentListItemViewNode),
+    BackgroundPromo(BackgroundPromoNode),
+    AttributionView(AttributionViewNode),
+    AvatarStackView(AvatarStackViewNode),
+    AnimatedThumbnailOverlayView(AnimatedThumbnailOverlayViewNode),
+    // Batch 9: Cards & Interactive Items
+    CardCollection(CardCollectionNode),
+    CollaboratorInfoCardContent(CollaboratorInfoCardContentNode),
+    CollectionThumbnailView(CollectionThumbnailViewNode),
+    ClipAdState(ClipAdStateNode),
+    ClipCreationTextInput(ClipCreationTextInputNode),
+    ClientSideToggleMenuItem(ClientSideToggleMenuItemNode),
+    AudioOnlyPlayability(AudioOnlyPlayabilityNode),
+    CompactMovie(CompactMovieNode),
+    CompactStation(CompactStationNode),
+    AddToPlaylist(AddToPlaylistNode),
+    C4TabbedHeader(C4TabbedHeaderNode),
+    ChannelSwitcherPage(ChannelSwitcherPageNode),
+    // Batch 9: LiveChat Extras
+    LiveChatItemList(LiveChatItemListNode),
+    LiveChatParticipantsList(LiveChatParticipantsListNode),
+    LiveChatActionPanel(LiveChatActionPanelNode),
+    AddBannerToLiveChatCommand(AddBannerToLiveChatCommandNode),
+    RemoveBannerForLiveChatCommand(RemoveBannerForLiveChatCommandNode),
+    AddLiveChatTickerItemAction(AddLiveChatTickerItemActionNode),
+    DimChatItemAction(DimChatItemActionNode),
+    RemoveChatItemAction(RemoveChatItemActionNode),
+    RemoveChatItemByAuthorAction(RemoveChatItemByAuthorActionNode),
+    ReplaceChatItemAction(ReplaceChatItemActionNode),
+    ReplayChatItemAction(ReplayChatItemActionNode),
+    UpdateLiveChatPollAction(UpdateLiveChatPollActionNode),
+    // Batch 9: Commands & Actions
+    AppendContinuationItemsAction(AppendContinuationItemsActionNode),
+    GetMultiPageMenuAction(GetMultiPageMenuActionNode),
+    OpenPopupAction(OpenPopupActionNode),
+    SendFeedbackAction(SendFeedbackActionNode),
+    SignalAction(SignalActionNode),
+    UpdateChannelSwitcherPageAction(UpdateChannelSwitcherPageActionNode),
+    UpdateSubscribeButtonAction(UpdateSubscribeButtonActionNode),
+    AddToPlaylistCommand(AddToPlaylistCommandNode),
+    ContinuationCommand(ContinuationCommandNode),
+    ShowSheetCommand(ShowSheetCommandNode),
+    UpdateEngagementPanelContentCommand(UpdateEngagementPanelContentCommandNode),
+    RunAttestationCommand(RunAttestationCommandNode),
 }
 
 impl YTNode {
@@ -1030,6 +1103,158 @@ impl YTNode {
         }
         if val.get("textHeaderRenderer").is_some() {
             if let Some(n) = TextHeaderNode::from_value(val) { return Some(YTNode::TextHeader(n)); }
+        }
+
+        // 39. Carousels & Views (Batch 9)
+        if val.get("carouselHeaderRenderer").is_some() {
+            if let Some(n) = CarouselHeaderNode::from_value(val) { return Some(YTNode::CarouselHeader(n)); }
+        }
+        if val.get("carouselItemRenderer").is_some() {
+            if let Some(n) = CarouselItemNode::from_value(val) { return Some(YTNode::CarouselItem(n)); }
+        }
+        if val.get("carouselItemView").is_some() {
+            if let Some(n) = CarouselItemViewNode::from_value(val) { return Some(YTNode::CarouselItemView(n)); }
+        }
+        if val.get("carouselLockupRenderer").is_some() {
+            if let Some(n) = CarouselLockupNode::from_value(val) { return Some(YTNode::CarouselLockup(n)); }
+        }
+        if val.get("carouselTitleView").is_some() {
+            if let Some(n) = CarouselTitleViewNode::from_value(val) { return Some(YTNode::CarouselTitleView(n)); }
+        }
+        if val.get("chipBarView").is_some() {
+            if let Some(n) = ChipBarViewNode::from_value(val) { return Some(YTNode::ChipBarView(n)); }
+        }
+        if val.get("chipView").is_some() {
+            if let Some(n) = ChipViewNode::from_value(val) { return Some(YTNode::ChipView(n)); }
+        }
+        if val.get("contentListItemView").is_some() {
+            if let Some(n) = ContentListItemViewNode::from_value(val) { return Some(YTNode::ContentListItemView(n)); }
+        }
+        if val.get("backgroundPromoRenderer").is_some() {
+            if let Some(n) = BackgroundPromoNode::from_value(val) { return Some(YTNode::BackgroundPromo(n)); }
+        }
+        if val.get("attributionView").is_some() {
+            if let Some(n) = AttributionViewNode::from_value(val) { return Some(YTNode::AttributionView(n)); }
+        }
+        if val.get("avatarStackView").is_some() {
+            if let Some(n) = AvatarStackViewNode::from_value(val) { return Some(YTNode::AvatarStackView(n)); }
+        }
+        if val.get("animatedThumbnailOverlayView").is_some() {
+            if let Some(n) = AnimatedThumbnailOverlayViewNode::from_value(val) { return Some(YTNode::AnimatedThumbnailOverlayView(n)); }
+        }
+
+        // 40. Cards & Interactive Items (Batch 9)
+        if val.get("cardCollectionRenderer").is_some() {
+            if let Some(n) = CardCollectionNode::from_value(val) { return Some(YTNode::CardCollection(n)); }
+        }
+        if val.get("collaboratorInfoCardContentRenderer").is_some() {
+            if let Some(n) = CollaboratorInfoCardContentNode::from_value(val) { return Some(YTNode::CollaboratorInfoCardContent(n)); }
+        }
+        if val.get("collectionThumbnailView").is_some() {
+            if let Some(n) = CollectionThumbnailViewNode::from_value(val) { return Some(YTNode::CollectionThumbnailView(n)); }
+        }
+        if val.get("clipAdStateRenderer").is_some() {
+            if let Some(n) = ClipAdStateNode::from_value(val) { return Some(YTNode::ClipAdState(n)); }
+        }
+        if val.get("clipCreationTextInputRenderer").is_some() {
+            if let Some(n) = ClipCreationTextInputNode::from_value(val) { return Some(YTNode::ClipCreationTextInput(n)); }
+        }
+        if val.get("clientSideToggleMenuItemRenderer").is_some() {
+            if let Some(n) = ClientSideToggleMenuItemNode::from_value(val) { return Some(YTNode::ClientSideToggleMenuItem(n)); }
+        }
+        if val.get("audioOnlyPlayabilityRenderer").is_some() {
+            if let Some(n) = AudioOnlyPlayabilityNode::from_value(val) { return Some(YTNode::AudioOnlyPlayability(n)); }
+        }
+        if val.get("compactMovieRenderer").is_some() {
+            if let Some(n) = CompactMovieNode::from_value(val) { return Some(YTNode::CompactMovie(n)); }
+        }
+        if val.get("compactStationRenderer").is_some() {
+            if let Some(n) = CompactStationNode::from_value(val) { return Some(YTNode::CompactStation(n)); }
+        }
+        if val.get("addToPlaylistRenderer").is_some() {
+            if let Some(n) = AddToPlaylistNode::from_value(val) { return Some(YTNode::AddToPlaylist(n)); }
+        }
+        if val.get("c4TabbedHeaderRenderer").is_some() {
+            if let Some(n) = C4TabbedHeaderNode::from_value(val) { return Some(YTNode::C4TabbedHeader(n)); }
+        }
+        if val.get("channelSwitcherPageRenderer").is_some() {
+            if let Some(n) = ChannelSwitcherPageNode::from_value(val) { return Some(YTNode::ChannelSwitcherPage(n)); }
+        }
+
+        // 41. LiveChat Extras (Batch 9)
+        if val.get("liveChatItemListRenderer").is_some() {
+            if let Some(n) = LiveChatItemListNode::from_value(val) { return Some(YTNode::LiveChatItemList(n)); }
+        }
+        if val.get("liveChatParticipantsListRenderer").is_some() {
+            if let Some(n) = LiveChatParticipantsListNode::from_value(val) { return Some(YTNode::LiveChatParticipantsList(n)); }
+        }
+        if val.get("liveChatActionPanelRenderer").is_some() {
+            if let Some(n) = LiveChatActionPanelNode::from_value(val) { return Some(YTNode::LiveChatActionPanel(n)); }
+        }
+        if val.get("addBannerToLiveChatCommand").is_some() {
+            if let Some(n) = AddBannerToLiveChatCommandNode::from_value(val) { return Some(YTNode::AddBannerToLiveChatCommand(n)); }
+        }
+        if val.get("removeBannerForLiveChatCommand").is_some() {
+            if let Some(n) = RemoveBannerForLiveChatCommandNode::from_value(val) { return Some(YTNode::RemoveBannerForLiveChatCommand(n)); }
+        }
+        if val.get("addLiveChatTickerItemAction").is_some() {
+            if let Some(n) = AddLiveChatTickerItemActionNode::from_value(val) { return Some(YTNode::AddLiveChatTickerItemAction(n)); }
+        }
+        if val.get("dimChatItemAction").is_some() {
+            if let Some(n) = DimChatItemActionNode::from_value(val) { return Some(YTNode::DimChatItemAction(n)); }
+        }
+        if val.get("removeChatItemAction").is_some() {
+            if let Some(n) = RemoveChatItemActionNode::from_value(val) { return Some(YTNode::RemoveChatItemAction(n)); }
+        }
+        if val.get("removeChatItemByAuthorAction").is_some() {
+            if let Some(n) = RemoveChatItemByAuthorActionNode::from_value(val) { return Some(YTNode::RemoveChatItemByAuthorAction(n)); }
+        }
+        if val.get("replaceChatItemAction").is_some() {
+            if let Some(n) = ReplaceChatItemActionNode::from_value(val) { return Some(YTNode::ReplaceChatItemAction(n)); }
+        }
+        if val.get("replayChatItemAction").is_some() {
+            if let Some(n) = ReplayChatItemActionNode::from_value(val) { return Some(YTNode::ReplayChatItemAction(n)); }
+        }
+        if val.get("updateLiveChatPollAction").is_some() {
+            if let Some(n) = UpdateLiveChatPollActionNode::from_value(val) { return Some(YTNode::UpdateLiveChatPollAction(n)); }
+        }
+
+        // 42. Commands & Actions (Batch 9)
+        if val.get("appendContinuationItemsAction").is_some() {
+            if let Some(n) = AppendContinuationItemsActionNode::from_value(val) { return Some(YTNode::AppendContinuationItemsAction(n)); }
+        }
+        if val.get("getMultiPageMenuAction").is_some() {
+            if let Some(n) = GetMultiPageMenuActionNode::from_value(val) { return Some(YTNode::GetMultiPageMenuAction(n)); }
+        }
+        if val.get("openPopupAction").is_some() {
+            if let Some(n) = OpenPopupActionNode::from_value(val) { return Some(YTNode::OpenPopupAction(n)); }
+        }
+        if val.get("sendFeedbackAction").is_some() {
+            if let Some(n) = SendFeedbackActionNode::from_value(val) { return Some(YTNode::SendFeedbackAction(n)); }
+        }
+        if val.get("signalAction").is_some() {
+            if let Some(n) = SignalActionNode::from_value(val) { return Some(YTNode::SignalAction(n)); }
+        }
+        if val.get("updateChannelSwitcherPageAction").is_some() {
+            if let Some(n) = UpdateChannelSwitcherPageActionNode::from_value(val) { return Some(YTNode::UpdateChannelSwitcherPageAction(n)); }
+        }
+        if val.get("updateSubscribeButtonAction").is_some() {
+            if let Some(n) = UpdateSubscribeButtonActionNode::from_value(val) { return Some(YTNode::UpdateSubscribeButtonAction(n)); }
+        }
+        if val.get("addToPlaylistCommand").is_some() {
+            if let Some(n) = AddToPlaylistCommandNode::from_value(val) { return Some(YTNode::AddToPlaylistCommand(n)); }
+        }
+        if val.get("continuationCommand").is_some() {
+            if let Some(n) = ContinuationCommandNode::from_value(val) { return Some(YTNode::ContinuationCommand(n)); }
+        }
+        if val.get("showSheetCommand").is_some() {
+            if let Some(n) = ShowSheetCommandNode::from_value(val) { return Some(YTNode::ShowSheetCommand(n)); }
+        }
+        if val.get("updateEngagementPanelContentCommand").is_some() {
+            if let Some(n) = UpdateEngagementPanelContentCommandNode::from_value(val) { return Some(YTNode::UpdateEngagementPanelContentCommand(n)); }
+        }
+        if val.get("runAttestationCommand").is_some() {
+            if let Some(n) = RunAttestationCommandNode::from_value(val) { return Some(YTNode::RunAttestationCommand(n)); }
         }
 
         None
