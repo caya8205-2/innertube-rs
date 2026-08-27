@@ -89,12 +89,25 @@ pub use misc::{
     MetadataRowHeaderNode, MetadataRowNode, MetadataScreenNode, MicroformatDataNode, MixNode,
     ModalWithTitleAndButtonNode, MovieNode, MovingThumbnailNode, MultiMarkersPlayerBarNode,
     MusicCardShelfHeaderBasicNode, MusicCarouselShelfBasicHeaderNode, MusicLargeCardItemCarouselNode,
-    MusicMultiRowListItemNode, MusicPlaylistEditHeaderNode, NavigateActionNode,
-    NavigationEndpointNode, NotificationNode, PlayerCaptionsTracklistNode, PlayerErrorMessageNode,
-    PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode,
-    ProfileColumnNode, ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode,
-    SearchFilterGroupNode, SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode,
-    ShowEngagementPanelActionNode, ShowLiveChatActionNode, ShowingResultsForNode,
+    MusicMultiRowListItemNode, MusicPlaylistEditHeaderNode, MusicResponsiveListItemFixedColumnNode,
+    MusicResponsiveListItemFlexColumnNode, MusicTastebuilderShelfNode,
+    MusicTastebuilderShelfThumbnailNode, NavigateActionNode, NavigationEndpointNode, NotificationActionNode,
+    NotificationNode, OpenOnePickAddVideoModalCommandNode, PageHeaderNode, PageHeaderViewNode,
+    PageIndicatorViewNode, PageIntroductionNode, PanelFooterViewNode, PivotButtonNode,
+    PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
+    PlayerOverlayNode, PlayerStoryboardSpecNode, PlaylistAddToOptionNode,
+    PlaylistCollaborationViewNode, PlaylistCustomThumbnailNode, PlaylistHeaderNode,
+    PlaylistInfoCardContentNode, PlaylistPanelVideoWrapperNode, PlaylistSidebarNode,
+    PlaylistThumbnailOverlayNode, PlaylistVideoListNode, PlaylistVideoThumbnailNode, PollNode,
+    PremiereTrailerBadgeNode, ProductListHeaderNode, ProductListItemNode, ProductListNode,
+    ProfileColumnNode, ProfileColumnStatsEntryNode, ProfileColumnStatsNode, ProfileColumnUserInfoNode,
+    QuizNode, RecognitionShelfNode, ReelWatchEndpointNode, RelatedChipCloudNode, RichListHeaderNode,
+    RichMetadataNode, RichMetadataRowNode, SearchBoxNode, SearchEndpointNode, SearchFilterGroupNode,
+    SearchFilterNode, SearchFilterOptionsDialogNode, SearchHeaderNode, SearchRefinementCardNode,
+    SearchSubMenuNode, SearchSuggestionNode, SearchSuggestionsSectionNode, SecondarySearchContainerNode,
+    SectionHeaderViewNode, SegmentedLikeDislikeButtonNode, SegmentedLikeDislikeButtonViewNode,
+    SettingBooleanNode, SettingsCheckboxNode, SettingsOptionsNode, SettingsSidebarNode,
+    SettingsSwitchNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode, ShowingResultsForNode,
     SubscribeEndpointNode, SubscriptionNotificationToggleButtonNode, TextHeaderNode, TextNode,
     TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayBottomPanelNode,
     ThumbnailOverlayEndorsementNode, ThumbnailOverlayHoverTextNode,
@@ -441,6 +454,58 @@ pub enum YTNode {
     MusicLargeCardItemCarousel(MusicLargeCardItemCarouselNode),
     MusicMultiRowListItem(MusicMultiRowListItemNode),
     MusicPlaylistEditHeader(MusicPlaylistEditHeaderNode),
+    // Batch 12: Music & Page Headers
+    MusicResponsiveListItemFixedColumn(MusicResponsiveListItemFixedColumnNode),
+    MusicResponsiveListItemFlexColumn(MusicResponsiveListItemFlexColumnNode),
+    MusicTastebuilderShelf(MusicTastebuilderShelfNode),
+    MusicTastebuilderShelfThumbnail(MusicTastebuilderShelfThumbnailNode),
+    NotificationAction(NotificationActionNode),
+    OpenOnePickAddVideoModalCommand(OpenOnePickAddVideoModalCommandNode),
+    PageHeader(PageHeaderNode),
+    PageHeaderView(PageHeaderViewNode),
+    PageIndicatorView(PageIndicatorViewNode),
+    PageIntroduction(PageIntroductionNode),
+    PanelFooterView(PanelFooterViewNode),
+    PivotButton(PivotButtonNode),
+    // Batch 12: Playlists & Products
+    PlaylistAddToOption(PlaylistAddToOptionNode),
+    PlaylistCollaborationView(PlaylistCollaborationViewNode),
+    PlaylistCustomThumbnail(PlaylistCustomThumbnailNode),
+    PlaylistHeader(PlaylistHeaderNode),
+    PlaylistInfoCardContent(PlaylistInfoCardContentNode),
+    PlaylistPanelVideoWrapper(PlaylistPanelVideoWrapperNode),
+    PlaylistSidebar(PlaylistSidebarNode),
+    PlaylistThumbnailOverlay(PlaylistThumbnailOverlayNode),
+    PlaylistVideoList(PlaylistVideoListNode),
+    PlaylistVideoThumbnail(PlaylistVideoThumbnailNode),
+    PremiereTrailerBadge(PremiereTrailerBadgeNode),
+    ProductList(ProductListNode),
+    // Batch 12: Products & Metadata
+    ProductListHeader(ProductListHeaderNode),
+    ProductListItem(ProductListItemNode),
+    ProfileColumnStats(ProfileColumnStatsNode),
+    ProfileColumnStatsEntry(ProfileColumnStatsEntryNode),
+    Quiz(QuizNode),
+    RecognitionShelf(RecognitionShelfNode),
+    RelatedChipCloud(RelatedChipCloudNode),
+    RichListHeader(RichListHeaderNode),
+    RichMetadata(RichMetadataNode),
+    RichMetadataRow(RichMetadataRowNode),
+    SearchBox(SearchBoxNode),
+    SearchFilterOptionsDialog(SearchFilterOptionsDialogNode),
+    // Batch 12: Search & Settings
+    SearchHeader(SearchHeaderNode),
+    SearchSuggestion(SearchSuggestionNode),
+    SearchSuggestionsSection(SearchSuggestionsSectionNode),
+    SecondarySearchContainer(SecondarySearchContainerNode),
+    SectionHeaderView(SectionHeaderViewNode),
+    SegmentedLikeDislikeButton(SegmentedLikeDislikeButtonNode),
+    SegmentedLikeDislikeButtonView(SegmentedLikeDislikeButtonViewNode),
+    SettingBoolean(SettingBooleanNode),
+    SettingsCheckbox(SettingsCheckboxNode),
+    SettingsOptions(SettingsOptionsNode),
+    SettingsSidebar(SettingsSidebarNode),
+    SettingsSwitch(SettingsSwitchNode),
 }
 
 impl YTNode {
@@ -1686,6 +1751,158 @@ impl YTNode {
         }
         if val.get("musicPlaylistEditHeaderRenderer").is_some() {
             if let Some(n) = MusicPlaylistEditHeaderNode::from_value(val) { return Some(YTNode::MusicPlaylistEditHeader(n)); }
+        }
+
+        // 51. Music & Page Headers (Batch 12)
+        if val.get("musicResponsiveListItemFixedColumnRenderer").is_some() {
+            if let Some(n) = MusicResponsiveListItemFixedColumnNode::from_value(val) { return Some(YTNode::MusicResponsiveListItemFixedColumn(n)); }
+        }
+        if val.get("musicResponsiveListItemFlexColumnRenderer").is_some() {
+            if let Some(n) = MusicResponsiveListItemFlexColumnNode::from_value(val) { return Some(YTNode::MusicResponsiveListItemFlexColumn(n)); }
+        }
+        if val.get("musicTastebuilderShelfRenderer").is_some() {
+            if let Some(n) = MusicTastebuilderShelfNode::from_value(val) { return Some(YTNode::MusicTastebuilderShelf(n)); }
+        }
+        if val.get("musicTastebuilderShelfThumbnailRenderer").is_some() {
+            if let Some(n) = MusicTastebuilderShelfThumbnailNode::from_value(val) { return Some(YTNode::MusicTastebuilderShelfThumbnail(n)); }
+        }
+        if val.get("notificationActionRenderer").is_some() {
+            if let Some(n) = NotificationActionNode::from_value(val) { return Some(YTNode::NotificationAction(n)); }
+        }
+        if val.get("openOnePickAddVideoModalCommand").is_some() {
+            if let Some(n) = OpenOnePickAddVideoModalCommandNode::from_value(val) { return Some(YTNode::OpenOnePickAddVideoModalCommand(n)); }
+        }
+        if val.get("pageHeaderRenderer").is_some() {
+            if let Some(n) = PageHeaderNode::from_value(val) { return Some(YTNode::PageHeader(n)); }
+        }
+        if val.get("pageHeaderView").is_some() {
+            if let Some(n) = PageHeaderViewNode::from_value(val) { return Some(YTNode::PageHeaderView(n)); }
+        }
+        if val.get("pageIndicatorView").is_some() {
+            if let Some(n) = PageIndicatorViewNode::from_value(val) { return Some(YTNode::PageIndicatorView(n)); }
+        }
+        if val.get("pageIntroductionRenderer").is_some() {
+            if let Some(n) = PageIntroductionNode::from_value(val) { return Some(YTNode::PageIntroduction(n)); }
+        }
+        if val.get("panelFooterView").is_some() {
+            if let Some(n) = PanelFooterViewNode::from_value(val) { return Some(YTNode::PanelFooterView(n)); }
+        }
+        if val.get("pivotButtonRenderer").is_some() {
+            if let Some(n) = PivotButtonNode::from_value(val) { return Some(YTNode::PivotButton(n)); }
+        }
+
+        // 52. Playlists & Products (Batch 12)
+        if val.get("playlistAddToOptionRenderer").is_some() {
+            if let Some(n) = PlaylistAddToOptionNode::from_value(val) { return Some(YTNode::PlaylistAddToOption(n)); }
+        }
+        if val.get("playlistCollaborationView").is_some() {
+            if let Some(n) = PlaylistCollaborationViewNode::from_value(val) { return Some(YTNode::PlaylistCollaborationView(n)); }
+        }
+        if val.get("playlistCustomThumbnailRenderer").is_some() {
+            if let Some(n) = PlaylistCustomThumbnailNode::from_value(val) { return Some(YTNode::PlaylistCustomThumbnail(n)); }
+        }
+        if val.get("playlistHeaderRenderer").is_some() {
+            if let Some(n) = PlaylistHeaderNode::from_value(val) { return Some(YTNode::PlaylistHeader(n)); }
+        }
+        if val.get("playlistInfoCardContentRenderer").is_some() {
+            if let Some(n) = PlaylistInfoCardContentNode::from_value(val) { return Some(YTNode::PlaylistInfoCardContent(n)); }
+        }
+        if val.get("playlistPanelVideoWrapperRenderer").is_some() {
+            if let Some(n) = PlaylistPanelVideoWrapperNode::from_value(val) { return Some(YTNode::PlaylistPanelVideoWrapper(n)); }
+        }
+        if val.get("playlistSidebarRenderer").is_some() {
+            if let Some(n) = PlaylistSidebarNode::from_value(val) { return Some(YTNode::PlaylistSidebar(n)); }
+        }
+        if val.get("playlistThumbnailOverlayRenderer").is_some() {
+            if let Some(n) = PlaylistThumbnailOverlayNode::from_value(val) { return Some(YTNode::PlaylistThumbnailOverlay(n)); }
+        }
+        if val.get("playlistVideoListRenderer").is_some() {
+            if let Some(n) = PlaylistVideoListNode::from_value(val) { return Some(YTNode::PlaylistVideoList(n)); }
+        }
+        if val.get("playlistVideoThumbnailRenderer").is_some() {
+            if let Some(n) = PlaylistVideoThumbnailNode::from_value(val) { return Some(YTNode::PlaylistVideoThumbnail(n)); }
+        }
+        if val.get("premiereTrailerBadgeRenderer").is_some() {
+            if let Some(n) = PremiereTrailerBadgeNode::from_value(val) { return Some(YTNode::PremiereTrailerBadge(n)); }
+        }
+        if val.get("productListRenderer").is_some() {
+            if let Some(n) = ProductListNode::from_value(val) { return Some(YTNode::ProductList(n)); }
+        }
+
+        // 53. Products & Metadata (Batch 12)
+        if val.get("productListHeaderRenderer").is_some() {
+            if let Some(n) = ProductListHeaderNode::from_value(val) { return Some(YTNode::ProductListHeader(n)); }
+        }
+        if val.get("productListItemRenderer").is_some() {
+            if let Some(n) = ProductListItemNode::from_value(val) { return Some(YTNode::ProductListItem(n)); }
+        }
+        if val.get("profileColumnStatsRenderer").is_some() {
+            if let Some(n) = ProfileColumnStatsNode::from_value(val) { return Some(YTNode::ProfileColumnStats(n)); }
+        }
+        if val.get("profileColumnStatsEntryRenderer").is_some() {
+            if let Some(n) = ProfileColumnStatsEntryNode::from_value(val) { return Some(YTNode::ProfileColumnStatsEntry(n)); }
+        }
+        if val.get("quizRenderer").is_some() {
+            if let Some(n) = QuizNode::from_value(val) { return Some(YTNode::Quiz(n)); }
+        }
+        if val.get("recognitionShelfRenderer").is_some() {
+            if let Some(n) = RecognitionShelfNode::from_value(val) { return Some(YTNode::RecognitionShelf(n)); }
+        }
+        if val.get("relatedChipCloudRenderer").is_some() {
+            if let Some(n) = RelatedChipCloudNode::from_value(val) { return Some(YTNode::RelatedChipCloud(n)); }
+        }
+        if val.get("richListHeaderRenderer").is_some() {
+            if let Some(n) = RichListHeaderNode::from_value(val) { return Some(YTNode::RichListHeader(n)); }
+        }
+        if val.get("richMetadataRenderer").is_some() {
+            if let Some(n) = RichMetadataNode::from_value(val) { return Some(YTNode::RichMetadata(n)); }
+        }
+        if val.get("richMetadataRowRenderer").is_some() {
+            if let Some(n) = RichMetadataRowNode::from_value(val) { return Some(YTNode::RichMetadataRow(n)); }
+        }
+        if val.get("searchBoxRenderer").is_some() {
+            if let Some(n) = SearchBoxNode::from_value(val) { return Some(YTNode::SearchBox(n)); }
+        }
+        if val.get("searchFilterOptionsDialogRenderer").is_some() {
+            if let Some(n) = SearchFilterOptionsDialogNode::from_value(val) { return Some(YTNode::SearchFilterOptionsDialog(n)); }
+        }
+
+        // 54. Search & Settings (Batch 12)
+        if val.get("searchHeaderRenderer").is_some() {
+            if let Some(n) = SearchHeaderNode::from_value(val) { return Some(YTNode::SearchHeader(n)); }
+        }
+        if val.get("searchSuggestionRenderer").is_some() {
+            if let Some(n) = SearchSuggestionNode::from_value(val) { return Some(YTNode::SearchSuggestion(n)); }
+        }
+        if val.get("searchSuggestionsSectionRenderer").is_some() {
+            if let Some(n) = SearchSuggestionsSectionNode::from_value(val) { return Some(YTNode::SearchSuggestionsSection(n)); }
+        }
+        if val.get("secondarySearchContainerRenderer").is_some() {
+            if let Some(n) = SecondarySearchContainerNode::from_value(val) { return Some(YTNode::SecondarySearchContainer(n)); }
+        }
+        if val.get("sectionHeaderView").is_some() {
+            if let Some(n) = SectionHeaderViewNode::from_value(val) { return Some(YTNode::SectionHeaderView(n)); }
+        }
+        if val.get("segmentedLikeDislikeButtonRenderer").is_some() {
+            if let Some(n) = SegmentedLikeDislikeButtonNode::from_value(val) { return Some(YTNode::SegmentedLikeDislikeButton(n)); }
+        }
+        if val.get("segmentedLikeDislikeButtonView").is_some() {
+            if let Some(n) = SegmentedLikeDislikeButtonViewNode::from_value(val) { return Some(YTNode::SegmentedLikeDislikeButtonView(n)); }
+        }
+        if val.get("settingBooleanRenderer").is_some() {
+            if let Some(n) = SettingBooleanNode::from_value(val) { return Some(YTNode::SettingBoolean(n)); }
+        }
+        if val.get("settingsCheckboxRenderer").is_some() {
+            if let Some(n) = SettingsCheckboxNode::from_value(val) { return Some(YTNode::SettingsCheckbox(n)); }
+        }
+        if val.get("settingsOptionsRenderer").is_some() {
+            if let Some(n) = SettingsOptionsNode::from_value(val) { return Some(YTNode::SettingsOptions(n)); }
+        }
+        if val.get("settingsSidebarRenderer").is_some() {
+            if let Some(n) = SettingsSidebarNode::from_value(val) { return Some(YTNode::SettingsSidebar(n)); }
+        }
+        if val.get("settingsSwitchRenderer").is_some() {
+            if let Some(n) = SettingsSwitchNode::from_value(val) { return Some(YTNode::SettingsSwitch(n)); }
         }
 
         None
