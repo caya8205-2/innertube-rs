@@ -10,15 +10,19 @@ pub mod dialogs;
 pub mod endscreen;
 pub mod engagement;
 pub mod forms_games;
+pub mod guide_sections;
 pub mod headers_sections;
 pub mod interactive_cards;
 pub mod kids;
+pub mod lists;
 pub mod markers;
+pub mod media_live;
 pub mod menu;
 pub mod metadata;
 pub mod navigation;
 pub mod overlay;
 pub mod overlays_ext;
+pub mod panels;
 pub mod player_media;
 pub mod player_overlay;
 pub mod previews;
@@ -65,6 +69,12 @@ pub use forms_games::{
     ExpandableMetadataNode, ExpandedShelfContentsNode, FactoidNode, FancyDismissibleDialogNode,
     FeedTabbedHeaderNode,
 };
+pub use guide_sections::{
+    GuideEntryNode, GuideSectionNode, GuideSubscriptionsSectionNode, HashtagHeaderNode,
+    HashtagTileNode, HeatMarkerNode, HeroPlaylistThumbnailNode, HighlightsCarouselNode,
+    HorizontalListNode, HorizontalMovieListNode, HowThisWasMadeSectionViewNode,
+    HypeFanCreditsSectionViewNode,
+};
 pub use headers_sections::{
     FlexibleActionsViewNode, FormFooterViewNode, FormNode, FormPopupNode, GameCardNode,
     GameDetailsNode, GridHeaderNode, GridNode, GridShelfViewNode,
@@ -77,7 +87,19 @@ pub use interactive_cards::{
     CompactMovieNode, CompactStationNode,
 };
 pub use kids::{KidsCategoriesHeaderNode, KidsHomeScreenNode};
+pub use lists::{
+    HypePointsFactoidNode, IconLinkNode, ImageBannerViewNode, IncludingResultsForNode,
+    InfoPanelContainerNode, InfoPanelContentNode, InteractiveTabbedHeaderNode,
+    ItemSectionHeaderNode, ItemSectionTabNode, ItemSectionTabbedHeaderNode, LikeButtonNode,
+    LikeButtonViewNode,
+};
 pub use markers::{ChapterNode, HeatmapNode, MacroMarkersListItemNode, MacroMarkersListNode};
+pub use media_live::{
+    MetadataRowContainerNode, MetadataRowHeaderNode, MetadataScreenNode, MixNode, MovieNode,
+    MovingThumbnailNode, MultiMarkersPlayerBarNode, MusicCardShelfHeaderBasicNode,
+    MusicCarouselShelfBasicHeaderNode, MusicLargeCardItemCarouselNode, MusicMultiRowListItemNode,
+    MusicPlaylistEditHeaderNode,
+};
 pub use menu::{MenuItemNode, MenuNode};
 pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, ViewCountNode};
 pub use navigation::{
@@ -91,6 +113,11 @@ pub use overlays_ext::{
     ThumbnailOverlayHoverTextNode, ThumbnailOverlayInlineUnplayableNode,
     ThumbnailOverlayLoadingPreviewNode, ThumbnailOverlayNowPlayingNode,
     ThumbnailOverlaySidePanelNode, ThumbnailOverlayToggleButtonNode,
+};
+pub use panels::{
+    ListItemViewNode, ListViewNode, LiveChatDialogNode, LockupMetadataViewNode, LockupViewNode,
+    MacroMarkersInfoItemNode, MacroMarkersListEntityNode, MenuTitleNode, MerchandiseItemNode,
+    MerchandiseShelfNode, MessageNode, MetadataRowNode,
 };
 pub use player_media::{
     PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,

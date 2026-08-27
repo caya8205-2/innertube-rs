@@ -74,11 +74,23 @@ pub use misc::{
     FancyDismissibleDialogNode, FeedNudgeNode, FeedTabbedHeaderNode, FlexibleActionsViewNode,
     FormFooterViewNode, FormNode, FormPopupNode, GameCardNode, GameDetailsNode, GridHeaderNode,
     GridNode, GridShelfViewNode, GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode,
-    GuideDownloadsEntryNode, HeatmapNode, HistorySuggestionNode, HorizontalCardListNode,
-    InfoRowNode, KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode,
-    MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
-    MicroformatDataNode, ModalWithTitleAndButtonNode, NavigateActionNode, NavigationEndpointNode,
-    NotificationNode, PlayerCaptionsTracklistNode, PlayerErrorMessageNode,
+    GuideDownloadsEntryNode, GuideEntryNode, GuideSectionNode, GuideSubscriptionsSectionNode,
+    HashtagHeaderNode, HashtagTileNode, HeatMarkerNode, HeatmapNode, HeroPlaylistThumbnailNode,
+    HighlightsCarouselNode, HistorySuggestionNode, HorizontalCardListNode, HorizontalListNode,
+    HorizontalMovieListNode, HowThisWasMadeSectionViewNode, HypeFanCreditsSectionViewNode,
+    HypePointsFactoidNode, IconLinkNode, ImageBannerViewNode, IncludingResultsForNode,
+    InfoPanelContainerNode, InfoPanelContentNode, InfoRowNode, InteractiveTabbedHeaderNode,
+    ItemSectionHeaderNode, ItemSectionTabNode, ItemSectionTabbedHeaderNode, KidsCategoriesHeaderNode,
+    KidsHomeScreenNode, LikeButtonNode, LikeButtonViewNode, LikeEndpointNode, ListItemViewNode,
+    ListViewNode, LiveChatDialogNode, LockupMetadataViewNode, LockupViewNode,
+    MacroMarkersInfoItemNode, MacroMarkersListEntityNode, MacroMarkersListItemNode,
+    MacroMarkersListNode, MenuItemNode, MenuNode, MenuTitleNode, MerchandiseItemNode,
+    MerchandiseShelfNode, MessageNode, MetadataBadgeNode, MetadataRowContainerNode,
+    MetadataRowHeaderNode, MetadataRowNode, MetadataScreenNode, MicroformatDataNode, MixNode,
+    ModalWithTitleAndButtonNode, MovieNode, MovingThumbnailNode, MultiMarkersPlayerBarNode,
+    MusicCardShelfHeaderBasicNode, MusicCarouselShelfBasicHeaderNode, MusicLargeCardItemCarouselNode,
+    MusicMultiRowListItemNode, MusicPlaylistEditHeaderNode, NavigateActionNode,
+    NavigationEndpointNode, NotificationNode, PlayerCaptionsTracklistNode, PlayerErrorMessageNode,
     PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode,
     ProfileColumnNode, ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode,
     SearchFilterGroupNode, SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode,
@@ -377,6 +389,58 @@ pub enum YTNode {
     GuideCollapsibleEntry(GuideCollapsibleEntryNode),
     GuideCollapsibleSectionEntry(GuideCollapsibleSectionEntryNode),
     GuideDownloadsEntry(GuideDownloadsEntryNode),
+    // Batch 11: Guide & Sections
+    GuideEntry(GuideEntryNode),
+    GuideSection(GuideSectionNode),
+    GuideSubscriptionsSection(GuideSubscriptionsSectionNode),
+    HashtagHeader(HashtagHeaderNode),
+    HashtagTile(HashtagTileNode),
+    HeatMarker(HeatMarkerNode),
+    HeroPlaylistThumbnail(HeroPlaylistThumbnailNode),
+    HighlightsCarousel(HighlightsCarouselNode),
+    HorizontalList(HorizontalListNode),
+    HorizontalMovieList(HorizontalMovieListNode),
+    HowThisWasMadeSectionView(HowThisWasMadeSectionViewNode),
+    HypeFanCreditsSectionView(HypeFanCreditsSectionViewNode),
+    // Batch 11: Lists & Headers
+    HypePointsFactoid(HypePointsFactoidNode),
+    IconLink(IconLinkNode),
+    ImageBannerView(ImageBannerViewNode),
+    IncludingResultsFor(IncludingResultsForNode),
+    InfoPanelContainer(InfoPanelContainerNode),
+    InfoPanelContent(InfoPanelContentNode),
+    InteractiveTabbedHeader(InteractiveTabbedHeaderNode),
+    ItemSectionHeader(ItemSectionHeaderNode),
+    ItemSectionTab(ItemSectionTabNode),
+    ItemSectionTabbedHeader(ItemSectionTabbedHeaderNode),
+    LikeButton(LikeButtonNode),
+    LikeButtonView(LikeButtonViewNode),
+    // Batch 11: Panels & Lockups
+    ListItemView(ListItemViewNode),
+    ListView(ListViewNode),
+    LiveChatDialog(LiveChatDialogNode),
+    LockupMetadataView(LockupMetadataViewNode),
+    LockupView(LockupViewNode),
+    MacroMarkersInfoItem(MacroMarkersInfoItemNode),
+    MacroMarkersListEntity(MacroMarkersListEntityNode),
+    MenuTitle(MenuTitleNode),
+    MerchandiseItem(MerchandiseItemNode),
+    MerchandiseShelf(MerchandiseShelfNode),
+    Message(MessageNode),
+    MetadataRow(MetadataRowNode),
+    // Batch 11: Media & Music Headers
+    MetadataRowContainer(MetadataRowContainerNode),
+    MetadataRowHeader(MetadataRowHeaderNode),
+    MetadataScreen(MetadataScreenNode),
+    Mix(MixNode),
+    Movie(MovieNode),
+    MovingThumbnail(MovingThumbnailNode),
+    MultiMarkersPlayerBar(MultiMarkersPlayerBarNode),
+    MusicCardShelfHeaderBasic(MusicCardShelfHeaderBasicNode),
+    MusicCarouselShelfBasicHeader(MusicCarouselShelfBasicHeaderNode),
+    MusicLargeCardItemCarousel(MusicLargeCardItemCarouselNode),
+    MusicMultiRowListItem(MusicMultiRowListItemNode),
+    MusicPlaylistEditHeader(MusicPlaylistEditHeaderNode),
 }
 
 impl YTNode {
@@ -1470,6 +1534,158 @@ impl YTNode {
         }
         if val.get("guideDownloadsEntryRenderer").is_some() {
             if let Some(n) = GuideDownloadsEntryNode::from_value(val) { return Some(YTNode::GuideDownloadsEntry(n)); }
+        }
+
+        // 47. Guide & Sections (Batch 11)
+        if val.get("guideEntryRenderer").is_some() {
+            if let Some(n) = GuideEntryNode::from_value(val) { return Some(YTNode::GuideEntry(n)); }
+        }
+        if val.get("guideSectionRenderer").is_some() {
+            if let Some(n) = GuideSectionNode::from_value(val) { return Some(YTNode::GuideSection(n)); }
+        }
+        if val.get("guideSubscriptionsSectionRenderer").is_some() {
+            if let Some(n) = GuideSubscriptionsSectionNode::from_value(val) { return Some(YTNode::GuideSubscriptionsSection(n)); }
+        }
+        if val.get("hashtagHeaderRenderer").is_some() {
+            if let Some(n) = HashtagHeaderNode::from_value(val) { return Some(YTNode::HashtagHeader(n)); }
+        }
+        if val.get("hashtagTileRenderer").is_some() {
+            if let Some(n) = HashtagTileNode::from_value(val) { return Some(YTNode::HashtagTile(n)); }
+        }
+        if val.get("heatMarkerRenderer").is_some() {
+            if let Some(n) = HeatMarkerNode::from_value(val) { return Some(YTNode::HeatMarker(n)); }
+        }
+        if val.get("heroPlaylistThumbnailRenderer").is_some() {
+            if let Some(n) = HeroPlaylistThumbnailNode::from_value(val) { return Some(YTNode::HeroPlaylistThumbnail(n)); }
+        }
+        if val.get("highlightsCarouselRenderer").is_some() {
+            if let Some(n) = HighlightsCarouselNode::from_value(val) { return Some(YTNode::HighlightsCarousel(n)); }
+        }
+        if val.get("horizontalListRenderer").is_some() {
+            if let Some(n) = HorizontalListNode::from_value(val) { return Some(YTNode::HorizontalList(n)); }
+        }
+        if val.get("horizontalMovieListRenderer").is_some() {
+            if let Some(n) = HorizontalMovieListNode::from_value(val) { return Some(YTNode::HorizontalMovieList(n)); }
+        }
+        if val.get("howThisWasMadeSectionView").is_some() {
+            if let Some(n) = HowThisWasMadeSectionViewNode::from_value(val) { return Some(YTNode::HowThisWasMadeSectionView(n)); }
+        }
+        if val.get("hypeFanCreditsSectionView").is_some() {
+            if let Some(n) = HypeFanCreditsSectionViewNode::from_value(val) { return Some(YTNode::HypeFanCreditsSectionView(n)); }
+        }
+
+        // 48. Lists & Headers (Batch 11)
+        if val.get("hypePointsFactoidRenderer").is_some() {
+            if let Some(n) = HypePointsFactoidNode::from_value(val) { return Some(YTNode::HypePointsFactoid(n)); }
+        }
+        if val.get("iconLinkRenderer").is_some() {
+            if let Some(n) = IconLinkNode::from_value(val) { return Some(YTNode::IconLink(n)); }
+        }
+        if val.get("imageBannerView").is_some() {
+            if let Some(n) = ImageBannerViewNode::from_value(val) { return Some(YTNode::ImageBannerView(n)); }
+        }
+        if val.get("includingResultsForRenderer").is_some() {
+            if let Some(n) = IncludingResultsForNode::from_value(val) { return Some(YTNode::IncludingResultsFor(n)); }
+        }
+        if val.get("infoPanelContainerRenderer").is_some() {
+            if let Some(n) = InfoPanelContainerNode::from_value(val) { return Some(YTNode::InfoPanelContainer(n)); }
+        }
+        if val.get("infoPanelContentRenderer").is_some() {
+            if let Some(n) = InfoPanelContentNode::from_value(val) { return Some(YTNode::InfoPanelContent(n)); }
+        }
+        if val.get("interactiveTabbedHeaderRenderer").is_some() {
+            if let Some(n) = InteractiveTabbedHeaderNode::from_value(val) { return Some(YTNode::InteractiveTabbedHeader(n)); }
+        }
+        if val.get("itemSectionHeaderRenderer").is_some() {
+            if let Some(n) = ItemSectionHeaderNode::from_value(val) { return Some(YTNode::ItemSectionHeader(n)); }
+        }
+        if val.get("itemSectionTabRenderer").is_some() {
+            if let Some(n) = ItemSectionTabNode::from_value(val) { return Some(YTNode::ItemSectionTab(n)); }
+        }
+        if val.get("itemSectionTabbedHeaderRenderer").is_some() {
+            if let Some(n) = ItemSectionTabbedHeaderNode::from_value(val) { return Some(YTNode::ItemSectionTabbedHeader(n)); }
+        }
+        if val.get("likeButtonRenderer").is_some() {
+            if let Some(n) = LikeButtonNode::from_value(val) { return Some(YTNode::LikeButton(n)); }
+        }
+        if val.get("likeButtonView").is_some() {
+            if let Some(n) = LikeButtonViewNode::from_value(val) { return Some(YTNode::LikeButtonView(n)); }
+        }
+
+        // 49. Panels & Lockups (Batch 11)
+        if val.get("listItemView").is_some() {
+            if let Some(n) = ListItemViewNode::from_value(val) { return Some(YTNode::ListItemView(n)); }
+        }
+        if val.get("listView").is_some() {
+            if let Some(n) = ListViewNode::from_value(val) { return Some(YTNode::ListView(n)); }
+        }
+        if val.get("liveChatDialogRenderer").is_some() {
+            if let Some(n) = LiveChatDialogNode::from_value(val) { return Some(YTNode::LiveChatDialog(n)); }
+        }
+        if val.get("lockupMetadataView").is_some() {
+            if let Some(n) = LockupMetadataViewNode::from_value(val) { return Some(YTNode::LockupMetadataView(n)); }
+        }
+        if val.get("lockupView").is_some() {
+            if let Some(n) = LockupViewNode::from_value(val) { return Some(YTNode::LockupView(n)); }
+        }
+        if val.get("macroMarkersInfoItemRenderer").is_some() {
+            if let Some(n) = MacroMarkersInfoItemNode::from_value(val) { return Some(YTNode::MacroMarkersInfoItem(n)); }
+        }
+        if val.get("macroMarkersListEntity").is_some() {
+            if let Some(n) = MacroMarkersListEntityNode::from_value(val) { return Some(YTNode::MacroMarkersListEntity(n)); }
+        }
+        if val.get("menuTitleRenderer").is_some() {
+            if let Some(n) = MenuTitleNode::from_value(val) { return Some(YTNode::MenuTitle(n)); }
+        }
+        if val.get("merchandiseItemRenderer").is_some() {
+            if let Some(n) = MerchandiseItemNode::from_value(val) { return Some(YTNode::MerchandiseItem(n)); }
+        }
+        if val.get("merchandiseShelfRenderer").is_some() {
+            if let Some(n) = MerchandiseShelfNode::from_value(val) { return Some(YTNode::MerchandiseShelf(n)); }
+        }
+        if val.get("messageRenderer").is_some() {
+            if let Some(n) = MessageNode::from_value(val) { return Some(YTNode::Message(n)); }
+        }
+        if val.get("metadataRowRenderer").is_some() {
+            if let Some(n) = MetadataRowNode::from_value(val) { return Some(YTNode::MetadataRow(n)); }
+        }
+
+        // 50. Media & Music Headers (Batch 11)
+        if val.get("metadataRowContainerRenderer").is_some() {
+            if let Some(n) = MetadataRowContainerNode::from_value(val) { return Some(YTNode::MetadataRowContainer(n)); }
+        }
+        if val.get("metadataRowHeaderRenderer").is_some() {
+            if let Some(n) = MetadataRowHeaderNode::from_value(val) { return Some(YTNode::MetadataRowHeader(n)); }
+        }
+        if val.get("metadataScreenRenderer").is_some() {
+            if let Some(n) = MetadataScreenNode::from_value(val) { return Some(YTNode::MetadataScreen(n)); }
+        }
+        if val.get("mixRenderer").is_some() {
+            if let Some(n) = MixNode::from_value(val) { return Some(YTNode::Mix(n)); }
+        }
+        if val.get("movieRenderer").is_some() {
+            if let Some(n) = MovieNode::from_value(val) { return Some(YTNode::Movie(n)); }
+        }
+        if val.get("movingThumbnailRenderer").is_some() {
+            if let Some(n) = MovingThumbnailNode::from_value(val) { return Some(YTNode::MovingThumbnail(n)); }
+        }
+        if val.get("multiMarkersPlayerBarRenderer").is_some() {
+            if let Some(n) = MultiMarkersPlayerBarNode::from_value(val) { return Some(YTNode::MultiMarkersPlayerBar(n)); }
+        }
+        if val.get("musicCardShelfHeaderBasicRenderer").is_some() {
+            if let Some(n) = MusicCardShelfHeaderBasicNode::from_value(val) { return Some(YTNode::MusicCardShelfHeaderBasic(n)); }
+        }
+        if val.get("musicCarouselShelfBasicHeaderRenderer").is_some() {
+            if let Some(n) = MusicCarouselShelfBasicHeaderNode::from_value(val) { return Some(YTNode::MusicCarouselShelfBasicHeader(n)); }
+        }
+        if val.get("musicLargeCardItemCarouselRenderer").is_some() {
+            if let Some(n) = MusicLargeCardItemCarouselNode::from_value(val) { return Some(YTNode::MusicLargeCardItemCarousel(n)); }
+        }
+        if val.get("musicMultiRowListItemRenderer").is_some() {
+            if let Some(n) = MusicMultiRowListItemNode::from_value(val) { return Some(YTNode::MusicMultiRowListItem(n)); }
+        }
+        if val.get("musicPlaylistEditHeaderRenderer").is_some() {
+            if let Some(n) = MusicPlaylistEditHeaderNode::from_value(val) { return Some(YTNode::MusicPlaylistEditHeader(n)); }
         }
 
         None

@@ -37,20 +37,21 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-28
 
-The checkpoint below was last synchronized at `2f74c52`. Always obtain the actual starting revision with `git log -1 --oneline` and inspect `git status --short` before acting.
+The checkpoint below was last synchronized at `bf8c649`. Always obtain the actual starting revision with `git log -1 --oneline` and inspect `git status --short` before acting.
 
 Recent implementation batches:
 
 - `77f3405`: Batch 8 — added 48 concrete renderer AST nodes via parallel subagents across Grid & Compact, Music Extended, Overlays & Dialogs, and Engagement & Comments.
 - `c176637`: Batch 9 — added 48 concrete renderer AST nodes via parallel subagents across Carousels & Views, Cards & Interactive Items, LiveChat Extras, and Commands & Actions.
 - `2f74c52`: Batch 10 — added 48 concrete renderer AST nodes via parallel subagents across Dialogs & Views, Previews & Dropdowns, Forms & Emojis, and Headers & Grids.
-- Current parser status: `src/parser/registry.rs` has **315 Direct** concrete `YTNode` AST variants with executable parser branches (out of 574 legacy classes), with 111 Container, 106 Element, 38 Endpoint, 4 Kids. All 574 legacy classes are strongly typed with 0 generic fallbacks.
+- `bf8c649`: Batch 11 — added 48 concrete renderer AST nodes via parallel subagents across Guide & Sections, Lists & Headers, Panels & Lockups, and Media & Music Headers.
+- Current parser status: `src/parser/registry.rs` has **363 Direct** concrete `YTNode` AST variants with executable parser branches (out of 574 legacy classes), with 86 Container, 83 Element, 38 Endpoint, 4 Kids. All 574 legacy classes are strongly typed with 0 generic fallbacks.
 
 Current evidence:
 
 - `cargo test --all-targets` passes 97 non-network unit/contract tests (40 in `src/lib.rs` + 24 in `tests/contract_fixtures.rs` + 25 in `tests/api_contracts.rs` + 8 in `tests/authenticated_integration.rs`).
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
-- All 315 `YTNode` variants have executable deterministic parser fixture tests in `src/parser/registry.rs`.
+- All 363 `YTNode` variants have executable deterministic parser fixture tests in `src/parser/registry.rs`.
 
 ## Handoff instructions
 
