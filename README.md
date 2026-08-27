@@ -159,14 +159,50 @@ cargo run --example download_audio
 
 ## Testing
 
-Run any of the included testers:
+`innertube-rs` includes unit tests, deterministic fixture contract tests, live network integration tests, and authenticated lifecycle test suites.
+
+### Standard Test Suites (Offline / Fixture-based)
 
 ```bash
-# Full-suite test
+# Run all unit tests, contract fixtures, and API contract test suites
 cargo test --all-targets
 
-# Test that require network access
+# Run the central legacy AST renderer registry & parser contract tests
+cargo test --lib parser::registry
+
+# Run API contract suites matching YouTube.js public methods
+cargo test --test api_contracts
+
+# Run deterministic payload fixtures and AST dispatch tests
+cargo test --test contract_fixtures
+
+# Run protobuf encoder and manifest parser tests
+cargo test utils::proto
+cargo test utils::manifest
+```
+
+### Live Network Integration Tests
+
+```bash
+# Run live integration tests against YouTube's live servers (requires network)
 cargo test --test live_integration -- --ignored
+
+# Run live anonymous tests with detailed stdout logging
+cargo test --test live_integration -- --ignored --nocapture
+```
+
+### Authenticated Mutation Integration Tests
+
+```bash
+# Run authenticated live tests (requires valid cookie and explicit opt-in)
+INNERTUBE_COOKIE="your_cookie_here" INNERTUBE_MUTATION_TEST=1 cargo test --test authenticated_integration -- --ignored
+```
+
+### Code Quality & Static Analysis
+
+```bash
+# Run Clippy with strict warnings
+cargo clippy --all-targets -- -D warnings
 ```
 
 ---
