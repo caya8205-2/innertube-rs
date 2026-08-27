@@ -117,13 +117,7 @@ impl TextRunNode {
             .get("text")
             .and_then(|v| v.as_str())
             .map(String::from)
-            .or_else(|| {
-                if let Some(s) = node.as_str() {
-                    Some(s.to_string())
-                } else {
-                    None
-                }
-            })?;
+            .or_else(|| node.as_str().map(String::from))?;
         Some(Self {
             text,
             bold: node.get("bold").and_then(|b| b.as_bool()).unwrap_or(false),
