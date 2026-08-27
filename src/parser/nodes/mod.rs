@@ -50,30 +50,41 @@ pub use livechat_ext::{
 pub use misc::{
     AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
     AddToPlaylistNode, AlertNode, AnimatedThumbnailOverlayViewNode, AttributionViewNode,
-    AudioOnlyPlayabilityNode,
-    AuthorNode, AvatarStackViewNode, AvatarViewNode, BackgroundPromoNode, BadgeViewNode,
-    BrowseEndpointNode, ButtonCardViewNode, ButtonNode, C4TabbedHeaderNode,
-    CallToActionButtonNode, CardCollectionNode, CardNode, CarouselHeaderNode, CarouselItemNode,
-    CarouselItemViewNode, CarouselLockupNode, CarouselTitleViewNode, ChannelOwnerEmptyStateNode,
-    ChannelSwitcherPageNode, ChapterNode, ChipBarViewNode, ChipViewNode, ClarificationNode,
-    ClientSideToggleMenuItemNode, ClipAdStateNode, ClipCreationNode, ClipCreationScrubberNode,
-    ClipCreationTextInputNode, CollaboratorInfoCardContentNode, CollectionThumbnailViewNode,
-    CollageHeroImageNode, CommentActionButtonsNode, CommentSimpleboxNode,
-    CommentsEntryPointHeaderNode, CommentsHeaderNode, CompactLinkNode, CompactMovieNode,
-    CompactStationNode, ConfirmDialogNode, ContentListItemViewNode, ContinuationEndpointNode,
-    DecoratedPlayerBarNode, DialogNode, DidYouMeanNode, EndscreenElementNode, EndscreenNode,
-    EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, ExpandableTabNode,
-    FeedNudgeNode, HeatmapNode, HistorySuggestionNode, HorizontalCardListNode, InfoRowNode,
-    KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode, MacroMarkersListItemNode,
-    MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode,
-    ModalWithTitleAndButtonNode, NavigateActionNode, NavigationEndpointNode, NotificationNode,
-    PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
-    PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode, ProfileColumnNode,
-    ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode, SearchFilterGroupNode,
-    SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode, ShowEngagementPanelActionNode,
-    ShowLiveChatActionNode, ShowingResultsForNode, SubscribeEndpointNode,
-    SubscriptionNotificationToggleButtonNode, TextHeaderNode, TextNode, TextRunNode,
-    ThumbnailListNode, ThumbnailNode, ThumbnailOverlayBottomPanelNode,
+    AudioOnlyPlayabilityNode, AuthorNode, AvatarStackViewNode, AvatarViewNode, BackgroundPromoNode,
+    BadgeViewNode, BrowseEndpointNode, BrowseFeedActionsNode, ButtonCardViewNode, ButtonNode,
+    ButtonViewNode, C4TabbedHeaderNode, CallToActionButtonNode, CardCollectionNode, CardNode,
+    CarouselHeaderNode, CarouselItemNode, CarouselItemViewNode, CarouselLockupNode,
+    CarouselTitleViewNode, ChannelOwnerEmptyStateNode, ChannelSwitcherPageNode, ChapterNode,
+    ChipBarViewNode, ChipViewNode, ClarificationNode, ClientSideToggleMenuItemNode, ClipAdStateNode,
+    ClipCreationNode, ClipCreationScrubberNode, ClipCreationTextInputNode, ClipSectionNode,
+    CollaboratorInfoCardContentNode, CollectionThumbnailViewNode, CollageHeroImageNode,
+    CommentActionButtonsNode, CommentSimpleboxNode, CommentsEntryPointHeaderNode,
+    CommentsHeaderNode, CompactLinkNode, CompactMovieNode, CompactStationNode, ConfirmDialogNode,
+    ContentListItemViewNode, ContentMetadataViewNode, ContentPreviewImageViewNode,
+    ContinuationEndpointNode, ContinuationItemNode, ContinuationItemViewNode, ConversationBarNode,
+    CopyLinkNode, CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode, DecoratedAvatarViewNode,
+    DecoratedPlayerBarNode, DefaultPromoPanelNode, DescriptionPreviewViewNode, DialogHeaderViewNode,
+    DialogNode, DialogViewNode, DidYouMeanNode, DislikeButtonViewNode,
+    DismissableDialogContentSectionNode, DismissableDialogNode, DownloadButtonNode,
+    DownloadListItemViewNode, DropdownItemNode, DropdownNode, DropdownViewNode, DynamicTextViewNode,
+    ElementNode, EmojiPickerCategoryButtonNode, EmojiPickerCategoryNode,
+    EmojiPickerUpsellCategoryNode, EndScreenPlaylistNode, EndscreenElementNode, EndscreenNode,
+    EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, EomSettingsDisclaimerNode,
+    ExpandableMetadataNode, ExpandableTabNode, ExpandedShelfContentsNode, FactoidNode,
+    FancyDismissibleDialogNode, FeedNudgeNode, FeedTabbedHeaderNode, FlexibleActionsViewNode,
+    FormFooterViewNode, FormNode, FormPopupNode, GameCardNode, GameDetailsNode, GridHeaderNode,
+    GridNode, GridShelfViewNode, GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode,
+    GuideDownloadsEntryNode, HeatmapNode, HistorySuggestionNode, HorizontalCardListNode,
+    InfoRowNode, KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode,
+    MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
+    MicroformatDataNode, ModalWithTitleAndButtonNode, NavigateActionNode, NavigationEndpointNode,
+    NotificationNode, PlayerCaptionsTracklistNode, PlayerErrorMessageNode,
+    PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode,
+    ProfileColumnNode, ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode,
+    SearchFilterGroupNode, SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode,
+    ShowEngagementPanelActionNode, ShowLiveChatActionNode, ShowingResultsForNode,
+    SubscribeEndpointNode, SubscriptionNotificationToggleButtonNode, TextHeaderNode, TextNode,
+    TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayBottomPanelNode,
     ThumbnailOverlayEndorsementNode, ThumbnailOverlayHoverTextNode,
     ThumbnailOverlayInlineUnplayableNode, ThumbnailOverlayLoadingPreviewNode,
     ThumbnailOverlayNowPlayingNode, ThumbnailOverlayProgressBarNode,
@@ -314,6 +325,58 @@ pub enum YTNode {
     ShowSheetCommand(ShowSheetCommandNode),
     UpdateEngagementPanelContentCommand(UpdateEngagementPanelContentCommandNode),
     RunAttestationCommand(RunAttestationCommandNode),
+    // Batch 10: Dialogs & Views
+    BrowseFeedActions(BrowseFeedActionsNode),
+    ButtonView(ButtonViewNode),
+    ClipSection(ClipSectionNode),
+    ContentMetadataView(ContentMetadataViewNode),
+    ContentPreviewImageView(ContentPreviewImageViewNode),
+    ContinuationItem(ContinuationItemNode),
+    ContinuationItemView(ContinuationItemViewNode),
+    ConversationBar(ConversationBarNode),
+    CopyLink(CopyLinkNode),
+    CreatePlaylistDialog(CreatePlaylistDialogNode),
+    CreatePlaylistDialogFormView(CreatePlaylistDialogFormViewNode),
+    DecoratedAvatarView(DecoratedAvatarViewNode),
+    // Batch 10: Previews & Dropdowns
+    DefaultPromoPanel(DefaultPromoPanelNode),
+    DescriptionPreviewView(DescriptionPreviewViewNode),
+    DialogHeaderView(DialogHeaderViewNode),
+    DialogView(DialogViewNode),
+    DislikeButtonView(DislikeButtonViewNode),
+    DismissableDialog(DismissableDialogNode),
+    DismissableDialogContentSection(DismissableDialogContentSectionNode),
+    DownloadButton(DownloadButtonNode),
+    DownloadListItemView(DownloadListItemViewNode),
+    Dropdown(DropdownNode),
+    DropdownItem(DropdownItemNode),
+    DropdownView(DropdownViewNode),
+    // Batch 10: Forms & Emojis
+    DynamicTextView(DynamicTextViewNode),
+    Element(ElementNode),
+    EmojiPickerCategory(EmojiPickerCategoryNode),
+    EmojiPickerCategoryButton(EmojiPickerCategoryButtonNode),
+    EmojiPickerUpsellCategory(EmojiPickerUpsellCategoryNode),
+    EndScreenPlaylist(EndScreenPlaylistNode),
+    EomSettingsDisclaimer(EomSettingsDisclaimerNode),
+    ExpandableMetadata(ExpandableMetadataNode),
+    ExpandedShelfContents(ExpandedShelfContentsNode),
+    Factoid(FactoidNode),
+    FancyDismissibleDialog(FancyDismissibleDialogNode),
+    FeedTabbedHeader(FeedTabbedHeaderNode),
+    // Batch 10: Headers & Grids
+    FlexibleActionsView(FlexibleActionsViewNode),
+    Form(FormNode),
+    FormFooterView(FormFooterViewNode),
+    FormPopup(FormPopupNode),
+    GameCard(GameCardNode),
+    GameDetails(GameDetailsNode),
+    Grid(GridNode),
+    GridHeader(GridHeaderNode),
+    GridShelfView(GridShelfViewNode),
+    GuideCollapsibleEntry(GuideCollapsibleEntryNode),
+    GuideCollapsibleSectionEntry(GuideCollapsibleSectionEntryNode),
+    GuideDownloadsEntry(GuideDownloadsEntryNode),
 }
 
 impl YTNode {
@@ -1255,6 +1318,158 @@ impl YTNode {
         }
         if val.get("runAttestationCommand").is_some() {
             if let Some(n) = RunAttestationCommandNode::from_value(val) { return Some(YTNode::RunAttestationCommand(n)); }
+        }
+
+        // 43. Dialogs & Views (Batch 10)
+        if val.get("browseFeedActionsRenderer").is_some() || val.get("browseFeedActions").is_some() {
+            if let Some(n) = BrowseFeedActionsNode::from_value(val) { return Some(YTNode::BrowseFeedActions(n)); }
+        }
+        if val.get("buttonView").is_some() {
+            if let Some(n) = ButtonViewNode::from_value(val) { return Some(YTNode::ButtonView(n)); }
+        }
+        if val.get("clipSectionRenderer").is_some() {
+            if let Some(n) = ClipSectionNode::from_value(val) { return Some(YTNode::ClipSection(n)); }
+        }
+        if val.get("contentMetadataView").is_some() {
+            if let Some(n) = ContentMetadataViewNode::from_value(val) { return Some(YTNode::ContentMetadataView(n)); }
+        }
+        if val.get("contentPreviewImageView").is_some() {
+            if let Some(n) = ContentPreviewImageViewNode::from_value(val) { return Some(YTNode::ContentPreviewImageView(n)); }
+        }
+        if val.get("continuationItemRenderer").is_some() {
+            if let Some(n) = ContinuationItemNode::from_value(val) { return Some(YTNode::ContinuationItem(n)); }
+        }
+        if val.get("continuationItemView").is_some() {
+            if let Some(n) = ContinuationItemViewNode::from_value(val) { return Some(YTNode::ContinuationItemView(n)); }
+        }
+        if val.get("conversationBarRenderer").is_some() {
+            if let Some(n) = ConversationBarNode::from_value(val) { return Some(YTNode::ConversationBar(n)); }
+        }
+        if val.get("copyLinkRenderer").is_some() {
+            if let Some(n) = CopyLinkNode::from_value(val) { return Some(YTNode::CopyLink(n)); }
+        }
+        if val.get("createPlaylistDialogRenderer").is_some() {
+            if let Some(n) = CreatePlaylistDialogNode::from_value(val) { return Some(YTNode::CreatePlaylistDialog(n)); }
+        }
+        if val.get("createPlaylistDialogFormView").is_some() {
+            if let Some(n) = CreatePlaylistDialogFormViewNode::from_value(val) { return Some(YTNode::CreatePlaylistDialogFormView(n)); }
+        }
+        if val.get("decoratedAvatarView").is_some() {
+            if let Some(n) = DecoratedAvatarViewNode::from_value(val) { return Some(YTNode::DecoratedAvatarView(n)); }
+        }
+
+        // 44. Previews & Dropdowns (Batch 10)
+        if val.get("defaultPromoPanelRenderer").is_some() {
+            if let Some(n) = DefaultPromoPanelNode::from_value(val) { return Some(YTNode::DefaultPromoPanel(n)); }
+        }
+        if val.get("descriptionPreviewView").is_some() {
+            if let Some(n) = DescriptionPreviewViewNode::from_value(val) { return Some(YTNode::DescriptionPreviewView(n)); }
+        }
+        if val.get("dialogHeaderView").is_some() {
+            if let Some(n) = DialogHeaderViewNode::from_value(val) { return Some(YTNode::DialogHeaderView(n)); }
+        }
+        if val.get("dialogView").is_some() {
+            if let Some(n) = DialogViewNode::from_value(val) { return Some(YTNode::DialogView(n)); }
+        }
+        if val.get("dislikeButtonView").is_some() {
+            if let Some(n) = DislikeButtonViewNode::from_value(val) { return Some(YTNode::DislikeButtonView(n)); }
+        }
+        if val.get("dismissableDialogRenderer").is_some() {
+            if let Some(n) = DismissableDialogNode::from_value(val) { return Some(YTNode::DismissableDialog(n)); }
+        }
+        if val.get("dismissableDialogContentSectionRenderer").is_some() {
+            if let Some(n) = DismissableDialogContentSectionNode::from_value(val) { return Some(YTNode::DismissableDialogContentSection(n)); }
+        }
+        if val.get("downloadButtonRenderer").is_some() {
+            if let Some(n) = DownloadButtonNode::from_value(val) { return Some(YTNode::DownloadButton(n)); }
+        }
+        if val.get("downloadListItemView").is_some() {
+            if let Some(n) = DownloadListItemViewNode::from_value(val) { return Some(YTNode::DownloadListItemView(n)); }
+        }
+        if val.get("dropdownRenderer").is_some() {
+            if let Some(n) = DropdownNode::from_value(val) { return Some(YTNode::Dropdown(n)); }
+        }
+        if val.get("dropdownItemRenderer").is_some() {
+            if let Some(n) = DropdownItemNode::from_value(val) { return Some(YTNode::DropdownItem(n)); }
+        }
+        if val.get("dropdownView").is_some() {
+            if let Some(n) = DropdownViewNode::from_value(val) { return Some(YTNode::DropdownView(n)); }
+        }
+
+        // 45. Forms & Emojis (Batch 10)
+        if val.get("dynamicTextView").is_some() {
+            if let Some(n) = DynamicTextViewNode::from_value(val) { return Some(YTNode::DynamicTextView(n)); }
+        }
+        if val.get("elementRenderer").is_some() {
+            if let Some(n) = ElementNode::from_value(val) { return Some(YTNode::Element(n)); }
+        }
+        if val.get("emojiPickerCategoryRenderer").is_some() {
+            if let Some(n) = EmojiPickerCategoryNode::from_value(val) { return Some(YTNode::EmojiPickerCategory(n)); }
+        }
+        if val.get("emojiPickerCategoryButtonRenderer").is_some() {
+            if let Some(n) = EmojiPickerCategoryButtonNode::from_value(val) { return Some(YTNode::EmojiPickerCategoryButton(n)); }
+        }
+        if val.get("emojiPickerUpsellCategoryRenderer").is_some() {
+            if let Some(n) = EmojiPickerUpsellCategoryNode::from_value(val) { return Some(YTNode::EmojiPickerUpsellCategory(n)); }
+        }
+        if val.get("endScreenPlaylistRenderer").is_some() {
+            if let Some(n) = EndScreenPlaylistNode::from_value(val) { return Some(YTNode::EndScreenPlaylist(n)); }
+        }
+        if val.get("eomSettingsDisclaimerRenderer").is_some() {
+            if let Some(n) = EomSettingsDisclaimerNode::from_value(val) { return Some(YTNode::EomSettingsDisclaimer(n)); }
+        }
+        if val.get("expandableMetadataRenderer").is_some() {
+            if let Some(n) = ExpandableMetadataNode::from_value(val) { return Some(YTNode::ExpandableMetadata(n)); }
+        }
+        if val.get("expandedShelfContentsRenderer").is_some() {
+            if let Some(n) = ExpandedShelfContentsNode::from_value(val) { return Some(YTNode::ExpandedShelfContents(n)); }
+        }
+        if val.get("factoidRenderer").is_some() {
+            if let Some(n) = FactoidNode::from_value(val) { return Some(YTNode::Factoid(n)); }
+        }
+        if val.get("fancyDismissibleDialogRenderer").is_some() {
+            if let Some(n) = FancyDismissibleDialogNode::from_value(val) { return Some(YTNode::FancyDismissibleDialog(n)); }
+        }
+        if val.get("feedTabbedHeaderRenderer").is_some() {
+            if let Some(n) = FeedTabbedHeaderNode::from_value(val) { return Some(YTNode::FeedTabbedHeader(n)); }
+        }
+
+        // 46. Headers & Grids (Batch 10)
+        if val.get("flexibleActionsView").is_some() {
+            if let Some(n) = FlexibleActionsViewNode::from_value(val) { return Some(YTNode::FlexibleActionsView(n)); }
+        }
+        if val.get("formRenderer").is_some() {
+            if let Some(n) = FormNode::from_value(val) { return Some(YTNode::Form(n)); }
+        }
+        if val.get("formFooterView").is_some() {
+            if let Some(n) = FormFooterViewNode::from_value(val) { return Some(YTNode::FormFooterView(n)); }
+        }
+        if val.get("formPopupRenderer").is_some() {
+            if let Some(n) = FormPopupNode::from_value(val) { return Some(YTNode::FormPopup(n)); }
+        }
+        if val.get("gameCardRenderer").is_some() {
+            if let Some(n) = GameCardNode::from_value(val) { return Some(YTNode::GameCard(n)); }
+        }
+        if val.get("gameDetailsRenderer").is_some() {
+            if let Some(n) = GameDetailsNode::from_value(val) { return Some(YTNode::GameDetails(n)); }
+        }
+        if val.get("gridRenderer").is_some() {
+            if let Some(n) = GridNode::from_value(val) { return Some(YTNode::Grid(n)); }
+        }
+        if val.get("gridHeaderRenderer").is_some() {
+            if let Some(n) = GridHeaderNode::from_value(val) { return Some(YTNode::GridHeader(n)); }
+        }
+        if val.get("gridShelfView").is_some() {
+            if let Some(n) = GridShelfViewNode::from_value(val) { return Some(YTNode::GridShelfView(n)); }
+        }
+        if val.get("guideCollapsibleEntryRenderer").is_some() {
+            if let Some(n) = GuideCollapsibleEntryNode::from_value(val) { return Some(YTNode::GuideCollapsibleEntry(n)); }
+        }
+        if val.get("guideCollapsibleSectionEntryRenderer").is_some() {
+            if let Some(n) = GuideCollapsibleSectionEntryNode::from_value(val) { return Some(YTNode::GuideCollapsibleSectionEntry(n)); }
+        }
+        if val.get("guideDownloadsEntryRenderer").is_some() {
+            if let Some(n) = GuideDownloadsEntryNode::from_value(val) { return Some(YTNode::GuideDownloadsEntry(n)); }
         }
 
         None

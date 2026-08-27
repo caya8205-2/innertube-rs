@@ -6,8 +6,11 @@ pub mod button;
 pub mod cards;
 pub mod carousels;
 pub mod clip;
+pub mod dialogs;
 pub mod endscreen;
 pub mod engagement;
+pub mod forms_games;
+pub mod headers_sections;
 pub mod interactive_cards;
 pub mod kids;
 pub mod markers;
@@ -18,6 +21,7 @@ pub mod overlay;
 pub mod overlays_ext;
 pub mod player_media;
 pub mod player_overlay;
+pub mod previews;
 pub mod profile;
 pub mod search_modifiers;
 pub mod text;
@@ -42,12 +46,29 @@ pub use carousels::{
     CarouselTitleViewNode, ChipBarViewNode, ChipViewNode, ContentListItemViewNode,
 };
 pub use clip::{ClipCreationNode, ClipCreationScrubberNode};
+pub use dialogs::{
+    BrowseFeedActionsNode, ButtonViewNode, ClipSectionNode, ContentMetadataViewNode,
+    ContentPreviewImageViewNode, ContinuationItemNode, ContinuationItemViewNode,
+    ConversationBarNode, CopyLinkNode, CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode,
+    DecoratedAvatarViewNode,
+};
 pub use endscreen::{EndscreenElementNode, EndscreenNode};
 pub use engagement::{
     ChannelOwnerEmptyStateNode, CollageHeroImageNode, CommentActionButtonsNode,
     CommentSimpleboxNode, CommentsEntryPointHeaderNode, CommentsHeaderNode,
     EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, FeedNudgeNode, InfoRowNode,
     SubscriptionNotificationToggleButtonNode, TextHeaderNode,
+};
+pub use forms_games::{
+    DynamicTextViewNode, ElementNode, EmojiPickerCategoryButtonNode, EmojiPickerCategoryNode,
+    EmojiPickerUpsellCategoryNode, EndScreenPlaylistNode, EomSettingsDisclaimerNode,
+    ExpandableMetadataNode, ExpandedShelfContentsNode, FactoidNode, FancyDismissibleDialogNode,
+    FeedTabbedHeaderNode,
+};
+pub use headers_sections::{
+    FlexibleActionsViewNode, FormFooterViewNode, FormNode, FormPopupNode, GameCardNode,
+    GameDetailsNode, GridHeaderNode, GridNode, GridShelfViewNode,
+    GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode, GuideDownloadsEntryNode,
 };
 pub use interactive_cards::{
     AddToPlaylistNode, AudioOnlyPlayabilityNode, C4TabbedHeaderNode, CardCollectionNode,
@@ -75,6 +96,11 @@ pub use player_media::{
     PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
 };
 pub use player_overlay::{PlayerOverlayNode, PlayerStoryboardSpecNode, TimedMarkerDecorationNode};
+pub use previews::{
+    DefaultPromoPanelNode, DescriptionPreviewViewNode, DialogHeaderViewNode, DialogViewNode,
+    DislikeButtonViewNode, DismissableDialogContentSectionNode, DismissableDialogNode,
+    DownloadButtonNode, DownloadListItemViewNode, DropdownItemNode, DropdownNode, DropdownViewNode,
+};
 pub use profile::{ProfileColumnNode, ProfileColumnUserInfoNode, VerticalListNode};
 pub use search_modifiers::{
     DidYouMeanNode, SearchFilterGroupNode, SearchFilterNode, SearchSubMenuNode,
