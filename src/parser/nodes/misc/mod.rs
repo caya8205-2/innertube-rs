@@ -15,6 +15,7 @@ pub mod headers_sections;
 pub mod interactive_cards;
 pub mod kids;
 pub mod lists;
+pub mod live_actions;
 pub mod markers;
 pub mod media_live;
 pub mod menu;
@@ -32,8 +33,11 @@ pub mod previews;
 pub mod profile;
 pub mod reels_search;
 pub mod search_modifiers;
+pub mod shorts_tabs;
 pub mod text;
 pub mod thumbnail;
+pub mod title_views;
+pub mod video_watch;
 pub mod views;
 
 pub use account::{
@@ -97,6 +101,12 @@ pub use lists::{
     ItemSectionHeaderNode, ItemSectionTabNode, ItemSectionTabbedHeaderNode, LikeButtonNode,
     LikeButtonViewNode,
 };
+pub use live_actions::{
+    PromoConfigNode, ThumbnailBackgroundColor, ThumbnailOverlayResumePlaybackNode,
+    ThumbnailOverlayTitleViewNode, ThumbnailViewNode, TicketEventNode, TicketShelfNode,
+    TitleAndButtonListHeaderNode, ToggleButtonViewNode, ToggleFormFieldNode,
+    ToggleMenuServiceItemNode, TooltipNode, TranscriptFooterNode, TranscriptNode,
+};
 pub use markers::{ChapterNode, HeatmapNode, MacroMarkersListItemNode, MacroMarkersListNode};
 pub use media_live::{
     MetadataRowContainerNode, MetadataRowHeaderNode, MetadataScreenNode, MixNode, MovieNode,
@@ -141,8 +151,8 @@ pub use player_media::{
 pub use player_overlay::{PlayerOverlayNode, PlayerStoryboardSpecNode, TimedMarkerDecorationNode};
 pub use player_sections::{
     ProductListHeaderNode, ProductListItemNode, ProfileColumnStatsEntryNode, ProfileColumnStatsNode,
-    QuizNode, RecognitionShelfNode, RelatedChipCloudNode, RichListHeaderNode, RichMetadataNode,
-    RichMetadataRowNode, SearchBoxNode, SearchFilterOptionsDialogNode,
+    QuizChoice, QuizNode, RecognitionShelfNode, RelatedChipCloudNode, RichListHeaderNode,
+    RichMetadataNode, RichMetadataRowNode, SearchBoxNode, SearchFilterOptionsDialogNode,
 };
 pub use previews::{
     DefaultPromoPanelNode, DescriptionPreviewViewNode, DialogHeaderViewNode, DialogViewNode,
@@ -160,8 +170,28 @@ pub use search_modifiers::{
     DidYouMeanNode, SearchFilterGroupNode, SearchFilterNode, SearchSubMenuNode,
     ShowingResultsForNode,
 };
+pub use shorts_tabs::{
+    SharePanelHeaderNode, SharePanelTitleV15Node, ShareTargetNode, SheetViewNode,
+    ShowCustomThumbnailNode, SimpleCardContentNode, SimpleCardTeaserNode, SimpleTextSectionNode,
+    SingleColumnBrowseResultsNode, SingleColumnMusicWatchNextResultsNode, SingleHeroImageNode,
+    SlimOwnerNode,
+};
 pub use text::{TextNode, TextRunNode};
 pub use thumbnail::{ThumbnailListNode, ThumbnailNode};
+pub use title_views::{
+    BellAccessibilityDataNode, ButtonContentNode, ButtonStyleNode, SortFilterHeaderNode,
+    SortFilterSubMenuNode, StartAtNode, StructuredDescriptionContentNode,
+    StructuredDescriptionPlaylistLockupNode, SubFeedOptionNode, SubFeedSelectorNode,
+    SubMenuItemNode, SubscribeButtonNode, SubscribeButtonViewNode, TabbedNode,
+    TabbedSearchResultsNode, TextCarouselItemViewNode,
+};
+pub use video_watch::{
+    TextFieldViewNode, ThirdPartyShareTargetSectionNode, ThumbnailBadgeViewNode,
+    ThumbnailBottomOverlayViewNode, ThumbnailHoverOverlayToggleActionsViewNode,
+    ThumbnailHoverOverlayViewNode, ThumbnailLandscapePortraitNode,
+    ThumbnailOverlayAvatarStackViewNode, ThumbnailOverlayBadgeViewNode, ThumbnailOverlayPinkingNode,
+    ThumbnailOverlayPlaybackStatusNode, ThumbnailOverlayProgressBarViewNode,
+};
 pub use views::{
     AvatarViewNode, BadgeViewNode, ButtonCardViewNode, CallToActionButtonNode, CompactLinkNode,
 };

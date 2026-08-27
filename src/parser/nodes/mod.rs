@@ -107,16 +107,30 @@ pub use misc::{
     SearchSubMenuNode, SearchSuggestionNode, SearchSuggestionsSectionNode, SecondarySearchContainerNode,
     SectionHeaderViewNode, SegmentedLikeDislikeButtonNode, SegmentedLikeDislikeButtonViewNode,
     SettingBooleanNode, SettingsCheckboxNode, SettingsOptionsNode, SettingsSidebarNode,
-    SettingsSwitchNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode, ShowingResultsForNode,
-    SubscribeEndpointNode, SubscriptionNotificationToggleButtonNode, TextHeaderNode, TextNode,
-    TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayBottomPanelNode,
-    ThumbnailOverlayEndorsementNode, ThumbnailOverlayHoverTextNode,
-    ThumbnailOverlayInlineUnplayableNode, ThumbnailOverlayLoadingPreviewNode,
-    ThumbnailOverlayNowPlayingNode, ThumbnailOverlayProgressBarNode,
-    ThumbnailOverlaySidePanelNode, ThumbnailOverlayTimeStatusNode,
-    ThumbnailOverlayToggleButtonNode, TimedMarkerDecorationNode, ToggleButtonNode,
-    UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode, ViewCountNode,
-    WatchEndpointNode,
+    SettingsSwitchNode, SharePanelHeaderNode, SharePanelTitleV15Node, ShareTargetNode, SheetViewNode,
+    ShowCustomThumbnailNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
+    ShowingResultsForNode, SimpleCardContentNode, SimpleCardTeaserNode, SimpleTextSectionNode,
+    SingleColumnBrowseResultsNode, SingleColumnMusicWatchNextResultsNode, SingleHeroImageNode,
+    SlimOwnerNode, SortFilterHeaderNode, SortFilterSubMenuNode, StartAtNode,
+    StructuredDescriptionContentNode, StructuredDescriptionPlaylistLockupNode, SubFeedOptionNode,
+    SubFeedSelectorNode, SubscribeButtonNode, SubscribeButtonViewNode, SubscribeEndpointNode,
+    SubscriptionNotificationToggleButtonNode, TabbedNode, TabbedSearchResultsNode, TextCarouselItemViewNode,
+    TextFieldViewNode, TextHeaderNode, TextNode, TextRunNode, ThirdPartyShareTargetSectionNode,
+    ThumbnailBadgeViewNode, ThumbnailBottomOverlayViewNode, ThumbnailHoverOverlayToggleActionsViewNode,
+    ThumbnailHoverOverlayViewNode, ThumbnailLandscapePortraitNode, ThumbnailListNode,
+    ThumbnailNode, ThumbnailOverlayAvatarStackViewNode, ThumbnailOverlayBadgeViewNode,
+    ThumbnailOverlayBottomPanelNode, ThumbnailOverlayEndorsementNode,
+    ThumbnailOverlayHoverTextNode, ThumbnailOverlayInlineUnplayableNode,
+    ThumbnailOverlayLoadingPreviewNode, ThumbnailOverlayNowPlayingNode,
+    ThumbnailOverlayPinkingNode, ThumbnailOverlayPlaybackStatusNode,
+    ThumbnailOverlayProgressBarNode, ThumbnailOverlayProgressBarViewNode,
+    ThumbnailOverlayResumePlaybackNode, ThumbnailOverlaySidePanelNode,
+    ThumbnailOverlayTimeStatusNode, ThumbnailOverlayTitleViewNode,
+    ThumbnailOverlayToggleButtonNode, ThumbnailViewNode, TicketEventNode, TicketShelfNode,
+    TimedMarkerDecorationNode, TitleAndButtonListHeaderNode, ToggleButtonNode, ToggleButtonViewNode,
+    ToggleFormFieldNode, ToggleMenuServiceItemNode, TooltipNode, TranscriptFooterNode,
+    TranscriptNode, UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode,
+    ViewCountNode, WatchEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
@@ -506,6 +520,58 @@ pub enum YTNode {
     SettingsOptions(SettingsOptionsNode),
     SettingsSidebar(SettingsSidebarNode),
     SettingsSwitch(SettingsSwitchNode),
+    // Batch 13: Shares & Columns
+    SharePanelHeader(SharePanelHeaderNode),
+    SharePanelTitleV15(SharePanelTitleV15Node),
+    ShareTarget(ShareTargetNode),
+    SheetView(SheetViewNode),
+    ShowCustomThumbnail(ShowCustomThumbnailNode),
+    SimpleCardContent(SimpleCardContentNode),
+    SimpleCardTeaser(SimpleCardTeaserNode),
+    SimpleTextSection(SimpleTextSectionNode),
+    SingleColumnBrowseResults(SingleColumnBrowseResultsNode),
+    SingleColumnMusicWatchNextResults(SingleColumnMusicWatchNextResultsNode),
+    SingleHeroImage(SingleHeroImageNode),
+    SlimOwner(SlimOwnerNode),
+    // Batch 13: Filters & Subscriptions
+    SortFilterHeader(SortFilterHeaderNode),
+    SortFilterSubMenu(SortFilterSubMenuNode),
+    StartAt(StartAtNode),
+    StructuredDescriptionContent(StructuredDescriptionContentNode),
+    StructuredDescriptionPlaylistLockup(StructuredDescriptionPlaylistLockupNode),
+    SubFeedOption(SubFeedOptionNode),
+    SubFeedSelector(SubFeedSelectorNode),
+    SubscribeButton(SubscribeButtonNode),
+    SubscribeButtonView(SubscribeButtonViewNode),
+    Tabbed(TabbedNode),
+    TabbedSearchResults(TabbedSearchResultsNode),
+    TextCarouselItemView(TextCarouselItemViewNode),
+    // Batch 13: Thumbnail Overlays & Badges
+    TextFieldView(TextFieldViewNode),
+    ThirdPartyShareTargetSection(ThirdPartyShareTargetSectionNode),
+    ThumbnailBadgeView(ThumbnailBadgeViewNode),
+    ThumbnailBottomOverlayView(ThumbnailBottomOverlayViewNode),
+    ThumbnailHoverOverlayToggleActionsView(ThumbnailHoverOverlayToggleActionsViewNode),
+    ThumbnailHoverOverlayView(ThumbnailHoverOverlayViewNode),
+    ThumbnailLandscapePortrait(ThumbnailLandscapePortraitNode),
+    ThumbnailOverlayAvatarStackView(ThumbnailOverlayAvatarStackViewNode),
+    ThumbnailOverlayBadgeView(ThumbnailOverlayBadgeViewNode),
+    ThumbnailOverlayPinking(ThumbnailOverlayPinkingNode),
+    ThumbnailOverlayPlaybackStatus(ThumbnailOverlayPlaybackStatusNode),
+    ThumbnailOverlayProgressBarView(ThumbnailOverlayProgressBarViewNode),
+    // Batch 13: Tickets & Transcripts
+    ThumbnailOverlayResumePlayback(ThumbnailOverlayResumePlaybackNode),
+    ThumbnailOverlayTitleView(ThumbnailOverlayTitleViewNode),
+    ThumbnailView(ThumbnailViewNode),
+    TicketEvent(TicketEventNode),
+    TicketShelf(TicketShelfNode),
+    TitleAndButtonListHeader(TitleAndButtonListHeaderNode),
+    ToggleButtonView(ToggleButtonViewNode),
+    ToggleFormField(ToggleFormFieldNode),
+    ToggleMenuServiceItem(ToggleMenuServiceItemNode),
+    Tooltip(TooltipNode),
+    Transcript(TranscriptNode),
+    TranscriptFooter(TranscriptFooterNode),
 }
 
 impl YTNode {
@@ -1903,6 +1969,158 @@ impl YTNode {
         }
         if val.get("settingsSwitchRenderer").is_some() {
             if let Some(n) = SettingsSwitchNode::from_value(val) { return Some(YTNode::SettingsSwitch(n)); }
+        }
+
+        // 55. Shares & Columns (Batch 13)
+        if val.get("sharePanelHeaderRenderer").is_some() {
+            if let Some(n) = SharePanelHeaderNode::from_value(val) { return Some(YTNode::SharePanelHeader(n)); }
+        }
+        if val.get("sharePanelTitleV15Renderer").is_some() {
+            if let Some(n) = SharePanelTitleV15Node::from_value(val) { return Some(YTNode::SharePanelTitleV15(n)); }
+        }
+        if val.get("shareTargetRenderer").is_some() {
+            if let Some(n) = ShareTargetNode::from_value(val) { return Some(YTNode::ShareTarget(n)); }
+        }
+        if val.get("sheetView").is_some() {
+            if let Some(n) = SheetViewNode::from_value(val) { return Some(YTNode::SheetView(n)); }
+        }
+        if val.get("showCustomThumbnailRenderer").is_some() {
+            if let Some(n) = ShowCustomThumbnailNode::from_value(val) { return Some(YTNode::ShowCustomThumbnail(n)); }
+        }
+        if val.get("simpleCardContentRenderer").is_some() {
+            if let Some(n) = SimpleCardContentNode::from_value(val) { return Some(YTNode::SimpleCardContent(n)); }
+        }
+        if val.get("simpleCardTeaserRenderer").is_some() {
+            if let Some(n) = SimpleCardTeaserNode::from_value(val) { return Some(YTNode::SimpleCardTeaser(n)); }
+        }
+        if val.get("simpleTextSectionRenderer").is_some() {
+            if let Some(n) = SimpleTextSectionNode::from_value(val) { return Some(YTNode::SimpleTextSection(n)); }
+        }
+        if val.get("singleColumnBrowseResultsRenderer").is_some() {
+            if let Some(n) = SingleColumnBrowseResultsNode::from_value(val) { return Some(YTNode::SingleColumnBrowseResults(n)); }
+        }
+        if val.get("singleColumnMusicWatchNextResultsRenderer").is_some() {
+            if let Some(n) = SingleColumnMusicWatchNextResultsNode::from_value(val) { return Some(YTNode::SingleColumnMusicWatchNextResults(n)); }
+        }
+        if val.get("singleHeroImageRenderer").is_some() {
+            if let Some(n) = SingleHeroImageNode::from_value(val) { return Some(YTNode::SingleHeroImage(n)); }
+        }
+        if val.get("slimOwnerRenderer").is_some() {
+            if let Some(n) = SlimOwnerNode::from_value(val) { return Some(YTNode::SlimOwner(n)); }
+        }
+
+        // 56. Filters & Subscriptions (Batch 13)
+        if val.get("sortFilterHeaderRenderer").is_some() {
+            if let Some(n) = SortFilterHeaderNode::from_value(val) { return Some(YTNode::SortFilterHeader(n)); }
+        }
+        if val.get("sortFilterSubMenuRenderer").is_some() {
+            if let Some(n) = SortFilterSubMenuNode::from_value(val) { return Some(YTNode::SortFilterSubMenu(n)); }
+        }
+        if val.get("startAtRenderer").is_some() {
+            if let Some(n) = StartAtNode::from_value(val) { return Some(YTNode::StartAt(n)); }
+        }
+        if val.get("structuredDescriptionContentRenderer").is_some() {
+            if let Some(n) = StructuredDescriptionContentNode::from_value(val) { return Some(YTNode::StructuredDescriptionContent(n)); }
+        }
+        if val.get("structuredDescriptionPlaylistLockupRenderer").is_some() {
+            if let Some(n) = StructuredDescriptionPlaylistLockupNode::from_value(val) { return Some(YTNode::StructuredDescriptionPlaylistLockup(n)); }
+        }
+        if val.get("subFeedOptionRenderer").is_some() {
+            if let Some(n) = SubFeedOptionNode::from_value(val) { return Some(YTNode::SubFeedOption(n)); }
+        }
+        if val.get("subFeedSelectorRenderer").is_some() {
+            if let Some(n) = SubFeedSelectorNode::from_value(val) { return Some(YTNode::SubFeedSelector(n)); }
+        }
+        if val.get("subscribeButtonRenderer").is_some() {
+            if let Some(n) = SubscribeButtonNode::from_value(val) { return Some(YTNode::SubscribeButton(n)); }
+        }
+        if val.get("subscribeButtonView").is_some() {
+            if let Some(n) = SubscribeButtonViewNode::from_value(val) { return Some(YTNode::SubscribeButtonView(n)); }
+        }
+        if val.get("tabbedRenderer").is_some() {
+            if let Some(n) = TabbedNode::from_value(val) { return Some(YTNode::Tabbed(n)); }
+        }
+        if val.get("tabbedSearchResultsRenderer").is_some() {
+            if let Some(n) = TabbedSearchResultsNode::from_value(val) { return Some(YTNode::TabbedSearchResults(n)); }
+        }
+        if val.get("textCarouselItemView").is_some() {
+            if let Some(n) = TextCarouselItemViewNode::from_value(val) { return Some(YTNode::TextCarouselItemView(n)); }
+        }
+
+        // 57. Thumbnail Overlays & Badges (Batch 13)
+        if val.get("textFieldView").is_some() {
+            if let Some(n) = TextFieldViewNode::from_value(val) { return Some(YTNode::TextFieldView(n)); }
+        }
+        if val.get("thirdPartyShareTargetSectionRenderer").is_some() {
+            if let Some(n) = ThirdPartyShareTargetSectionNode::from_value(val) { return Some(YTNode::ThirdPartyShareTargetSection(n)); }
+        }
+        if val.get("thumbnailBadgeView").is_some() {
+            if let Some(n) = ThumbnailBadgeViewNode::from_value(val) { return Some(YTNode::ThumbnailBadgeView(n)); }
+        }
+        if val.get("thumbnailBottomOverlayView").is_some() {
+            if let Some(n) = ThumbnailBottomOverlayViewNode::from_value(val) { return Some(YTNode::ThumbnailBottomOverlayView(n)); }
+        }
+        if val.get("thumbnailHoverOverlayToggleActionsView").is_some() {
+            if let Some(n) = ThumbnailHoverOverlayToggleActionsViewNode::from_value(val) { return Some(YTNode::ThumbnailHoverOverlayToggleActionsView(n)); }
+        }
+        if val.get("thumbnailHoverOverlayView").is_some() {
+            if let Some(n) = ThumbnailHoverOverlayViewNode::from_value(val) { return Some(YTNode::ThumbnailHoverOverlayView(n)); }
+        }
+        if val.get("thumbnailLandscapePortraitRenderer").is_some() {
+            if let Some(n) = ThumbnailLandscapePortraitNode::from_value(val) { return Some(YTNode::ThumbnailLandscapePortrait(n)); }
+        }
+        if val.get("thumbnailOverlayAvatarStackView").is_some() {
+            if let Some(n) = ThumbnailOverlayAvatarStackViewNode::from_value(val) { return Some(YTNode::ThumbnailOverlayAvatarStackView(n)); }
+        }
+        if val.get("thumbnailOverlayBadgeView").is_some() {
+            if let Some(n) = ThumbnailOverlayBadgeViewNode::from_value(val) { return Some(YTNode::ThumbnailOverlayBadgeView(n)); }
+        }
+        if val.get("thumbnailOverlayPinkingRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayPinkingNode::from_value(val) { return Some(YTNode::ThumbnailOverlayPinking(n)); }
+        }
+        if val.get("thumbnailOverlayPlaybackStatusRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayPlaybackStatusNode::from_value(val) { return Some(YTNode::ThumbnailOverlayPlaybackStatus(n)); }
+        }
+        if val.get("thumbnailOverlayProgressBarView").is_some() {
+            if let Some(n) = ThumbnailOverlayProgressBarViewNode::from_value(val) { return Some(YTNode::ThumbnailOverlayProgressBarView(n)); }
+        }
+
+        // 58. Tickets & Transcripts (Batch 13)
+        if val.get("thumbnailOverlayResumePlaybackRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayResumePlaybackNode::from_value(val) { return Some(YTNode::ThumbnailOverlayResumePlayback(n)); }
+        }
+        if val.get("thumbnailOverlayTitleView").is_some() {
+            if let Some(n) = ThumbnailOverlayTitleViewNode::from_value(val) { return Some(YTNode::ThumbnailOverlayTitleView(n)); }
+        }
+        if val.get("thumbnailView").is_some() {
+            if let Some(n) = ThumbnailViewNode::from_value(val) { return Some(YTNode::ThumbnailView(n)); }
+        }
+        if val.get("ticketEventRenderer").is_some() {
+            if let Some(n) = TicketEventNode::from_value(val) { return Some(YTNode::TicketEvent(n)); }
+        }
+        if val.get("ticketShelfRenderer").is_some() {
+            if let Some(n) = TicketShelfNode::from_value(val) { return Some(YTNode::TicketShelf(n)); }
+        }
+        if val.get("titleAndButtonListHeaderRenderer").is_some() {
+            if let Some(n) = TitleAndButtonListHeaderNode::from_value(val) { return Some(YTNode::TitleAndButtonListHeader(n)); }
+        }
+        if val.get("toggleButtonView").is_some() {
+            if let Some(n) = ToggleButtonViewNode::from_value(val) { return Some(YTNode::ToggleButtonView(n)); }
+        }
+        if val.get("toggleFormFieldRenderer").is_some() {
+            if let Some(n) = ToggleFormFieldNode::from_value(val) { return Some(YTNode::ToggleFormField(n)); }
+        }
+        if val.get("toggleMenuServiceItemRenderer").is_some() {
+            if let Some(n) = ToggleMenuServiceItemNode::from_value(val) { return Some(YTNode::ToggleMenuServiceItem(n)); }
+        }
+        if val.get("tooltipRenderer").is_some() {
+            if let Some(n) = TooltipNode::from_value(val) { return Some(YTNode::Tooltip(n)); }
+        }
+        if val.get("transcriptRenderer").is_some() {
+            if let Some(n) = TranscriptNode::from_value(val) { return Some(YTNode::Transcript(n)); }
+        }
+        if val.get("transcriptFooterRenderer").is_some() {
+            if let Some(n) = TranscriptFooterNode::from_value(val) { return Some(YTNode::TranscriptFooter(n)); }
         }
 
         None

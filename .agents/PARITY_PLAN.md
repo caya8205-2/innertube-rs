@@ -37,7 +37,7 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-28
 
-The checkpoint below was last synchronized at `a33dc03`. Always obtain the actual starting revision with `git log -1 --oneline` and inspect `git status --short` before acting.
+The checkpoint below was last synchronized at `d14f723`. Always obtain the actual starting revision with `git log -1 --oneline` and inspect `git status --short` before acting.
 
 Recent implementation batches:
 
@@ -46,13 +46,14 @@ Recent implementation batches:
 - `2f74c52`: Batch 10 — added 48 concrete renderer AST nodes via parallel subagents across Dialogs & Views, Previews & Dropdowns, Forms & Emojis, and Headers & Grids.
 - `bf8c649`: Batch 11 — added 48 concrete renderer AST nodes via parallel subagents across Guide & Sections, Lists & Headers, Panels & Lockups, and Media & Music Headers.
 - `a33dc03`: Batch 12 — added 48 concrete renderer AST nodes via parallel subagents across Music & Page Headers, Playlists & Products, Products & Metadata, and Search & Settings.
-- Current parser status: `src/parser/registry.rs` has **411 Direct** concrete `YTNode` AST variants with executable parser branches (out of 574 legacy classes), with 56 Container, 67 Element, 36 Endpoint, 4 Kids. All 574 legacy classes are strongly typed with 0 generic fallbacks.
+- `d14f723`: Batch 13 — added 48 concrete renderer AST nodes via parallel subagents across Shares & Columns, Filters & Subscriptions, Thumbnail Overlays & Badges, and Tickets & Transcripts.
+- Current parser status: `src/parser/registry.rs` has **459 Direct** concrete `YTNode` AST variants with executable parser branches (out of 574 legacy classes), with 42 Container, 34 Element, 35 Endpoint, 4 Kids. All 574 legacy classes are strongly typed with 0 generic fallbacks.
 
 Current evidence:
 
 - `cargo test --all-targets` passes 97 non-network unit/contract tests (40 in `src/lib.rs` + 24 in `tests/contract_fixtures.rs` + 25 in `tests/api_contracts.rs` + 8 in `tests/authenticated_integration.rs`).
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
-- All 411 `YTNode` variants have executable deterministic parser fixture tests in `src/parser/registry.rs`.
+- All 459 `YTNode` variants have executable deterministic parser fixture tests in `src/parser/registry.rs`.
 
 ## Handoff instructions
 
