@@ -1,5 +1,6 @@
 pub mod account;
 pub mod actions;
+pub mod actions_ext;
 pub mod alert;
 pub mod author;
 pub mod button;
@@ -7,6 +8,7 @@ pub mod cards;
 pub mod carousels;
 pub mod clip;
 pub mod dialogs;
+pub mod elements_views;
 pub mod endscreen;
 pub mod engagement;
 pub mod forms_games;
@@ -39,6 +41,8 @@ pub mod thumbnail;
 pub mod title_views;
 pub mod video_watch;
 pub mod views;
+pub mod watch_ext;
+pub mod ypc_commerce;
 
 pub use account::{
     AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
@@ -47,6 +51,12 @@ pub use account::{
 pub use actions::{
     NavigateActionNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
     UpdateEngagementPanelActionNode,
+};
+pub use actions_ext::{
+    AddToPlaylistEndpointNode, AddToPlaylistServiceEndpointNode, CommandExecutorCommandNode,
+    CommentDialogNode, CommentReplyDialogNode, CreateCommentEndpointNode, EmojiPickerNode,
+    GetKidsBlocklistPickerCommandNode, ShowDialogCommandNode, VoiceReplyContainerViewNode,
+    WatchNextTabbedResultsNode, YpcTrailerNode,
 };
 pub use alert::{AlertNode, CardNode, ClarificationNode, PollNode};
 pub use author::AuthorNode;
@@ -63,6 +73,13 @@ pub use dialogs::{
     ContentPreviewImageViewNode, ContinuationItemNode, ContinuationItemViewNode,
     ConversationBarNode, CopyLinkNode, CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode,
     DecoratedAvatarViewNode,
+};
+pub use elements_views::{
+    CreatePlaylistServiceEndpointNode, DeletePlaylistEndpointNode, FeedbackEndpointNode,
+    GetAccountsListInnertubeEndpointNode, HideEngagementPanelEndpointNode,
+    LiveChatItemContextMenuEndpointNode, ModifyChannelNotificationPreferenceEndpointNode,
+    PerformCommentActionEndpointNode, PlaylistEditEndpointNode, PrefetchWatchCommandNode,
+    ShareEndpointNode, ShareEntityEndpointNode,
 };
 pub use endscreen::{EndscreenElementNode, EndscreenNode};
 pub use engagement::{
@@ -194,5 +211,19 @@ pub use video_watch::{
 };
 pub use views::{
     AvatarViewNode, BadgeViewNode, ButtonCardViewNode, CallToActionButtonNode, CompactLinkNode,
+};
+pub use watch_ext::{
+    AutoplayNode, AutoplaySetNode, PlaylistNode as WatchPlaylistNode, ThirdPartyNetworkSectionNode,
+    TranscriptSearchBoxNode, TranscriptSearchPanelNode, TranscriptSectionHeaderNode,
+    TranscriptSegmentListNode, TranscriptSegmentNode, TwoColumnBrowseResultsNode,
+    TwoColumnSearchResultsNode, TwoColumnWatchNextResultsNode, UnifiedSharePanelNode,
+    UniversalWatchCardNode, UploadTimeFactoidNode, UpsellDialogNode,
+};
+pub use ypc_commerce::{
+    VerticalWatchCardListNode, VideoAttributesSectionViewNode, VideoDescriptionCourseSectionNode,
+    VideoDescriptionInfocardsSectionNode, VideoDescriptionMusicSectionNode,
+    VideoDescriptionTranscriptSectionNode, VideoDescriptionYouchatSectionViewNode,
+    VideoMetadataCarouselViewNode, ViewCountFactoidNode, WatchCardRichHeaderNode,
+    WatchCardSectionSequenceNode, WatchNextEndScreenNode,
 };
 

@@ -49,76 +49,85 @@ pub use livechat_ext::{
 };
 pub use misc::{
     AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
-    AddToPlaylistNode, AlertNode, AnimatedThumbnailOverlayViewNode, AttributionViewNode,
-    AudioOnlyPlayabilityNode, AuthorNode, AvatarStackViewNode, AvatarViewNode, BackgroundPromoNode,
-    BadgeViewNode, BrowseEndpointNode, BrowseFeedActionsNode, ButtonCardViewNode, ButtonNode,
-    ButtonViewNode, C4TabbedHeaderNode, CallToActionButtonNode, CardCollectionNode, CardNode,
-    CarouselHeaderNode, CarouselItemNode, CarouselItemViewNode, CarouselLockupNode,
-    CarouselTitleViewNode, ChannelOwnerEmptyStateNode, ChannelSwitcherPageNode, ChapterNode,
-    ChipBarViewNode, ChipViewNode, ClarificationNode, ClientSideToggleMenuItemNode, ClipAdStateNode,
-    ClipCreationNode, ClipCreationScrubberNode, ClipCreationTextInputNode, ClipSectionNode,
-    CollaboratorInfoCardContentNode, CollectionThumbnailViewNode, CollageHeroImageNode,
-    CommentActionButtonsNode, CommentSimpleboxNode, CommentsEntryPointHeaderNode,
-    CommentsHeaderNode, CompactLinkNode, CompactMovieNode, CompactStationNode, ConfirmDialogNode,
-    ContentListItemViewNode, ContentMetadataViewNode, ContentPreviewImageViewNode,
-    ContinuationEndpointNode, ContinuationItemNode, ContinuationItemViewNode, ConversationBarNode,
-    CopyLinkNode, CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode, DecoratedAvatarViewNode,
-    DecoratedPlayerBarNode, DefaultPromoPanelNode, DescriptionPreviewViewNode, DialogHeaderViewNode,
-    DialogNode, DialogViewNode, DidYouMeanNode, DislikeButtonViewNode,
-    DismissableDialogContentSectionNode, DismissableDialogNode, DownloadButtonNode,
-    DownloadListItemViewNode, DropdownItemNode, DropdownNode, DropdownViewNode, DynamicTextViewNode,
-    ElementNode, EmojiPickerCategoryButtonNode, EmojiPickerCategoryNode,
-    EmojiPickerUpsellCategoryNode, EndScreenPlaylistNode, EndscreenElementNode, EndscreenNode,
-    EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, EomSettingsDisclaimerNode,
-    ExpandableMetadataNode, ExpandableTabNode, ExpandedShelfContentsNode, FactoidNode,
-    FancyDismissibleDialogNode, FeedNudgeNode, FeedTabbedHeaderNode, FlexibleActionsViewNode,
-    FormFooterViewNode, FormNode, FormPopupNode, GameCardNode, GameDetailsNode, GridHeaderNode,
-    GridNode, GridShelfViewNode, GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode,
-    GuideDownloadsEntryNode, GuideEntryNode, GuideSectionNode, GuideSubscriptionsSectionNode,
-    HashtagHeaderNode, HashtagTileNode, HeatMarkerNode, HeatmapNode, HeroPlaylistThumbnailNode,
+    AddToPlaylistEndpointNode, AddToPlaylistNode, AddToPlaylistServiceEndpointNode, AlertNode,
+    AnimatedThumbnailOverlayViewNode, AttributionViewNode, AudioOnlyPlayabilityNode, AuthorNode,
+    AvatarStackViewNode, AvatarViewNode, BackgroundPromoNode, BadgeViewNode, BrowseEndpointNode,
+    BrowseFeedActionsNode, ButtonCardViewNode, ButtonNode, ButtonViewNode, C4TabbedHeaderNode,
+    CallToActionButtonNode, CardCollectionNode, CardNode, CarouselHeaderNode, CarouselItemNode,
+    CarouselItemViewNode, CarouselLockupNode, CarouselTitleViewNode, ChannelOwnerEmptyStateNode,
+    ChannelSwitcherPageNode, ChapterNode, ChipBarViewNode, ChipViewNode, ClarificationNode,
+    ClientSideToggleMenuItemNode, ClipAdStateNode, ClipCreationNode, ClipCreationScrubberNode,
+    ClipCreationTextInputNode, ClipSectionNode, CollaboratorInfoCardContentNode,
+    CollectionThumbnailViewNode, CollageHeroImageNode, CommandExecutorCommandNode,
+    CommentActionButtonsNode, CommentDialogNode, CommentReplyDialogNode, CommentSimpleboxNode,
+    CommentsEntryPointHeaderNode, CommentsHeaderNode, CompactLinkNode, CompactMovieNode,
+    CompactStationNode, ConfirmDialogNode, ContentListItemViewNode, ContentMetadataViewNode,
+    ContentPreviewImageViewNode, ContinuationEndpointNode, ContinuationItemNode,
+    ContinuationItemViewNode, ConversationBarNode, CopyLinkNode, CreateCommentEndpointNode,
+    CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode, CreatePlaylistServiceEndpointNode,
+    DecoratedAvatarViewNode, DecoratedPlayerBarNode, DefaultPromoPanelNode, DeletePlaylistEndpointNode,
+    DescriptionPreviewViewNode, DialogHeaderViewNode, DialogNode, DialogViewNode, DidYouMeanNode,
+    DislikeButtonViewNode, DismissableDialogContentSectionNode, DismissableDialogNode,
+    DownloadButtonNode, DownloadListItemViewNode, DropdownItemNode, DropdownNode, DropdownViewNode,
+    DynamicTextViewNode, ElementNode, EmojiPickerCategoryButtonNode, EmojiPickerCategoryNode,
+    EmojiPickerNode, EmojiPickerUpsellCategoryNode, EndScreenPlaylistNode, EndscreenElementNode,
+    EndscreenNode, EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode,
+    EomSettingsDisclaimerNode, ExpandableMetadataNode, ExpandableTabNode,
+    ExpandedShelfContentsNode, FactoidNode, FancyDismissibleDialogNode, FeedbackEndpointNode,
+    FeedNudgeNode, FeedTabbedHeaderNode, FlexibleActionsViewNode, FormFooterViewNode, FormNode,
+    FormPopupNode, GameCardNode, GameDetailsNode, GetAccountsListInnertubeEndpointNode,
+    GetKidsBlocklistPickerCommandNode, GridHeaderNode, GridNode, GridShelfViewNode,
+    GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode, GuideDownloadsEntryNode,
+    GuideEntryNode, GuideSectionNode, GuideSubscriptionsSectionNode, HashtagHeaderNode,
+    HashtagTileNode, HeatMarkerNode, HeatmapNode, HeroPlaylistThumbnailNode, HideEngagementPanelEndpointNode,
     HighlightsCarouselNode, HistorySuggestionNode, HorizontalCardListNode, HorizontalListNode,
     HorizontalMovieListNode, HowThisWasMadeSectionViewNode, HypeFanCreditsSectionViewNode,
     HypePointsFactoidNode, IconLinkNode, ImageBannerViewNode, IncludingResultsForNode,
     InfoPanelContainerNode, InfoPanelContentNode, InfoRowNode, InteractiveTabbedHeaderNode,
     ItemSectionHeaderNode, ItemSectionTabNode, ItemSectionTabbedHeaderNode, KidsCategoriesHeaderNode,
     KidsHomeScreenNode, LikeButtonNode, LikeButtonViewNode, LikeEndpointNode, ListItemViewNode,
-    ListViewNode, LiveChatDialogNode, LockupMetadataViewNode, LockupViewNode,
-    MacroMarkersInfoItemNode, MacroMarkersListEntityNode, MacroMarkersListItemNode,
+    ListViewNode, LiveChatDialogNode, LiveChatItemContextMenuEndpointNode, LockupMetadataViewNode,
+    LockupViewNode, MacroMarkersInfoItemNode, MacroMarkersListEntityNode, MacroMarkersListItemNode,
     MacroMarkersListNode, MenuItemNode, MenuNode, MenuTitleNode, MerchandiseItemNode,
     MerchandiseShelfNode, MessageNode, MetadataBadgeNode, MetadataRowContainerNode,
     MetadataRowHeaderNode, MetadataRowNode, MetadataScreenNode, MicroformatDataNode, MixNode,
-    ModalWithTitleAndButtonNode, MovieNode, MovingThumbnailNode, MultiMarkersPlayerBarNode,
-    MusicCardShelfHeaderBasicNode, MusicCarouselShelfBasicHeaderNode, MusicLargeCardItemCarouselNode,
-    MusicMultiRowListItemNode, MusicPlaylistEditHeaderNode, MusicResponsiveListItemFixedColumnNode,
+    ModalWithTitleAndButtonNode, ModifyChannelNotificationPreferenceEndpointNode, MovieNode,
+    MovingThumbnailNode, MultiMarkersPlayerBarNode, MusicCardShelfHeaderBasicNode,
+    MusicCarouselShelfBasicHeaderNode, MusicLargeCardItemCarouselNode, MusicMultiRowListItemNode,
+    MusicPlaylistEditHeaderNode, MusicResponsiveListItemFixedColumnNode,
     MusicResponsiveListItemFlexColumnNode, MusicTastebuilderShelfNode,
-    MusicTastebuilderShelfThumbnailNode, NavigateActionNode, NavigationEndpointNode, NotificationActionNode,
-    NotificationNode, OpenOnePickAddVideoModalCommandNode, PageHeaderNode, PageHeaderViewNode,
-    PageIndicatorViewNode, PageIntroductionNode, PanelFooterViewNode, PivotButtonNode,
-    PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
-    PlayerOverlayNode, PlayerStoryboardSpecNode, PlaylistAddToOptionNode,
-    PlaylistCollaborationViewNode, PlaylistCustomThumbnailNode, PlaylistHeaderNode,
+    MusicTastebuilderShelfThumbnailNode, NavigateActionNode, NavigationEndpointNode,
+    NotificationActionNode, NotificationNode, OpenOnePickAddVideoModalCommandNode, PageHeaderNode,
+    PageHeaderViewNode, PageIndicatorViewNode, PageIntroductionNode, PanelFooterViewNode,
+    PerformCommentActionEndpointNode, PivotButtonNode, PlayerCaptionsTracklistNode,
+    PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode,
+    PlayerStoryboardSpecNode, PlaylistAddToOptionNode, PlaylistCollaborationViewNode,
+    PlaylistCustomThumbnailNode, PlaylistEditEndpointNode, PlaylistHeaderNode,
     PlaylistInfoCardContentNode, PlaylistPanelVideoWrapperNode, PlaylistSidebarNode,
     PlaylistThumbnailOverlayNode, PlaylistVideoListNode, PlaylistVideoThumbnailNode, PollNode,
-    PremiereTrailerBadgeNode, ProductListHeaderNode, ProductListItemNode, ProductListNode,
-    ProfileColumnNode, ProfileColumnStatsEntryNode, ProfileColumnStatsNode, ProfileColumnUserInfoNode,
-    QuizNode, RecognitionShelfNode, ReelWatchEndpointNode, RelatedChipCloudNode, RichListHeaderNode,
-    RichMetadataNode, RichMetadataRowNode, SearchBoxNode, SearchEndpointNode, SearchFilterGroupNode,
-    SearchFilterNode, SearchFilterOptionsDialogNode, SearchHeaderNode, SearchRefinementCardNode,
-    SearchSubMenuNode, SearchSuggestionNode, SearchSuggestionsSectionNode, SecondarySearchContainerNode,
-    SectionHeaderViewNode, SegmentedLikeDislikeButtonNode, SegmentedLikeDislikeButtonViewNode,
-    SettingBooleanNode, SettingsCheckboxNode, SettingsOptionsNode, SettingsSidebarNode,
-    SettingsSwitchNode, SharePanelHeaderNode, SharePanelTitleV15Node, ShareTargetNode, SheetViewNode,
-    ShowCustomThumbnailNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
-    ShowingResultsForNode, SimpleCardContentNode, SimpleCardTeaserNode, SimpleTextSectionNode,
-    SingleColumnBrowseResultsNode, SingleColumnMusicWatchNextResultsNode, SingleHeroImageNode,
-    SlimOwnerNode, SortFilterHeaderNode, SortFilterSubMenuNode, StartAtNode,
-    StructuredDescriptionContentNode, StructuredDescriptionPlaylistLockupNode, SubFeedOptionNode,
-    SubFeedSelectorNode, SubscribeButtonNode, SubscribeButtonViewNode, SubscribeEndpointNode,
-    SubscriptionNotificationToggleButtonNode, TabbedNode, TabbedSearchResultsNode, TextCarouselItemViewNode,
-    TextFieldViewNode, TextHeaderNode, TextNode, TextRunNode, ThirdPartyShareTargetSectionNode,
-    ThumbnailBadgeViewNode, ThumbnailBottomOverlayViewNode, ThumbnailHoverOverlayToggleActionsViewNode,
-    ThumbnailHoverOverlayViewNode, ThumbnailLandscapePortraitNode, ThumbnailListNode,
-    ThumbnailNode, ThumbnailOverlayAvatarStackViewNode, ThumbnailOverlayBadgeViewNode,
+    PrefetchWatchCommandNode, PremiereTrailerBadgeNode, ProductListHeaderNode, ProductListItemNode,
+    ProductListNode, ProfileColumnNode, ProfileColumnStatsEntryNode, ProfileColumnStatsNode,
+    ProfileColumnUserInfoNode, QuizNode, RecognitionShelfNode, ReelWatchEndpointNode,
+    RelatedChipCloudNode, RichListHeaderNode, RichMetadataNode, RichMetadataRowNode, SearchBoxNode,
+    SearchEndpointNode, SearchFilterGroupNode, SearchFilterNode, SearchFilterOptionsDialogNode,
+    SearchHeaderNode, SearchRefinementCardNode, SearchSubMenuNode, SearchSuggestionNode,
+    SearchSuggestionsSectionNode, SecondarySearchContainerNode, SectionHeaderViewNode,
+    SegmentedLikeDislikeButtonNode, SegmentedLikeDislikeButtonViewNode, SettingBooleanNode,
+    SettingsCheckboxNode, SettingsOptionsNode, SettingsSidebarNode, SettingsSwitchNode,
+    ShareEndpointNode, ShareEntityEndpointNode, SharePanelHeaderNode, SharePanelTitleV15Node,
+    ShareTargetNode, SheetViewNode, ShowCustomThumbnailNode, ShowDialogCommandNode,
+    ShowEngagementPanelActionNode, ShowLiveChatActionNode, ShowingResultsForNode,
+    SimpleCardContentNode, SimpleCardTeaserNode, SimpleTextSectionNode, SingleColumnBrowseResultsNode,
+    SingleColumnMusicWatchNextResultsNode, SingleHeroImageNode, SlimOwnerNode,
+    SortFilterHeaderNode, SortFilterSubMenuNode, StartAtNode, StructuredDescriptionContentNode,
+    StructuredDescriptionPlaylistLockupNode, SubFeedOptionNode, SubFeedSelectorNode,
+    SubscribeButtonNode, SubscribeButtonViewNode, SubscribeEndpointNode,
+    SubscriptionNotificationToggleButtonNode, TabbedNode, TabbedSearchResultsNode,
+    TextCarouselItemViewNode, TextFieldViewNode, TextHeaderNode, TextNode, TextRunNode,
+    ThirdPartyShareTargetSectionNode, ThumbnailBadgeViewNode, ThumbnailBottomOverlayViewNode,
+    ThumbnailHoverOverlayToggleActionsViewNode, ThumbnailHoverOverlayViewNode,
+    ThumbnailLandscapePortraitNode, ThumbnailListNode, ThumbnailNode,
+    ThumbnailOverlayAvatarStackViewNode, ThumbnailOverlayBadgeViewNode,
     ThumbnailOverlayBottomPanelNode, ThumbnailOverlayEndorsementNode,
     ThumbnailOverlayHoverTextNode, ThumbnailOverlayInlineUnplayableNode,
     ThumbnailOverlayLoadingPreviewNode, ThumbnailOverlayNowPlayingNode,
@@ -129,8 +138,17 @@ pub use misc::{
     ThumbnailOverlayToggleButtonNode, ThumbnailViewNode, TicketEventNode, TicketShelfNode,
     TimedMarkerDecorationNode, TitleAndButtonListHeaderNode, ToggleButtonNode, ToggleButtonViewNode,
     ToggleFormFieldNode, ToggleMenuServiceItemNode, TooltipNode, TranscriptFooterNode,
-    TranscriptNode, UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode,
-    ViewCountNode, WatchEndpointNode,
+    TranscriptNode, TranscriptSearchBoxNode, TranscriptSearchPanelNode, TranscriptSectionHeaderNode,
+    TranscriptSegmentListNode, TranscriptSegmentNode, TwoColumnBrowseResultsNode,
+    TwoColumnSearchResultsNode, TwoColumnWatchNextResultsNode, UnifiedSharePanelNode,
+    UniversalWatchCardNode, UpdateEngagementPanelActionNode, UploadTimeFactoidNode, UpsellDialogNode,
+    VerticalListNode, VerticalWatchCardListNode, VideoAttributesSectionViewNode,
+    VideoDescriptionCourseSectionNode, VideoDescriptionInfocardsSectionNode,
+    VideoDescriptionMusicSectionNode, VideoDescriptionTranscriptSectionNode,
+    VideoDescriptionYouchatSectionViewNode, VideoMetadataCarouselViewNode, VideoOwnerNode,
+    ViewCountFactoidNode, ViewCountNode, VoiceReplyContainerViewNode, WatchCardRichHeaderNode,
+    WatchCardSectionSequenceNode, WatchEndpointNode, WatchNextEndScreenNode,
+    WatchNextTabbedResultsNode, YpcTrailerNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
@@ -572,6 +590,58 @@ pub enum YTNode {
     Tooltip(TooltipNode),
     Transcript(TranscriptNode),
     TranscriptFooter(TranscriptFooterNode),
+    // Batch 14: Transcripts & Watch Columns
+    TranscriptSearchBox(TranscriptSearchBoxNode),
+    TranscriptSearchPanel(TranscriptSearchPanelNode),
+    TranscriptSectionHeader(TranscriptSectionHeaderNode),
+    TranscriptSegment(TranscriptSegmentNode),
+    TranscriptSegmentList(TranscriptSegmentListNode),
+    TwoColumnBrowseResults(TwoColumnBrowseResultsNode),
+    TwoColumnSearchResults(TwoColumnSearchResultsNode),
+    TwoColumnWatchNextResults(TwoColumnWatchNextResultsNode),
+    UnifiedSharePanel(UnifiedSharePanelNode),
+    UniversalWatchCard(UniversalWatchCardNode),
+    UploadTimeFactoid(UploadTimeFactoidNode),
+    UpsellDialog(UpsellDialogNode),
+    // Batch 14: Video Sections & Watch Cards
+    VerticalWatchCardList(VerticalWatchCardListNode),
+    VideoAttributesSectionView(VideoAttributesSectionViewNode),
+    VideoDescriptionCourseSection(VideoDescriptionCourseSectionNode),
+    VideoDescriptionInfocardsSection(VideoDescriptionInfocardsSectionNode),
+    VideoDescriptionMusicSection(VideoDescriptionMusicSectionNode),
+    VideoDescriptionTranscriptSection(VideoDescriptionTranscriptSectionNode),
+    VideoDescriptionYouchatSectionView(VideoDescriptionYouchatSectionViewNode),
+    VideoMetadataCarouselView(VideoMetadataCarouselViewNode),
+    ViewCountFactoid(ViewCountFactoidNode),
+    WatchCardRichHeader(WatchCardRichHeaderNode),
+    WatchCardSectionSequence(WatchCardSectionSequenceNode),
+    WatchNextEndScreen(WatchNextEndScreenNode),
+    // Batch 14: Comments & Endpoints Extended
+    WatchNextTabbedResults(WatchNextTabbedResultsNode),
+    YpcTrailer(YpcTrailerNode),
+    CommandExecutorCommand(CommandExecutorCommandNode),
+    GetKidsBlocklistPickerCommand(GetKidsBlocklistPickerCommandNode),
+    ShowDialogCommand(ShowDialogCommandNode),
+    CommentDialog(CommentDialogNode),
+    CommentReplyDialog(CommentReplyDialogNode),
+    EmojiPicker(EmojiPickerNode),
+    VoiceReplyContainerView(VoiceReplyContainerViewNode),
+    AddToPlaylistEndpoint(AddToPlaylistEndpointNode),
+    AddToPlaylistServiceEndpoint(AddToPlaylistServiceEndpointNode),
+    CreateCommentEndpoint(CreateCommentEndpointNode),
+    // Batch 14: Endpoint Commands
+    CreatePlaylistServiceEndpoint(CreatePlaylistServiceEndpointNode),
+    DeletePlaylistEndpoint(DeletePlaylistEndpointNode),
+    FeedbackEndpoint(FeedbackEndpointNode),
+    GetAccountsListInnertubeEndpoint(GetAccountsListInnertubeEndpointNode),
+    HideEngagementPanelEndpoint(HideEngagementPanelEndpointNode),
+    LiveChatItemContextMenuEndpoint(LiveChatItemContextMenuEndpointNode),
+    ModifyChannelNotificationPreferenceEndpoint(ModifyChannelNotificationPreferenceEndpointNode),
+    PerformCommentActionEndpoint(PerformCommentActionEndpointNode),
+    PlaylistEditEndpoint(PlaylistEditEndpointNode),
+    PrefetchWatchCommand(PrefetchWatchCommandNode),
+    ShareEndpoint(ShareEndpointNode),
+    ShareEntityEndpoint(ShareEntityEndpointNode),
 }
 
 impl YTNode {
@@ -2121,6 +2191,158 @@ impl YTNode {
         }
         if val.get("transcriptFooterRenderer").is_some() {
             if let Some(n) = TranscriptFooterNode::from_value(val) { return Some(YTNode::TranscriptFooter(n)); }
+        }
+
+        // 59. Transcripts & Watch Columns (Batch 14)
+        if val.get("transcriptSearchBoxRenderer").is_some() {
+            if let Some(n) = TranscriptSearchBoxNode::from_value(val) { return Some(YTNode::TranscriptSearchBox(n)); }
+        }
+        if val.get("transcriptSearchPanelRenderer").is_some() {
+            if let Some(n) = TranscriptSearchPanelNode::from_value(val) { return Some(YTNode::TranscriptSearchPanel(n)); }
+        }
+        if val.get("transcriptSectionHeaderRenderer").is_some() {
+            if let Some(n) = TranscriptSectionHeaderNode::from_value(val) { return Some(YTNode::TranscriptSectionHeader(n)); }
+        }
+        if val.get("transcriptSegmentRenderer").is_some() {
+            if let Some(n) = TranscriptSegmentNode::from_value(val) { return Some(YTNode::TranscriptSegment(n)); }
+        }
+        if val.get("transcriptSegmentListRenderer").is_some() {
+            if let Some(n) = TranscriptSegmentListNode::from_value(val) { return Some(YTNode::TranscriptSegmentList(n)); }
+        }
+        if val.get("twoColumnBrowseResultsRenderer").is_some() {
+            if let Some(n) = TwoColumnBrowseResultsNode::from_value(val) { return Some(YTNode::TwoColumnBrowseResults(n)); }
+        }
+        if val.get("twoColumnSearchResultsRenderer").is_some() {
+            if let Some(n) = TwoColumnSearchResultsNode::from_value(val) { return Some(YTNode::TwoColumnSearchResults(n)); }
+        }
+        if val.get("twoColumnWatchNextResults").is_some() {
+            if let Some(n) = TwoColumnWatchNextResultsNode::from_value(val) { return Some(YTNode::TwoColumnWatchNextResults(n)); }
+        }
+        if val.get("unifiedSharePanelRenderer").is_some() {
+            if let Some(n) = UnifiedSharePanelNode::from_value(val) { return Some(YTNode::UnifiedSharePanel(n)); }
+        }
+        if val.get("universalWatchCardRenderer").is_some() {
+            if let Some(n) = UniversalWatchCardNode::from_value(val) { return Some(YTNode::UniversalWatchCard(n)); }
+        }
+        if val.get("uploadTimeFactoidRenderer").is_some() {
+            if let Some(n) = UploadTimeFactoidNode::from_value(val) { return Some(YTNode::UploadTimeFactoid(n)); }
+        }
+        if val.get("upsellDialogRenderer").is_some() {
+            if let Some(n) = UpsellDialogNode::from_value(val) { return Some(YTNode::UpsellDialog(n)); }
+        }
+
+        // 60. Video Sections & Watch Cards (Batch 14)
+        if val.get("verticalWatchCardListRenderer").is_some() {
+            if let Some(n) = VerticalWatchCardListNode::from_value(val) { return Some(YTNode::VerticalWatchCardList(n)); }
+        }
+        if val.get("videoAttributesSectionView").is_some() {
+            if let Some(n) = VideoAttributesSectionViewNode::from_value(val) { return Some(YTNode::VideoAttributesSectionView(n)); }
+        }
+        if val.get("videoDescriptionCourseSectionRenderer").is_some() {
+            if let Some(n) = VideoDescriptionCourseSectionNode::from_value(val) { return Some(YTNode::VideoDescriptionCourseSection(n)); }
+        }
+        if val.get("videoDescriptionInfocardsSectionRenderer").is_some() {
+            if let Some(n) = VideoDescriptionInfocardsSectionNode::from_value(val) { return Some(YTNode::VideoDescriptionInfocardsSection(n)); }
+        }
+        if val.get("videoDescriptionMusicSectionRenderer").is_some() {
+            if let Some(n) = VideoDescriptionMusicSectionNode::from_value(val) { return Some(YTNode::VideoDescriptionMusicSection(n)); }
+        }
+        if val.get("videoDescriptionTranscriptSectionRenderer").is_some() {
+            if let Some(n) = VideoDescriptionTranscriptSectionNode::from_value(val) { return Some(YTNode::VideoDescriptionTranscriptSection(n)); }
+        }
+        if val.get("videoDescriptionYouchatSectionView").is_some() {
+            if let Some(n) = VideoDescriptionYouchatSectionViewNode::from_value(val) { return Some(YTNode::VideoDescriptionYouchatSectionView(n)); }
+        }
+        if val.get("videoMetadataCarouselView").is_some() {
+            if let Some(n) = VideoMetadataCarouselViewNode::from_value(val) { return Some(YTNode::VideoMetadataCarouselView(n)); }
+        }
+        if val.get("viewCountFactoidRenderer").is_some() {
+            if let Some(n) = ViewCountFactoidNode::from_value(val) { return Some(YTNode::ViewCountFactoid(n)); }
+        }
+        if val.get("watchCardRichHeaderRenderer").is_some() {
+            if let Some(n) = WatchCardRichHeaderNode::from_value(val) { return Some(YTNode::WatchCardRichHeader(n)); }
+        }
+        if val.get("watchCardSectionSequenceRenderer").is_some() {
+            if let Some(n) = WatchCardSectionSequenceNode::from_value(val) { return Some(YTNode::WatchCardSectionSequence(n)); }
+        }
+        if val.get("watchNextEndScreenRenderer").is_some() {
+            if let Some(n) = WatchNextEndScreenNode::from_value(val) { return Some(YTNode::WatchNextEndScreen(n)); }
+        }
+
+        // 61. Comments & Endpoints Extended (Batch 14)
+        if val.get("watchNextTabbedResultsRenderer").is_some() {
+            if let Some(n) = WatchNextTabbedResultsNode::from_value(val) { return Some(YTNode::WatchNextTabbedResults(n)); }
+        }
+        if val.get("ypcTrailerRenderer").is_some() {
+            if let Some(n) = YpcTrailerNode::from_value(val) { return Some(YTNode::YpcTrailer(n)); }
+        }
+        if val.get("commandExecutorCommand").is_some() {
+            if let Some(n) = CommandExecutorCommandNode::from_value(val) { return Some(YTNode::CommandExecutorCommand(n)); }
+        }
+        if val.get("getKidsBlocklistPickerCommand").is_some() {
+            if let Some(n) = GetKidsBlocklistPickerCommandNode::from_value(val) { return Some(YTNode::GetKidsBlocklistPickerCommand(n)); }
+        }
+        if val.get("showDialogCommand").is_some() {
+            if let Some(n) = ShowDialogCommandNode::from_value(val) { return Some(YTNode::ShowDialogCommand(n)); }
+        }
+        if val.get("commentDialogRenderer").is_some() {
+            if let Some(n) = CommentDialogNode::from_value(val) { return Some(YTNode::CommentDialog(n)); }
+        }
+        if val.get("commentReplyDialogRenderer").is_some() {
+            if let Some(n) = CommentReplyDialogNode::from_value(val) { return Some(YTNode::CommentReplyDialog(n)); }
+        }
+        if val.get("emojiPickerRenderer").is_some() {
+            if let Some(n) = EmojiPickerNode::from_value(val) { return Some(YTNode::EmojiPicker(n)); }
+        }
+        if val.get("voiceReplyContainerView").is_some() {
+            if let Some(n) = VoiceReplyContainerViewNode::from_value(val) { return Some(YTNode::VoiceReplyContainerView(n)); }
+        }
+        if val.get("addToPlaylistEndpoint").is_some() {
+            if let Some(n) = AddToPlaylistEndpointNode::from_value(val) { return Some(YTNode::AddToPlaylistEndpoint(n)); }
+        }
+        if val.get("addToPlaylistServiceEndpoint").is_some() {
+            if let Some(n) = AddToPlaylistServiceEndpointNode::from_value(val) { return Some(YTNode::AddToPlaylistServiceEndpoint(n)); }
+        }
+        if val.get("createCommentEndpoint").is_some() {
+            if let Some(n) = CreateCommentEndpointNode::from_value(val) { return Some(YTNode::CreateCommentEndpoint(n)); }
+        }
+
+        // 62. Endpoint Commands (Batch 14)
+        if val.get("createPlaylistServiceEndpoint").is_some() {
+            if let Some(n) = CreatePlaylistServiceEndpointNode::from_value(val) { return Some(YTNode::CreatePlaylistServiceEndpoint(n)); }
+        }
+        if val.get("deletePlaylistEndpoint").is_some() {
+            if let Some(n) = DeletePlaylistEndpointNode::from_value(val) { return Some(YTNode::DeletePlaylistEndpoint(n)); }
+        }
+        if val.get("feedbackEndpoint").is_some() {
+            if let Some(n) = FeedbackEndpointNode::from_value(val) { return Some(YTNode::FeedbackEndpoint(n)); }
+        }
+        if val.get("getAccountsListInnertubeEndpoint").is_some() {
+            if let Some(n) = GetAccountsListInnertubeEndpointNode::from_value(val) { return Some(YTNode::GetAccountsListInnertubeEndpoint(n)); }
+        }
+        if val.get("hideEngagementPanelEndpoint").is_some() {
+            if let Some(n) = HideEngagementPanelEndpointNode::from_value(val) { return Some(YTNode::HideEngagementPanelEndpoint(n)); }
+        }
+        if val.get("liveChatItemContextMenuEndpoint").is_some() {
+            if let Some(n) = LiveChatItemContextMenuEndpointNode::from_value(val) { return Some(YTNode::LiveChatItemContextMenuEndpoint(n)); }
+        }
+        if val.get("modifyChannelNotificationPreferenceEndpoint").is_some() {
+            if let Some(n) = ModifyChannelNotificationPreferenceEndpointNode::from_value(val) { return Some(YTNode::ModifyChannelNotificationPreferenceEndpoint(n)); }
+        }
+        if val.get("performCommentActionEndpoint").is_some() {
+            if let Some(n) = PerformCommentActionEndpointNode::from_value(val) { return Some(YTNode::PerformCommentActionEndpoint(n)); }
+        }
+        if val.get("playlistEditEndpoint").is_some() {
+            if let Some(n) = PlaylistEditEndpointNode::from_value(val) { return Some(YTNode::PlaylistEditEndpoint(n)); }
+        }
+        if val.get("prefetchWatchCommand").is_some() {
+            if let Some(n) = PrefetchWatchCommandNode::from_value(val) { return Some(YTNode::PrefetchWatchCommand(n)); }
+        }
+        if val.get("shareEndpoint").is_some() {
+            if let Some(n) = ShareEndpointNode::from_value(val) { return Some(YTNode::ShareEndpoint(n)); }
+        }
+        if val.get("shareEntityEndpoint").is_some() {
+            if let Some(n) = ShareEntityEndpointNode::from_value(val) { return Some(YTNode::ShareEntityEndpoint(n)); }
         }
 
         None
