@@ -313,7 +313,7 @@ fn test_api_contract_11_library_feed_contract() {
                                                     "horizontalListRenderer": {
                                                         "items": [
                                                             {
-                                                                "gridVideoRenderer": {
+                                                                "videoRenderer": {
                                                                     "videoId": "lib_vid_1",
                                                                     "title": { "runs": [{ "text": "Lib Video" }] }
                                                                 }
@@ -623,7 +623,7 @@ fn test_api_contract_24_get_post_and_comments_contract() {
                                             "itemSectionRenderer": {
                                                 "contents": [
                                                     {
-                                                        "backstagePostRenderer": {
+                                                        "postRenderer": {
                                                             "postId": "post_community_1",
                                                             "contentText": { "runs": [{ "text": "Live stream at 8pm!" }] }
                                                         }

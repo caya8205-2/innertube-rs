@@ -32,12 +32,35 @@ pub async fn get_post(
 /// Parse a Community Post detail response.
 pub fn parse_post_response(raw: &Value) -> Result<CommunityPostsResponse> {
     let tree = Parser::parse_tree(raw);
+    let mut posts = Vec::new();
+    for node in &tree {
+        match node {
+            crate::parser::YTNode::Post(p) => posts.push(p.post.clone()),
+            crate::parser::YTNode::BackstagePost(bp) => {
+                posts.push(crate::models::post::CommunityPost {
+                    id: bp.id.clone().unwrap_or_default(),
+                    author: bp.author_text.as_ref().map(|t| crate::parser::nodes::misc::author::AuthorNode {
+                        id: None,
+                        name: t.text.clone(),
+                        url: None,
+                        thumbnails: bp.author_thumbnail.clone().unwrap_or_default(),
+                        is_verified: false,
+                        is_verified_artist: false,
+                    }),
+                    content_text: bp.content.as_ref().map(|t| t.text.clone()).unwrap_or_default(),
+                    published_time: bp.published.as_ref().map(|t| t.text.clone()),
+                    vote_count: bp.vote_count.as_ref().map(|t| t.text.clone()),
+                    comment_count: None,
+                    poll: None,
+                    images: Vec::new(),
+                    video_id: None,
+                });
+            }
+            _ => {}
+        }
+    }
     Ok(CommunityPostsResponse {
-        posts: tree
-            .find_posts()
-            .into_iter()
-            .map(|post| post.post.clone())
-            .collect(),
+        posts,
         continuation_token: tree.find_continuation_token(),
     })
 }

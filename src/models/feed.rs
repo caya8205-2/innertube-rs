@@ -2,15 +2,15 @@ use serde::{Deserialize, Serialize};
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::parser::nodes::video::VideoNode;
-use crate::parser::nodes::{ChannelCardNode, PlaylistNode};
+use crate::parser::nodes::{ChannelNode, PlaylistNode};
 
 /// Generic parsed feed matching YouTube.js `Feed<T>` mixin.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Feed<T = serde_json::Value> {
     pub items: Vec<T>,
     pub videos: Vec<VideoNode>,
-    pub channels: Vec<ChannelCardNode>,
+    pub channels: Vec<ChannelNode>,
     pub playlists: Vec<PlaylistNode>,
     pub continuation_token: Option<String>,
 }
@@ -22,12 +22,12 @@ impl<T> Feed<T> {
 }
 
 /// Generic browse feed used by legacy account and discovery destinations.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BrowseFeed {
     pub browse_id: String,
     pub videos: Vec<VideoNode>,
-    pub channels: Vec<ChannelCardNode>,
+    pub channels: Vec<ChannelNode>,
     pub playlists: Vec<PlaylistNode>,
     pub continuation_token: Option<String>,
 }

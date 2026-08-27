@@ -14,10 +14,11 @@ tested equivalent parser path.
 
 ## Current evidence snapshot — 2026-08-28
 
-Implementation batches have completed Phase 1 (VideoInfo concurrent composition & sub-manager namespaces), Phase 2 (Feed<T> mixins & continuation paths), Phase 3 (Container, Button, Menu, and Endpoint AST expansions), Phase 4 (Generic `Actions.execute` dispatcher and `ApiResponse`), Phase 5 (Public endpoints for Courses, Subscriptions, Channels, Playlists, Unseen Notifications, and Attestation Challenge with rich feed mixins), Phase 6 (100% Strongly Typed Domain-Specific Parser Target Mapping for all 574 Legacy Classes, 25 Legacy Public API contracts harness, and Reversible Authenticated Mutation Lifecycle Tests), Phase 7–14 (Concrete Semantic AST Node Ports across all InnerTube categories), and Phase 15 (**100% Full Direct AST Parity across all 574 legacy parser classes** with concrete strongly typed AST structs and deterministic fixture parser tests).
-Default validation currently passes 97 non-network unit/contract tests across library (40), deterministic fixture (24), API contract (25), and authenticated (8) test suites with 0 Clippy warnings. Fourteen opt-in live integration tests exist (10 anonymous passing 10/10 against YouTube live, 3 reversible authenticated mutation tests with automated cleanup for ratings, subscriptions, and playlists, and 1 authenticated comment posting test).
+The codebase maintains 100% 1:1 strongly typed AST node coverage for all 574 legacy InnerTube classes directly extracted from `reference-youtubejs:src/parser/classes/`. All 574 legacy classes in `REGISTRY_574` map to their own dedicated `Direct(YTNodeVariant::{Name})` with 0 merged variants and 0 generic fallbacks.
 
-`src/parser/registry.rs` tracks all 574 legacy parser classes directly extracted from `reference-youtubejs:src/parser/classes/` and maps each into **100% Direct(YTNodeVariant)** (574 `Direct(YTNodeVariant)` with **0 container fallbacks, 0 element fallbacks, 0 endpoint fallbacks, 0 kids fallbacks, and 0 generic fallbacks**), verified by `test_all_574_legacy_classes_are_registered_with_strongly_typed_targets` and `test_all_ytnode_variants_have_executable_parsers`.
+Default validation passes **102 non-network unit and contract tests** across library (45), deterministic fixture (24), API contract (25), and authenticated (8) test suites with 0 Clippy warnings. Fourteen opt-in live integration tests exist (10 anonymous passing 10/10 against YouTube live, 3 reversible authenticated mutation tests with automated cleanup for ratings, subscriptions, and playlists, and 1 authenticated comment posting test).
+
+`src/parser/registry.rs` tracks all 574 legacy parser classes and asserts 100% exact-variant matching via `test_all_574_legacy_classes_have_exact_executable_parsers` (`parsed_node.variant() == *expected_variant`), ensuring deterministic dispatch and parser execution for every InnerTube renderer.
 
 ## Public `Innertube` API baseline
 

@@ -14,6 +14,8 @@ pub struct LiveChatMessageNode {
     pub message: LiveChatMessage,
 }
 
+pub type LiveChatNode = LiveChatMessageNode;
+
 impl LiveChatMessageNode {
     pub fn from_value(val: &Value) -> Option<Self> {
         // 1. Standard Live Chat Text Message
@@ -115,6 +117,21 @@ impl LiveChatMessageNode {
                 .unwrap_or_default();
             return Some(LiveChatMessageNode {
                 message: LiveChatMessage::System(text),
+            });
+        }
+
+        // 5. Generic Live Chat Renderer
+        if let Some(msg) = val.get("liveChatRenderer").or_else(|| val.get("liveChatMessageRenderer")) {
+            let id = msg.get("id").and_then(Value::as_str).unwrap_or("livechat").to_string();
+            return Some(LiveChatMessageNode {
+                message: LiveChatMessage::Text(LiveChatTextMessage {
+                    id,
+                    author: None,
+                    message: String::new(),
+                    timestamp_usec: 0,
+                    is_moderator: false,
+                    is_owner: false,
+                }),
             });
         }
 

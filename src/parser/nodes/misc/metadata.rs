@@ -78,6 +78,39 @@ impl ViewCountNode {
     }
 }
 
+/// Strongly typed VideoViewCount AST node (`videoViewCountRenderer`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoViewCountNode {
+    pub view_count: String,
+    pub short_view_count: Option<String>,
+}
+
+impl VideoViewCountNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("videoViewCountRenderer").unwrap_or(val);
+        let view_count = node
+            .get("viewCount")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text)
+            .or_else(|| {
+                node.get("viewCount")
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string)
+            })?;
+
+        let short_view_count = node
+            .get("shortViewCount")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
+
+        Some(Self {
+            view_count,
+            short_view_count,
+        })
+    }
+}
+
 /// Strongly typed VideoOwner AST node (`videoOwnerRenderer`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

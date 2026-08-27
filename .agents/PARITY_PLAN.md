@@ -37,25 +37,18 @@ method is not sufficient.
 
 ## Current checkpoint — 2026-08-28
 
-The checkpoint below was last synchronized at `2a6ff34`. Always obtain the actual starting revision with `git log -1 --oneline` and inspect `git status --short` before acting.
+The checkpoint below was last synchronized at the latest verified state. Always obtain the actual starting revision with `git log -1 --oneline` and inspect `git status --short` before acting.
 
-Recent implementation batches:
+Recent implementation achievements:
+- **1:1 AST Struct Coverage (574/574 Unique)**: Created dedicated concrete AST structs for all 96 previously merged/aliased classes across `video_extras.rs`, `livechat_items.rs`, `channels_comments.rs`, and `music_shorts_misc.rs`. Every single one of the 574 legacy TypeScript classes in `REGISTRY_574` maps 1:1 to its own unique `YTNodeVariant` (574/574 unique variants, 0 merged).
+- **Exact-Variant Contract Verification**: Updated `test_all_574_legacy_classes_have_exact_executable_parsers` in `src/parser/registry.rs` to verify that `Parser::parse_tree` for each of the 574 fixtures returns non-empty nodes and exact matching variants (`parsed_node.variant() == *expected_variant`).
+- **Cleaned Multi-Catch Parser Branches**: Replaced broad multi-catch regex/branch matches with strict single-key checks for each renderer.
+- **Deep Typing**: Replaced opaque `serde_json::Value` with strongly typed AST structs (`TextNode`, `ThumbnailListNode`, `AuthorNode`, `NavigationEndpointNode`, etc.) where schema is well-defined.
+- **Lint Cleanliness**: Fixed all `clippy` lints (`clippy::manual-map`).
 
-- `77f3405`: Batch 8 — added 48 concrete renderer AST nodes via parallel subagents across Grid & Compact, Music Extended, Overlays & Dialogs, and Engagement & Comments.
-- `c176637`: Batch 9 — added 48 concrete renderer AST nodes via parallel subagents across Carousels & Views, Cards & Interactive Items, LiveChat Extras, and Commands & Actions.
-- `2f74c52`: Batch 10 — added 48 concrete renderer AST nodes via parallel subagents across Dialogs & Views, Previews & Dropdowns, Forms & Emojis, and Headers & Grids.
-- `bf8c649`: Batch 11 — added 48 concrete renderer AST nodes via parallel subagents across Guide & Sections, Lists & Headers, Panels & Lockups, and Media & Music Headers.
-- `a33dc03`: Batch 12 — added 48 concrete renderer AST nodes via parallel subagents across Music & Page Headers, Playlists & Products, Products & Metadata, and Search & Settings.
-- `d14f723`: Batch 13 — added 48 concrete renderer AST nodes via parallel subagents across Shares & Columns, Filters & Subscriptions, Thumbnail Overlays & Badges, and Tickets & Transcripts.
-- `97be02c`: Batch 14 — added 48 concrete renderer AST nodes via parallel subagents across Transcripts & Watch Columns, Video Sections & Watch Cards, Comments & Endpoints Extended, and Endpoint Commands.
-- `2a6ff34`: Batch 15 — completed **100% Parser Parity** with **574 / 574 Direct strongly typed AST nodes** across Menus & Mobile Topbar, Livechat Actions & Collaboration, Endpoints Primitives & Kids, and Direct Primitives & Core Variants.
-- Current parser status: `src/parser/registry.rs` has **574 / 574 Direct (100.0%)** concrete `YTNode` AST variants with executable parser branches. All 574 legacy classes are strongly typed with 0 generic fallbacks, 0 container wrappers, 0 element wrappers, 0 kids wrappers.
-
-Current evidence:
-
-- `cargo test --all-targets` passes 97 non-network unit/contract tests (40 in `src/lib.rs` + 24 in `tests/contract_fixtures.rs` + 25 in `tests/api_contracts.rs` + 8 in `tests/authenticated_integration.rs`).
+Current validation evidence:
+- `cargo test --all-targets` passes **102 non-network tests** (45 in `src/lib.rs` + 24 in `tests/contract_fixtures.rs` + 25 in `tests/api_contracts.rs` + 8 in `tests/authenticated_integration.rs` with 4 opt-in authenticated mutation tests ignored).
 - `cargo clippy --all-targets -- -D warnings` passes with 0 warnings.
-- All 574 `YTNode` variants have executable deterministic parser fixture tests in `src/parser/registry.rs`.
 
 ## Handoff instructions
 

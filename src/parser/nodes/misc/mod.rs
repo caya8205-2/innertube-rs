@@ -7,6 +7,7 @@ pub mod author;
 pub mod button;
 pub mod cards;
 pub mod carousels;
+pub mod channels_comments;
 pub mod clip;
 pub mod dialogs;
 pub mod elements_views;
@@ -19,12 +20,14 @@ pub mod interactive_cards;
 pub mod kids;
 pub mod lists;
 pub mod live_actions;
+pub mod livechat_items;
 pub mod markers;
 pub mod media_live;
 pub mod menu;
 pub mod menus_mweb;
 pub mod metadata;
 pub mod music_nav;
+pub mod music_shorts_misc;
 pub mod navigation;
 pub mod navigation_ext;
 pub mod overlay;
@@ -42,6 +45,7 @@ pub mod shorts_tabs;
 pub mod text;
 pub mod thumbnail;
 pub mod title_views;
+pub mod video_extras;
 pub mod video_watch;
 pub mod views;
 pub mod watch_ext;
@@ -148,7 +152,7 @@ pub use menus_mweb::{
     MultiPageMenuSectionNode, PivotBarItemNode, PivotBarNode, SimpleMenuHeaderNode,
     TopbarMenuButtonNode,
 };
-pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, ViewCountNode};
+pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, VideoViewCountNode, ViewCountNode};
 pub use music_nav::{
     MusicResponsiveListItemFixedColumnNode, MusicResponsiveListItemFlexColumnNode,
     MusicTastebuilderShelfNode, MusicTastebuilderShelfThumbnailNode, NotificationActionNode,
@@ -247,5 +251,49 @@ pub use ypc_commerce::{
     VideoDescriptionTranscriptSectionNode, VideoDescriptionYouchatSectionViewNode,
     VideoMetadataCarouselViewNode, ViewCountFactoidNode, WatchCardRichHeaderNode,
     WatchCardSectionSequenceNode, WatchNextEndScreenNode,
+};
+pub use channels_comments::{
+    AboutChannelNode, AboutChannelViewNode, AccountChannelNode, ActiveAccountHeaderNode,
+    AuthorCommentBadgeNode, ChannelAgeGateNode, ChannelExternalLinkViewNode,
+    ChannelFeaturedContentNode, ChannelHeaderLinksNode, ChannelHeaderLinksViewNode,
+    ChannelMobileHeaderNode, ChannelNode, ChannelOptionsNode, ChannelSwitcherHeaderNode,
+    ChannelTaglineNode, ChannelThumbnailWithLinkNode, CommentKeysNode, CommentRepliesNode,
+    CommentViewNode, CommentsContinuationNode, CommentsEntryPointTeaserNode, CommentsSimpleboxNode,
+    HeaderLinkNode, MemberBadgeNode, PdgCommentChipNode, SponsorCommentBadgeNode,
+    TopicChannelDetailsNode,
+};
+pub use livechat_items::{
+    LiveChatAuthorBadgeNode, LiveChatBannerChatSummaryNode, LiveChatBannerHeaderNode,
+    LiveChatBannerPollNode, LiveChatBannerRedirectNode, LiveChatHeaderNode,
+    LiveChatItemBumperViewNode, LiveChatMessageInputNode, LiveChatPaidMessageNode,
+    LiveChatParticipantNode, LiveChatPlaceholderItemNode, LiveChatPollChoiceNode,
+    LiveChatProductItemNode, LiveChatRestrictedParticipationNode,
+    LiveChatSponsorshipsGiftPurchaseAnnouncementNode,
+    LiveChatSponsorshipsGiftRedemptionAnnouncementNode, LiveChatSponsorshipsHeaderNode,
+    LiveChatTextMessageNode, LiveChatTickerPaidMessageItemNode, LiveChatTickerPaidStickerItemNode,
+    LiveChatTickerSponsorItemNode, LiveChatTickerThumbnailNode,
+    MarkChatItemsByAuthorAsDeletedActionNode, ShowLiveChatActionPanelActionNode,
+    ShowLiveChatDialogActionNode, ShowLiveChatTooltipCommandNode,
+};
+pub use music_shorts_misc::{
+    AlertWithButtonNode, AutomixPreviewVideoNode, BackstagePostNode, BackstagePostThreadNode,
+    ChangeEngagementPanelVisibilityActionNode, CompositeVideoPrimaryInfoNode, CreatorHeartViewNode,
+    EmergencyOneboxNode, KidsCategoryTabNode, MusicDownloadStateBadgeNode, MusicElementHeaderNode,
+    MusicMenuItemDividerNode, MusicMultiSelectMenuItemNode, MusicMultiSelectMenuNode,
+    MusicSortFilterButtonNode, MusicThumbnailNode, PlayerLiveStoryboardSpecNode, PollHeaderNode,
+    ReelItemNode, ReelPlayerHeaderNode, ReelPlayerOverlayNode, SharedPostNode,
+    ShortsLockupViewNode, ShowEngagementPanelEndpointNode, SingleActionEmergencySupportNode,
+};
+pub use video_extras::{
+    BrowserMediaSessionNode, ChannelVideoPlayerNode, ChildVideoNode, EndScreenVideoNode,
+    ExpandableVideoDescriptionBodyNode, FormatAudioTrackNode, FormatCaptionTrackNode,
+    FormatColorInfoNode, FormatNode, FormatRangeNode, PlayerAnnotationsExpandedNode,
+    PlayerAnnotationsFeaturedChannelNode, PlayerCaptchaViewNode, PlayerControlsOverlayNode,
+    PlayerLegacyDesktopYpcOfferNode, PlayerMicroformatChannelNode, PlayerMicroformatEmbedNode,
+    PlayerMicroformatNode, PlayerOverflowNode, PlayerOverlayAutoplayNode,
+    PlayerOverlayVideoDetailsNode, SlimVideoMetadataNode, VideoAttributeViewNode, VideoCardNode,
+    VideoDescriptionHeaderNode, VideoDetailsNode, VideoInfoCardContentNode,
+    VideoSummaryContentViewNode, VideoSummaryParagraphViewNode, WatchCardCompactVideoNode,
+    WatchCardHeroVideoNode,
 };
 

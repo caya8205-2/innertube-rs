@@ -55,7 +55,7 @@ pub trait NodeListExt {
     fn find_shorts(&self) -> Vec<&ShortNode>;
     fn find_playlists(&self) -> Vec<&PlaylistNode>;
     fn find_playlist_videos(&self) -> Vec<&PlaylistVideoNode>;
-    fn find_channels(&self) -> Vec<&ChannelCardNode>;
+    fn find_channels(&self) -> Vec<&ChannelNode>;
     fn find_music_items(&self) -> Vec<&MusicResponsiveListItemNode>;
     fn find_comments(&self) -> Vec<&CommentThreadNode>;
     fn find_posts(&self) -> Vec<&PostNode>;
@@ -103,10 +103,10 @@ impl NodeListExt for [YTNode] {
             .collect()
     }
 
-    fn find_channels(&self) -> Vec<&ChannelCardNode> {
+    fn find_channels(&self) -> Vec<&ChannelNode> {
         self.iter()
             .filter_map(|n| match n {
-                YTNode::ChannelCard(c) => Some(c),
+                YTNode::Channel(c) => Some(c),
                 _ => None,
             })
             .collect()

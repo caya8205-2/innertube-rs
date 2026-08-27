@@ -29,10 +29,17 @@ fn test_fixture_search_response_parsing() {
                                             }
                                         },
                                         {
-                                            "reelItemRenderer": {
+                                            "shortsLockupViewModel": {
                                                 "videoId": "short_abc",
-                                                "headline": { "simpleText": "Rickroll Short" },
-                                                "viewCountText": { "simpleText": "10M views" }
+                                                "overlayMetadata": {
+                                                    "primaryText": { "content": "Rickroll Short" },
+                                                    "secondaryText": { "content": "10M views" }
+                                                },
+                                                "onTap": {
+                                                    "innertubeCommand": {
+                                                        "reelWatchEndpoint": { "videoId": "short_abc" }
+                                                    }
+                                                }
                                             }
                                         },
                                         {
@@ -73,11 +80,14 @@ fn test_fixture_search_response_parsing() {
     assert_eq!(nodes.find_videos()[0].id, "dQw4w9WgXcQ");
     assert_eq!(nodes.find_videos()[0].title, "Never Gonna Give You Up");
 
-    assert_eq!(nodes.find_shorts().len(), 1);
-    assert_eq!(nodes.find_shorts()[0].id, "short_abc");
+    let short_node = nodes.iter().find_map(|n| match n {
+        YTNode::ShortsLockupView(s) => Some(s),
+        _ => None,
+    }).expect("ShortsLockupView should be parsed");
+    assert_eq!(short_node.overlay_primary_text.as_ref().map(|t| t.text.as_str()), Some("Rickroll Short"));
 
     assert_eq!(nodes.find_channels().len(), 1);
-    assert_eq!(nodes.find_channels()[0].id, "UCuAXFkgsw1L7xaCfnd5JJOw");
+    assert_eq!(nodes.find_channels()[0].id.as_deref(), Some("UCuAXFkgsw1L7xaCfnd5JJOw"));
 
     assert_eq!(nodes.find_playlists().len(), 1);
     assert_eq!(nodes.find_playlists()[0].id, "PL_rick_greatest_hits");
@@ -147,13 +157,12 @@ fn test_fixture_channel_tabs_and_header_parsing() {
     assert_eq!(nodes.find_tabs()[2].title, "Community");
 
     let header = nodes.iter().find_map(|n| match n {
-        YTNode::ChannelHeader(h) => Some(h),
+        YTNode::C4TabbedHeader(h) => Some(h),
         _ => None,
-    }).expect("ChannelHeader should be parsed");
+    }).expect("C4TabbedHeader should be parsed");
 
-    assert_eq!(header.id, "UCuAXFkgsw1L7xaCfnd5JJOw");
-    assert_eq!(header.title, "Rick Astley");
-    assert_eq!(header.subscriber_count.as_deref(), Some("4.5M subscribers"));
+    assert_eq!(header.channel_id.as_deref(), Some("UCuAXFkgsw1L7xaCfnd5JJOw"));
+    assert_eq!(header.subscribers.as_ref().map(|t| t.text.as_str()), Some("4.5M subscribers"));
 }
 
 #[test]
@@ -212,9 +221,12 @@ fn test_fixture_playlist_response_parsing() {
     });
 
     let nodes = Parser::parse_tree(&fixture);
-    assert_eq!(nodes.find_playlists().len(), 1);
-    assert_eq!(nodes.find_playlists()[0].title, "Chill Music 2026");
-    assert_eq!(nodes.find_playlists()[0].video_count, Some(50));
+    let header = nodes.iter().find_map(|n| match n {
+        YTNode::PlaylistHeader(h) => Some(h),
+        _ => None,
+    }).expect("PlaylistHeader should be parsed");
+    assert_eq!(header.title.as_ref().map(|t| t.text.as_str()), Some("Chill Music 2026"));
+    assert_eq!(header.num_videos.as_ref().map(|t| t.text.as_str()), Some("50 videos"));
 
     assert_eq!(nodes.find_playlist_videos().len(), 2);
     assert_eq!(nodes.find_playlist_videos()[0].id, "vid_1");
@@ -324,7 +336,7 @@ fn test_fixture_comments_and_posts_parsing() {
                         }
                     },
                     {
-                        "backstagePostRenderer": {
+                        "postRenderer": {
                             "postId": "post_789",
                             "authorText": { "simpleText": "Creator" },
                             "contentText": { "runs": [{ "text": "New release coming tomorrow!" }] },
@@ -1012,9 +1024,9 @@ fn test_fixture_search_refinements_post_media_and_channel_submenus() {
 #[test]
 fn test_fixture_engagement_panel_and_navigation_actions() {
     let show_panel_json = json!({
-        "showEngagementPanelEndpoint": {
+        "showEngagementPanelAction": {
             "panelIdentifier": "engagement-panel-structured-description",
-            "engagementPanel": { "title": "Description" }
+            "content": { "title": "Description" }
         }
     });
     let show_panel_node = YTNode::parse(&show_panel_json).expect("ShowEngagementPanelActionNode should parse");

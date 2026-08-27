@@ -14,6 +14,8 @@ pub mod post;
 pub mod short;
 pub mod video;
 
+use crate::parser::registry::YTNodeVariant;
+
 pub use channel::{
     ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode, ChannelMetadataNode,
     ChannelSubMenuNode,
@@ -165,6 +167,105 @@ pub use misc::{
     EmojiRunNode, KidsBlocklistPickerItemNode, KidsBlocklistPickerNode, RendererContextNode,
     ShareEntityServiceEndpointNode, SignalServiceEndpointNode, UnsubscribeEndpointNode,
     WatchNextEndpointNode,
+
+    BrowserMediaSessionNode,
+    ChannelVideoPlayerNode,
+    ChildVideoNode,
+    EndScreenVideoNode,
+    ExpandableVideoDescriptionBodyNode,
+    PlayerAnnotationsExpandedNode,
+    PlayerCaptchaViewNode,
+    PlayerControlsOverlayNode,
+    PlayerLegacyDesktopYpcOfferNode,
+    PlayerMicroformatNode,
+    PlayerOverflowNode,
+    PlayerOverlayAutoplayNode,
+    PlayerOverlayVideoDetailsNode,
+    SlimVideoMetadataNode,
+    VideoAttributeViewNode,
+    VideoCardNode,
+    VideoDescriptionHeaderNode,
+    VideoInfoCardContentNode,
+    VideoSummaryContentViewNode,
+    VideoSummaryParagraphViewNode,
+    WatchCardCompactVideoNode,
+    WatchCardHeroVideoNode,
+    FormatNode,
+    VideoDetailsNode,
+    LiveChatAuthorBadgeNode,
+    LiveChatHeaderNode,
+    LiveChatMessageInputNode,
+    LiveChatParticipantNode,
+    LiveChatBannerChatSummaryNode,
+    LiveChatBannerHeaderNode,
+    LiveChatBannerRedirectNode,
+    LiveChatItemBumperViewNode,
+    LiveChatPaidMessageNode,
+    LiveChatPlaceholderItemNode,
+    LiveChatProductItemNode,
+    LiveChatRestrictedParticipationNode,
+    LiveChatSponsorshipsGiftPurchaseAnnouncementNode,
+    LiveChatSponsorshipsGiftRedemptionAnnouncementNode,
+    LiveChatSponsorshipsHeaderNode,
+    LiveChatTextMessageNode,
+    LiveChatTickerPaidMessageItemNode,
+    LiveChatTickerPaidStickerItemNode,
+    LiveChatTickerSponsorItemNode,
+    ShowLiveChatActionPanelActionNode,
+    ShowLiveChatDialogActionNode,
+    ShowLiveChatTooltipCommandNode,
+    MarkChatItemsByAuthorAsDeletedActionNode,
+    LiveChatBannerPollNode,
+    AboutChannelNode,
+    AboutChannelViewNode,
+    AccountChannelNode,
+    ChannelNode,
+    ChannelAgeGateNode,
+    ChannelExternalLinkViewNode,
+    ChannelFeaturedContentNode,
+    ChannelOptionsNode,
+    ChannelTaglineNode,
+    ChannelThumbnailWithLinkNode,
+    TopicChannelDetailsNode,
+    ActiveAccountHeaderNode,
+    ChannelHeaderLinksNode,
+    ChannelHeaderLinksViewNode,
+    ChannelMobileHeaderNode,
+    ChannelSwitcherHeaderNode,
+    AuthorCommentBadgeNode,
+    CommentRepliesNode,
+    CommentViewNode,
+    CommentsEntryPointTeaserNode,
+    CommentsSimpleboxNode,
+    PdgCommentChipNode,
+    SponsorCommentBadgeNode,
+    CommentsContinuationNode,
+    MusicDownloadStateBadgeNode,
+    MusicElementHeaderNode,
+    MusicSortFilterButtonNode,
+    MusicThumbnailNode,
+    MusicMenuItemDividerNode,
+    MusicMultiSelectMenuNode,
+    MusicMultiSelectMenuItemNode,
+    BackstagePostNode,
+    BackstagePostThreadNode,
+    SharedPostNode,
+    ReelItemNode,
+    ReelPlayerHeaderNode,
+    ReelPlayerOverlayNode,
+    ShortsLockupViewNode,
+    AlertWithButtonNode,
+    CompositeVideoPrimaryInfoNode,
+    EmergencyOneboxNode,
+    SingleActionEmergencySupportNode,
+    PlayerLiveStoryboardSpecNode,
+    PollHeaderNode,
+    ChangeEngagementPanelVisibilityActionNode,
+    ShowEngagementPanelEndpointNode,
+    CreatorHeartViewNode,
+    KidsCategoryTabNode,
+    AutomixPreviewVideoNode,
+    VideoViewCountNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
@@ -712,9 +813,703 @@ pub enum YTNode {
     Text(TextNode),
     TextRun(TextRunNode),
     Thumbnail(ThumbnailNode),
+    AutomixPreviewVideo(AutomixPreviewVideoNode),
+    VideoViewCount(VideoViewCountNode),
+    // Phase 16: Full 574 Unique AST Nodes
+    BrowserMediaSession(BrowserMediaSessionNode),
+    ChannelVideoPlayer(ChannelVideoPlayerNode),
+    ChildVideo(ChildVideoNode),
+    EndScreenVideo(EndScreenVideoNode),
+    ExpandableVideoDescriptionBody(ExpandableVideoDescriptionBodyNode),
+    PlayerAnnotationsExpanded(PlayerAnnotationsExpandedNode),
+    PlayerCaptchaView(PlayerCaptchaViewNode),
+    PlayerControlsOverlay(PlayerControlsOverlayNode),
+    PlayerLegacyDesktopYpcOffer(PlayerLegacyDesktopYpcOfferNode),
+    PlayerMicroformat(PlayerMicroformatNode),
+    PlayerOverflow(PlayerOverflowNode),
+    PlayerOverlayAutoplay(PlayerOverlayAutoplayNode),
+    PlayerOverlayVideoDetails(PlayerOverlayVideoDetailsNode),
+    SlimVideoMetadata(SlimVideoMetadataNode),
+    VideoAttributeView(VideoAttributeViewNode),
+    VideoCard(VideoCardNode),
+    VideoDescriptionHeader(VideoDescriptionHeaderNode),
+    VideoInfoCardContent(VideoInfoCardContentNode),
+    VideoSummaryContentView(VideoSummaryContentViewNode),
+    VideoSummaryParagraphView(VideoSummaryParagraphViewNode),
+    WatchCardCompactVideo(WatchCardCompactVideoNode),
+    WatchCardHeroVideo(WatchCardHeroVideoNode),
+    Format(FormatNode),
+    VideoDetails(VideoDetailsNode),
+    LiveChatAuthorBadge(LiveChatAuthorBadgeNode),
+    LiveChatHeader(LiveChatHeaderNode),
+    LiveChatMessageInput(LiveChatMessageInputNode),
+    LiveChatParticipant(LiveChatParticipantNode),
+    LiveChatBannerChatSummary(LiveChatBannerChatSummaryNode),
+    LiveChatBannerHeader(LiveChatBannerHeaderNode),
+    LiveChatBannerRedirect(LiveChatBannerRedirectNode),
+    LiveChatItemBumperView(LiveChatItemBumperViewNode),
+    LiveChatPaidMessage(LiveChatPaidMessageNode),
+    LiveChatPlaceholderItem(LiveChatPlaceholderItemNode),
+    LiveChatProductItem(LiveChatProductItemNode),
+    LiveChatRestrictedParticipation(LiveChatRestrictedParticipationNode),
+    LiveChatSponsorshipsGiftPurchaseAnnouncement(LiveChatSponsorshipsGiftPurchaseAnnouncementNode),
+    LiveChatSponsorshipsGiftRedemptionAnnouncement(LiveChatSponsorshipsGiftRedemptionAnnouncementNode),
+    LiveChatSponsorshipsHeader(LiveChatSponsorshipsHeaderNode),
+    LiveChatTextMessage(LiveChatTextMessageNode),
+    LiveChatTickerPaidMessageItem(LiveChatTickerPaidMessageItemNode),
+    LiveChatTickerPaidStickerItem(LiveChatTickerPaidStickerItemNode),
+    LiveChatTickerSponsorItem(LiveChatTickerSponsorItemNode),
+    ShowLiveChatActionPanelAction(ShowLiveChatActionPanelActionNode),
+    ShowLiveChatDialogAction(ShowLiveChatDialogActionNode),
+    ShowLiveChatTooltipCommand(ShowLiveChatTooltipCommandNode),
+    MarkChatItemsByAuthorAsDeletedAction(MarkChatItemsByAuthorAsDeletedActionNode),
+    LiveChatBannerPoll(LiveChatBannerPollNode),
+    AboutChannel(AboutChannelNode),
+    AboutChannelView(AboutChannelViewNode),
+    AccountChannel(AccountChannelNode),
+    Channel(ChannelNode),
+    ChannelAgeGate(ChannelAgeGateNode),
+    ChannelExternalLinkView(ChannelExternalLinkViewNode),
+    ChannelFeaturedContent(ChannelFeaturedContentNode),
+    ChannelOptions(ChannelOptionsNode),
+    ChannelTagline(ChannelTaglineNode),
+    ChannelThumbnailWithLink(ChannelThumbnailWithLinkNode),
+    TopicChannelDetails(TopicChannelDetailsNode),
+    ActiveAccountHeader(ActiveAccountHeaderNode),
+    ChannelHeaderLinks(ChannelHeaderLinksNode),
+    ChannelHeaderLinksView(ChannelHeaderLinksViewNode),
+    ChannelMobileHeader(ChannelMobileHeaderNode),
+    ChannelSwitcherHeader(ChannelSwitcherHeaderNode),
+    AuthorCommentBadge(AuthorCommentBadgeNode),
+    CommentReplies(CommentRepliesNode),
+    CommentView(CommentViewNode),
+    CommentsEntryPointTeaser(CommentsEntryPointTeaserNode),
+    CommentsSimplebox(CommentsSimpleboxNode),
+    PdgCommentChip(PdgCommentChipNode),
+    SponsorCommentBadge(SponsorCommentBadgeNode),
+    CommentsContinuation(CommentsContinuationNode),
+    MusicDownloadStateBadge(MusicDownloadStateBadgeNode),
+    MusicElementHeader(MusicElementHeaderNode),
+    MusicSortFilterButton(MusicSortFilterButtonNode),
+    MusicThumbnail(MusicThumbnailNode),
+    MusicMenuItemDivider(MusicMenuItemDividerNode),
+    MusicMultiSelectMenu(MusicMultiSelectMenuNode),
+    MusicMultiSelectMenuItem(MusicMultiSelectMenuItemNode),
+    BackstagePost(BackstagePostNode),
+    BackstagePostThread(BackstagePostThreadNode),
+    SharedPost(SharedPostNode),
+    ReelItem(ReelItemNode),
+    ReelPlayerHeader(ReelPlayerHeaderNode),
+    ReelPlayerOverlay(ReelPlayerOverlayNode),
+    ShortsLockupView(ShortsLockupViewNode),
+    AlertWithButton(AlertWithButtonNode),
+    CompositeVideoPrimaryInfo(CompositeVideoPrimaryInfoNode),
+    EmergencyOnebox(EmergencyOneboxNode),
+    SingleActionEmergencySupport(SingleActionEmergencySupportNode),
+    PlayerLiveStoryboardSpec(PlayerLiveStoryboardSpecNode),
+    PollHeader(PollHeaderNode),
+    ChangeEngagementPanelVisibilityAction(ChangeEngagementPanelVisibilityActionNode),
+    ShowEngagementPanelEndpoint(ShowEngagementPanelEndpointNode),
+    CreatorHeartView(CreatorHeartViewNode),
+    KidsCategoryTab(KidsCategoryTabNode),
+
 }
 
 impl YTNode {
+
+    /// Return the corresponding `YTNodeVariant` for this `YTNode` instance.
+    pub fn variant(&self) -> YTNodeVariant {
+        match self {
+            YTNode::Video(_) => YTNodeVariant::Video,
+            YTNode::VideoPrimaryInfo(_) => YTNodeVariant::VideoPrimaryInfo,
+            YTNode::VideoSecondaryInfo(_) => YTNodeVariant::VideoSecondaryInfo,
+            YTNode::Short(_) => YTNodeVariant::ReelItem,
+            YTNode::ReelShelf(_) => YTNodeVariant::ReelShelf,
+            YTNode::Playlist(_) => YTNodeVariant::Playlist,
+            YTNode::PlaylistVideo(_) => YTNodeVariant::PlaylistVideo,
+            YTNode::PlaylistPanel(_) => YTNodeVariant::PlaylistPanel,
+            YTNode::PlaylistPanelVideo(_) => YTNodeVariant::PlaylistPanelVideo,
+            YTNode::PlaylistMetadata(_) => YTNodeVariant::PlaylistMetadata,
+            YTNode::PlaylistSidebarPrimaryInfo(_) => YTNodeVariant::PlaylistSidebarPrimaryInfo,
+            YTNode::PlaylistSidebarSecondaryInfo(_) => YTNodeVariant::PlaylistSidebarSecondaryInfo,
+            YTNode::ChannelHeader(_) => YTNodeVariant::C4TabbedHeader,
+            YTNode::ChannelCard(_) => YTNodeVariant::Channel,
+            YTNode::ChannelAboutFullMetadata(_) => YTNodeVariant::ChannelAboutFullMetadata,
+            YTNode::ChannelMetadata(_) => YTNodeVariant::ChannelMetadata,
+            YTNode::ChannelSubMenu(_) => YTNodeVariant::ChannelSubMenu,
+            YTNode::MusicItem(_) => YTNodeVariant::MusicResponsiveListItem,
+            YTNode::MusicCard(_) => YTNodeVariant::MusicTwoRowItem,
+            YTNode::MusicDescriptionShelf(_) => YTNodeVariant::MusicDescriptionShelf,
+            YTNode::MusicHeader(_) => YTNodeVariant::MusicHeader,
+            YTNode::MusicInlineBadge(_) => YTNodeVariant::MusicInlineBadge,
+            YTNode::MusicNavigationButton(_) => YTNodeVariant::MusicNavigationButton,
+            YTNode::MusicQueue(_) => YTNodeVariant::MusicQueue,
+            YTNode::MusicPlayButton(_) => YTNodeVariant::MusicPlayButton,
+            YTNode::Comment(_) => YTNodeVariant::CommentView,
+            YTNode::CommentThread(_) => YTNodeVariant::CommentThread,
+            YTNode::CreatorHeart(_) => YTNodeVariant::CreatorHeart,
+            YTNode::Post(_) => YTNodeVariant::Post,
+            YTNode::BackstageImage(_) => YTNodeVariant::BackstageImage,
+            YTNode::PostMultiImage(_) => YTNodeVariant::PostMultiImage,
+            YTNode::Continuation(_) => YTNodeVariant::ContinuationItem,
+            YTNode::SectionList(_) => YTNodeVariant::SectionList,
+            YTNode::ItemSection(_) => YTNodeVariant::ItemSection,
+            YTNode::RichGrid(_) => YTNodeVariant::RichGrid,
+            YTNode::Shelf(_) => YTNodeVariant::Shelf,
+            YTNode::RichShelf(_) => YTNodeVariant::RichShelf,
+            YTNode::Tab(_) => YTNodeVariant::Tab,
+            YTNode::ChipCloud(_) => YTNodeVariant::ChipCloud,
+            YTNode::ChipCloudChip(_) => YTNodeVariant::ChipCloudChip,
+            YTNode::FeedFilterChipBar(_) => YTNodeVariant::FeedFilterChipBar,
+            YTNode::LiveChat(_) => YTNodeVariant::LiveChat,
+            YTNode::LiveChatPaidSticker(_) => YTNodeVariant::LiveChatPaidSticker,
+            YTNode::LiveChatMembershipItem(_) => YTNodeVariant::LiveChatMembershipItem,
+            YTNode::LiveChatViewerEngagementMessage(_) => YTNodeVariant::LiveChatViewerEngagementMessage,
+            YTNode::LiveChatBanner(_) => YTNodeVariant::LiveChatBanner,
+            YTNode::AddChatItemAction(_) => YTNodeVariant::AddChatItemAction,
+            YTNode::MarkChatItemAsDeletedAction(_) => YTNodeVariant::MarkChatItemAsDeletedAction,
+            YTNode::LiveChatAutoModMessage(_) => YTNodeVariant::LiveChatAutoModMessage,
+            YTNode::LiveChatModeChangeMessage(_) => YTNodeVariant::LiveChatModeChangeMessage,
+            YTNode::ShowEngagementPanelAction(_) => YTNodeVariant::ShowEngagementPanelEndpoint,
+            YTNode::UpdateEngagementPanelAction(_) => YTNodeVariant::UpdateEngagementPanelAction,
+            YTNode::NavigateAction(_) => YTNodeVariant::NavigationEndpoint,
+            YTNode::ShowLiveChatAction(_) => YTNodeVariant::ShowLiveChatDialogAction,
+            YTNode::Button(_) => YTNodeVariant::Button,
+            YTNode::ToggleButton(_) => YTNodeVariant::ToggleButton,
+            YTNode::Menu(_) => YTNodeVariant::Menu,
+            YTNode::DidYouMean(_) => YTNodeVariant::DidYouMean,
+            YTNode::ShowingResultsFor(_) => YTNodeVariant::ShowingResultsFor,
+            YTNode::SearchSubMenu(_) => YTNodeVariant::SearchSubMenu,
+            YTNode::SearchFilterGroup(_) => YTNodeVariant::SearchFilterGroup,
+            YTNode::SearchFilter(_) => YTNodeVariant::SearchFilter,
+            YTNode::Endscreen(_) => YTNodeVariant::Endscreen,
+            YTNode::EndscreenElement(_) => YTNodeVariant::EndscreenElement,
+            YTNode::MetadataBadge(_) => YTNodeVariant::MetadataBadge,
+            YTNode::ViewCount(_) => YTNodeVariant::VideoViewCount,
+            YTNode::VideoOwner(_) => YTNodeVariant::VideoOwner,
+            YTNode::MicroformatData(_) => YTNodeVariant::MicroformatData,
+            YTNode::Alert(_) => YTNodeVariant::Alert,
+            YTNode::Card(_) => YTNodeVariant::Card,
+            YTNode::Clarification(_) => YTNodeVariant::SingleActionEmergencySupport,
+            YTNode::Poll(_) => YTNodeVariant::Poll,
+            YTNode::PlayerOverlay(_) => YTNodeVariant::PlayerOverlay,
+            YTNode::PlayerStoryboardSpec(_) => YTNodeVariant::PlayerStoryboardSpec,
+            YTNode::TimedMarkerDecoration(_) => YTNodeVariant::TimedMarkerDecoration,
+            YTNode::PlayerCaptionsTracklist(_) => YTNodeVariant::PlayerCaptionsTracklist,
+            YTNode::PlayerErrorMessage(_) => YTNodeVariant::PlayerErrorMessage,
+            YTNode::PlayerLegacyDesktopYpcTrailer(_) => YTNodeVariant::PlayerLegacyDesktopYpcTrailer,
+            YTNode::ProfileColumn(_) => YTNodeVariant::ProfileColumn,
+            YTNode::ProfileColumnUserInfo(_) => YTNodeVariant::ProfileColumnUserInfo,
+            YTNode::VerticalList(_) => YTNodeVariant::VerticalList,
+            YTNode::Chapter(_) => YTNodeVariant::Chapter,
+            YTNode::Heatmap(_) => YTNodeVariant::Heatmap,
+            YTNode::MacroMarkersList(_) => YTNodeVariant::MacroMarkersList,
+            YTNode::MacroMarkersListItem(_) => YTNodeVariant::MacroMarkersListItem,
+            YTNode::SearchRefinementCard(_) => YTNodeVariant::SearchRefinementCard,
+            YTNode::HorizontalCardList(_) => YTNodeVariant::HorizontalCardList,
+            YTNode::ExpandableTab(_) => YTNodeVariant::ExpandableTab,
+            YTNode::Notification(_) => YTNodeVariant::Notification,
+            YTNode::HistorySuggestion(_) => YTNodeVariant::HistorySuggestion,
+            YTNode::AccountSectionList(_) => YTNodeVariant::AccountSectionList,
+            YTNode::AccountItem(_) => YTNodeVariant::AccountItem,
+            YTNode::AccountItemSection(_) => YTNodeVariant::AccountItemSection,
+            YTNode::AccountItemSectionHeader(_) => YTNodeVariant::AccountItemSectionHeader,
+            YTNode::KidsCategoriesHeader(_) => YTNodeVariant::KidsCategoriesHeader,
+            YTNode::KidsHomeScreen(_) => YTNodeVariant::KidsHomeScreen,
+            YTNode::ClipCreation(_) => YTNodeVariant::ClipCreation,
+            YTNode::ClipCreationScrubber(_) => YTNodeVariant::ClipCreationScrubber,
+            YTNode::BadgeView(_) => YTNodeVariant::BadgeView,
+            YTNode::CallToActionButton(_) => YTNodeVariant::CallToActionButton,
+            YTNode::ButtonCardView(_) => YTNodeVariant::ButtonCardView,
+            YTNode::AvatarView(_) => YTNodeVariant::AvatarView,
+            YTNode::CompactLink(_) => YTNodeVariant::CompactLink,
+            YTNode::GridVideo(_) => YTNodeVariant::GridVideo,
+            YTNode::GridChannel(_) => YTNodeVariant::GridChannel,
+            YTNode::GridPlaylist(_) => YTNodeVariant::GridPlaylist,
+            YTNode::GridMix(_) => YTNodeVariant::GridMix,
+            YTNode::GridMovie(_) => YTNodeVariant::GridMovie,
+            YTNode::GridShow(_) => YTNodeVariant::GridShow,
+            YTNode::CompactVideo(_) => YTNodeVariant::CompactVideo,
+            YTNode::CompactChannel(_) => YTNodeVariant::CompactChannel,
+            YTNode::CompactPlaylist(_) => YTNodeVariant::CompactPlaylist,
+            YTNode::CompactMix(_) => YTNodeVariant::CompactMix,
+            YTNode::RichItem(_) => YTNodeVariant::RichItem,
+            YTNode::RichSection(_) => YTNodeVariant::RichSection,
+            YTNode::MusicCarouselShelf(_) => YTNodeVariant::MusicCarouselShelf,
+            YTNode::MusicShelf(_) => YTNodeVariant::MusicShelf,
+            YTNode::MusicSideAlignedItem(_) => YTNodeVariant::MusicSideAlignedItem,
+            YTNode::MusicVisualHeader(_) => YTNodeVariant::MusicVisualHeader,
+            YTNode::MusicItemThumbnailOverlay(_) => YTNodeVariant::MusicItemThumbnailOverlay,
+            YTNode::MusicPlaylistShelf(_) => YTNodeVariant::MusicPlaylistShelf,
+            YTNode::MusicCardShelf(_) => YTNodeVariant::MusicCardShelf,
+            YTNode::MusicImmersiveHeader(_) => YTNodeVariant::MusicImmersiveHeader,
+            YTNode::MusicDetailHeader(_) => YTNodeVariant::MusicDetailHeader,
+            YTNode::MusicEditablePlaylistDetailHeader(_) => YTNodeVariant::MusicEditablePlaylistDetailHeader,
+            YTNode::MusicResponsiveHeader(_) => YTNodeVariant::MusicResponsiveHeader,
+            YTNode::MusicAutoplay(_) => YTNodeVariant::AutomixPreviewVideo,
+            YTNode::ThumbnailOverlayHoverText(_) => YTNodeVariant::ThumbnailOverlayHoverText,
+            YTNode::ThumbnailOverlayEndorsement(_) => YTNodeVariant::ThumbnailOverlayEndorsement,
+            YTNode::ThumbnailOverlayNowPlaying(_) => YTNodeVariant::ThumbnailOverlayNowPlaying,
+            YTNode::ThumbnailOverlayLoadingPreview(_) => YTNodeVariant::ThumbnailOverlayLoadingPreview,
+            YTNode::ThumbnailOverlayInlineUnplayable(_) => YTNodeVariant::ThumbnailOverlayInlineUnplayable,
+            YTNode::ThumbnailOverlayBottomPanel(_) => YTNodeVariant::ThumbnailOverlayBottomPanel,
+            YTNode::ThumbnailOverlaySidePanel(_) => YTNodeVariant::ThumbnailOverlaySidePanel,
+            YTNode::ThumbnailOverlayToggleButton(_) => YTNodeVariant::ThumbnailOverlayToggleButton,
+            YTNode::DecoratedPlayerBar(_) => YTNodeVariant::DecoratedPlayerBar,
+            YTNode::ConfirmDialog(_) => YTNodeVariant::ConfirmDialog,
+            YTNode::Dialog(_) => YTNodeVariant::ConfirmDialog,
+            YTNode::ModalWithTitleAndButton(_) => YTNodeVariant::ModalWithTitleAndButton,
+            YTNode::EngagementPanelSectionList(_) => YTNodeVariant::EngagementPanelSectionList,
+            YTNode::EngagementPanelTitleHeader(_) => YTNodeVariant::EngagementPanelTitleHeader,
+            YTNode::CommentsHeader(_) => YTNodeVariant::CommentsHeader,
+            YTNode::CommentsEntryPointHeader(_) => YTNodeVariant::CommentsEntryPointHeader,
+            YTNode::CommentActionButtons(_) => YTNodeVariant::CommentActionButtons,
+            YTNode::CommentSimplebox(_) => YTNodeVariant::CommentSimplebox,
+            YTNode::SubscriptionNotificationToggleButton(_) => YTNodeVariant::SubscriptionNotificationToggleButton,
+            YTNode::InfoRow(_) => YTNodeVariant::InfoRow,
+            YTNode::CollageHeroImage(_) => YTNodeVariant::CollageHeroImage,
+            YTNode::FeedNudge(_) => YTNodeVariant::FeedNudge,
+            YTNode::ChannelOwnerEmptyState(_) => YTNodeVariant::ChannelOwnerEmptyState,
+            YTNode::TextHeader(_) => YTNodeVariant::TextHeader,
+            YTNode::CarouselHeader(_) => YTNodeVariant::CarouselHeader,
+            YTNode::CarouselItem(_) => YTNodeVariant::CarouselItem,
+            YTNode::CarouselItemView(_) => YTNodeVariant::CarouselItemView,
+            YTNode::CarouselLockup(_) => YTNodeVariant::CarouselLockup,
+            YTNode::CarouselTitleView(_) => YTNodeVariant::CarouselTitleView,
+            YTNode::ChipBarView(_) => YTNodeVariant::ChipBarView,
+            YTNode::ChipView(_) => YTNodeVariant::ChipView,
+            YTNode::ContentListItemView(_) => YTNodeVariant::ContentListItemView,
+            YTNode::BackgroundPromo(_) => YTNodeVariant::BackgroundPromo,
+            YTNode::AttributionView(_) => YTNodeVariant::AttributionView,
+            YTNode::AvatarStackView(_) => YTNodeVariant::AvatarStackView,
+            YTNode::AnimatedThumbnailOverlayView(_) => YTNodeVariant::AnimatedThumbnailOverlayView,
+            YTNode::CardCollection(_) => YTNodeVariant::CardCollection,
+            YTNode::CollaboratorInfoCardContent(_) => YTNodeVariant::CollaboratorInfoCardContent,
+            YTNode::CollectionThumbnailView(_) => YTNodeVariant::CollectionThumbnailView,
+            YTNode::ClipAdState(_) => YTNodeVariant::ClipAdState,
+            YTNode::ClipCreationTextInput(_) => YTNodeVariant::ClipCreationTextInput,
+            YTNode::ClientSideToggleMenuItem(_) => YTNodeVariant::ClientSideToggleMenuItem,
+            YTNode::AudioOnlyPlayability(_) => YTNodeVariant::AudioOnlyPlayability,
+            YTNode::CompactMovie(_) => YTNodeVariant::CompactMovie,
+            YTNode::CompactStation(_) => YTNodeVariant::CompactStation,
+            YTNode::AddToPlaylist(_) => YTNodeVariant::AddToPlaylist,
+            YTNode::C4TabbedHeader(_) => YTNodeVariant::C4TabbedHeader,
+            YTNode::ChannelSwitcherPage(_) => YTNodeVariant::ChannelSwitcherPage,
+            YTNode::LiveChatItemList(_) => YTNodeVariant::LiveChatItemList,
+            YTNode::LiveChatParticipantsList(_) => YTNodeVariant::LiveChatParticipantsList,
+            YTNode::LiveChatActionPanel(_) => YTNodeVariant::LiveChatActionPanel,
+            YTNode::AddBannerToLiveChatCommand(_) => YTNodeVariant::AddBannerToLiveChatCommand,
+            YTNode::RemoveBannerForLiveChatCommand(_) => YTNodeVariant::RemoveBannerForLiveChatCommand,
+            YTNode::AddLiveChatTickerItemAction(_) => YTNodeVariant::AddLiveChatTickerItemAction,
+            YTNode::DimChatItemAction(_) => YTNodeVariant::DimChatItemAction,
+            YTNode::RemoveChatItemAction(_) => YTNodeVariant::RemoveChatItemAction,
+            YTNode::RemoveChatItemByAuthorAction(_) => YTNodeVariant::RemoveChatItemByAuthorAction,
+            YTNode::ReplaceChatItemAction(_) => YTNodeVariant::ReplaceChatItemAction,
+            YTNode::ReplayChatItemAction(_) => YTNodeVariant::ReplayChatItemAction,
+            YTNode::UpdateLiveChatPollAction(_) => YTNodeVariant::UpdateLiveChatPollAction,
+            YTNode::AppendContinuationItemsAction(_) => YTNodeVariant::AppendContinuationItemsAction,
+            YTNode::GetMultiPageMenuAction(_) => YTNodeVariant::GetMultiPageMenuAction,
+            YTNode::OpenPopupAction(_) => YTNodeVariant::OpenPopupAction,
+            YTNode::SendFeedbackAction(_) => YTNodeVariant::SendFeedbackAction,
+            YTNode::SignalAction(_) => YTNodeVariant::SignalAction,
+            YTNode::UpdateChannelSwitcherPageAction(_) => YTNodeVariant::UpdateChannelSwitcherPageAction,
+            YTNode::UpdateSubscribeButtonAction(_) => YTNodeVariant::UpdateSubscribeButtonAction,
+            YTNode::AddToPlaylistCommand(_) => YTNodeVariant::AddToPlaylistCommand,
+            YTNode::ContinuationCommand(_) => YTNodeVariant::ContinuationCommand,
+            YTNode::ShowSheetCommand(_) => YTNodeVariant::ShowSheetCommand,
+            YTNode::UpdateEngagementPanelContentCommand(_) => YTNodeVariant::UpdateEngagementPanelContentCommand,
+            YTNode::RunAttestationCommand(_) => YTNodeVariant::RunAttestationCommand,
+            YTNode::BrowseFeedActions(_) => YTNodeVariant::BrowseFeedActions,
+            YTNode::ButtonView(_) => YTNodeVariant::ButtonView,
+            YTNode::ClipSection(_) => YTNodeVariant::ClipSection,
+            YTNode::ContentMetadataView(_) => YTNodeVariant::ContentMetadataView,
+            YTNode::ContentPreviewImageView(_) => YTNodeVariant::ContentPreviewImageView,
+            YTNode::ContinuationItem(_) => YTNodeVariant::ContinuationItem,
+            YTNode::ContinuationItemView(_) => YTNodeVariant::ContinuationItemView,
+            YTNode::ConversationBar(_) => YTNodeVariant::ConversationBar,
+            YTNode::CopyLink(_) => YTNodeVariant::CopyLink,
+            YTNode::CreatePlaylistDialog(_) => YTNodeVariant::CreatePlaylistDialog,
+            YTNode::CreatePlaylistDialogFormView(_) => YTNodeVariant::CreatePlaylistDialogFormView,
+            YTNode::DecoratedAvatarView(_) => YTNodeVariant::DecoratedAvatarView,
+            YTNode::DefaultPromoPanel(_) => YTNodeVariant::DefaultPromoPanel,
+            YTNode::DescriptionPreviewView(_) => YTNodeVariant::DescriptionPreviewView,
+            YTNode::DialogHeaderView(_) => YTNodeVariant::DialogHeaderView,
+            YTNode::DialogView(_) => YTNodeVariant::DialogView,
+            YTNode::DislikeButtonView(_) => YTNodeVariant::DislikeButtonView,
+            YTNode::DismissableDialog(_) => YTNodeVariant::DismissableDialog,
+            YTNode::DismissableDialogContentSection(_) => YTNodeVariant::DismissableDialogContentSection,
+            YTNode::DownloadButton(_) => YTNodeVariant::DownloadButton,
+            YTNode::DownloadListItemView(_) => YTNodeVariant::DownloadListItemView,
+            YTNode::Dropdown(_) => YTNodeVariant::Dropdown,
+            YTNode::DropdownItem(_) => YTNodeVariant::DropdownItem,
+            YTNode::DropdownView(_) => YTNodeVariant::DropdownView,
+            YTNode::DynamicTextView(_) => YTNodeVariant::DynamicTextView,
+            YTNode::Element(_) => YTNodeVariant::Element,
+            YTNode::EmojiPickerCategory(_) => YTNodeVariant::EmojiPickerCategory,
+            YTNode::EmojiPickerCategoryButton(_) => YTNodeVariant::EmojiPickerCategoryButton,
+            YTNode::EmojiPickerUpsellCategory(_) => YTNodeVariant::EmojiPickerUpsellCategory,
+            YTNode::EndScreenPlaylist(_) => YTNodeVariant::EndScreenPlaylist,
+            YTNode::EomSettingsDisclaimer(_) => YTNodeVariant::EomSettingsDisclaimer,
+            YTNode::ExpandableMetadata(_) => YTNodeVariant::ExpandableMetadata,
+            YTNode::ExpandedShelfContents(_) => YTNodeVariant::ExpandedShelfContents,
+            YTNode::Factoid(_) => YTNodeVariant::Factoid,
+            YTNode::FancyDismissibleDialog(_) => YTNodeVariant::FancyDismissibleDialog,
+            YTNode::FeedTabbedHeader(_) => YTNodeVariant::FeedTabbedHeader,
+            YTNode::FlexibleActionsView(_) => YTNodeVariant::FlexibleActionsView,
+            YTNode::Form(_) => YTNodeVariant::Form,
+            YTNode::FormFooterView(_) => YTNodeVariant::FormFooterView,
+            YTNode::FormPopup(_) => YTNodeVariant::FormPopup,
+            YTNode::GameCard(_) => YTNodeVariant::GameCard,
+            YTNode::GameDetails(_) => YTNodeVariant::GameDetails,
+            YTNode::Grid(_) => YTNodeVariant::Grid,
+            YTNode::GridHeader(_) => YTNodeVariant::GridHeader,
+            YTNode::GridShelfView(_) => YTNodeVariant::GridShelfView,
+            YTNode::GuideCollapsibleEntry(_) => YTNodeVariant::GuideCollapsibleEntry,
+            YTNode::GuideCollapsibleSectionEntry(_) => YTNodeVariant::GuideCollapsibleSectionEntry,
+            YTNode::GuideDownloadsEntry(_) => YTNodeVariant::GuideDownloadsEntry,
+            YTNode::GuideEntry(_) => YTNodeVariant::GuideEntry,
+            YTNode::GuideSection(_) => YTNodeVariant::GuideSection,
+            YTNode::GuideSubscriptionsSection(_) => YTNodeVariant::GuideSubscriptionsSection,
+            YTNode::HashtagHeader(_) => YTNodeVariant::HashtagHeader,
+            YTNode::HashtagTile(_) => YTNodeVariant::HashtagTile,
+            YTNode::HeatMarker(_) => YTNodeVariant::HeatMarker,
+            YTNode::HeroPlaylistThumbnail(_) => YTNodeVariant::HeroPlaylistThumbnail,
+            YTNode::HighlightsCarousel(_) => YTNodeVariant::HighlightsCarousel,
+            YTNode::HorizontalList(_) => YTNodeVariant::HorizontalList,
+            YTNode::HorizontalMovieList(_) => YTNodeVariant::HorizontalMovieList,
+            YTNode::HowThisWasMadeSectionView(_) => YTNodeVariant::HowThisWasMadeSectionView,
+            YTNode::HypeFanCreditsSectionView(_) => YTNodeVariant::HypeFanCreditsSectionView,
+            YTNode::HypePointsFactoid(_) => YTNodeVariant::HypePointsFactoid,
+            YTNode::IconLink(_) => YTNodeVariant::IconLink,
+            YTNode::ImageBannerView(_) => YTNodeVariant::ImageBannerView,
+            YTNode::IncludingResultsFor(_) => YTNodeVariant::IncludingResultsFor,
+            YTNode::InfoPanelContainer(_) => YTNodeVariant::InfoPanelContainer,
+            YTNode::InfoPanelContent(_) => YTNodeVariant::InfoPanelContent,
+            YTNode::InteractiveTabbedHeader(_) => YTNodeVariant::InteractiveTabbedHeader,
+            YTNode::ItemSectionHeader(_) => YTNodeVariant::ItemSectionHeader,
+            YTNode::ItemSectionTab(_) => YTNodeVariant::ItemSectionTab,
+            YTNode::ItemSectionTabbedHeader(_) => YTNodeVariant::ItemSectionTabbedHeader,
+            YTNode::LikeButton(_) => YTNodeVariant::LikeButton,
+            YTNode::LikeButtonView(_) => YTNodeVariant::LikeButtonView,
+            YTNode::ListItemView(_) => YTNodeVariant::ListItemView,
+            YTNode::ListView(_) => YTNodeVariant::ListView,
+            YTNode::LiveChatDialog(_) => YTNodeVariant::LiveChatDialog,
+            YTNode::LockupMetadataView(_) => YTNodeVariant::LockupMetadataView,
+            YTNode::LockupView(_) => YTNodeVariant::LockupView,
+            YTNode::MacroMarkersInfoItem(_) => YTNodeVariant::MacroMarkersInfoItem,
+            YTNode::MacroMarkersListEntity(_) => YTNodeVariant::MacroMarkersListEntity,
+            YTNode::MenuTitle(_) => YTNodeVariant::MenuTitle,
+            YTNode::MerchandiseItem(_) => YTNodeVariant::MerchandiseItem,
+            YTNode::MerchandiseShelf(_) => YTNodeVariant::MerchandiseShelf,
+            YTNode::Message(_) => YTNodeVariant::Message,
+            YTNode::MetadataRow(_) => YTNodeVariant::MetadataRow,
+            YTNode::MetadataRowContainer(_) => YTNodeVariant::MetadataRowContainer,
+            YTNode::MetadataRowHeader(_) => YTNodeVariant::MetadataRowHeader,
+            YTNode::MetadataScreen(_) => YTNodeVariant::MetadataScreen,
+            YTNode::Mix(_) => YTNodeVariant::Mix,
+            YTNode::Movie(_) => YTNodeVariant::Movie,
+            YTNode::MovingThumbnail(_) => YTNodeVariant::MovingThumbnail,
+            YTNode::MultiMarkersPlayerBar(_) => YTNodeVariant::MultiMarkersPlayerBar,
+            YTNode::MusicCardShelfHeaderBasic(_) => YTNodeVariant::MusicCardShelfHeaderBasic,
+            YTNode::MusicCarouselShelfBasicHeader(_) => YTNodeVariant::MusicCarouselShelfBasicHeader,
+            YTNode::MusicLargeCardItemCarousel(_) => YTNodeVariant::MusicLargeCardItemCarousel,
+            YTNode::MusicMultiRowListItem(_) => YTNodeVariant::MusicMultiRowListItem,
+            YTNode::MusicPlaylistEditHeader(_) => YTNodeVariant::MusicPlaylistEditHeader,
+            YTNode::MusicResponsiveListItemFixedColumn(_) => YTNodeVariant::MusicResponsiveListItemFixedColumn,
+            YTNode::MusicResponsiveListItemFlexColumn(_) => YTNodeVariant::MusicResponsiveListItemFlexColumn,
+            YTNode::MusicTastebuilderShelf(_) => YTNodeVariant::MusicTastebuilderShelf,
+            YTNode::MusicTastebuilderShelfThumbnail(_) => YTNodeVariant::MusicTastebuilderShelfThumbnail,
+            YTNode::NotificationAction(_) => YTNodeVariant::NotificationAction,
+            YTNode::OpenOnePickAddVideoModalCommand(_) => YTNodeVariant::OpenOnePickAddVideoModalCommand,
+            YTNode::PageHeader(_) => YTNodeVariant::PageHeader,
+            YTNode::PageHeaderView(_) => YTNodeVariant::PageHeaderView,
+            YTNode::PageIndicatorView(_) => YTNodeVariant::PageIndicatorView,
+            YTNode::PageIntroduction(_) => YTNodeVariant::PageIntroduction,
+            YTNode::PanelFooterView(_) => YTNodeVariant::PanelFooterView,
+            YTNode::PivotButton(_) => YTNodeVariant::PivotButton,
+            YTNode::PlaylistAddToOption(_) => YTNodeVariant::PlaylistAddToOption,
+            YTNode::PlaylistCollaborationView(_) => YTNodeVariant::PlaylistCollaborationView,
+            YTNode::PlaylistCustomThumbnail(_) => YTNodeVariant::PlaylistCustomThumbnail,
+            YTNode::PlaylistHeader(_) => YTNodeVariant::PlaylistHeader,
+            YTNode::PlaylistInfoCardContent(_) => YTNodeVariant::PlaylistInfoCardContent,
+            YTNode::PlaylistPanelVideoWrapper(_) => YTNodeVariant::PlaylistPanelVideoWrapper,
+            YTNode::PlaylistSidebar(_) => YTNodeVariant::PlaylistSidebar,
+            YTNode::PlaylistThumbnailOverlay(_) => YTNodeVariant::PlaylistThumbnailOverlay,
+            YTNode::PlaylistVideoList(_) => YTNodeVariant::PlaylistVideoList,
+            YTNode::PlaylistVideoThumbnail(_) => YTNodeVariant::PlaylistVideoThumbnail,
+            YTNode::PremiereTrailerBadge(_) => YTNodeVariant::PremiereTrailerBadge,
+            YTNode::ProductList(_) => YTNodeVariant::ProductList,
+            YTNode::ProductListHeader(_) => YTNodeVariant::ProductListHeader,
+            YTNode::ProductListItem(_) => YTNodeVariant::ProductListItem,
+            YTNode::ProfileColumnStats(_) => YTNodeVariant::ProfileColumnStats,
+            YTNode::ProfileColumnStatsEntry(_) => YTNodeVariant::ProfileColumnStatsEntry,
+            YTNode::Quiz(_) => YTNodeVariant::Quiz,
+            YTNode::RecognitionShelf(_) => YTNodeVariant::RecognitionShelf,
+            YTNode::RelatedChipCloud(_) => YTNodeVariant::RelatedChipCloud,
+            YTNode::RichListHeader(_) => YTNodeVariant::RichListHeader,
+            YTNode::RichMetadata(_) => YTNodeVariant::RichMetadata,
+            YTNode::RichMetadataRow(_) => YTNodeVariant::RichMetadataRow,
+            YTNode::SearchBox(_) => YTNodeVariant::SearchBox,
+            YTNode::SearchFilterOptionsDialog(_) => YTNodeVariant::SearchFilterOptionsDialog,
+            YTNode::SearchHeader(_) => YTNodeVariant::SearchHeader,
+            YTNode::SearchSuggestion(_) => YTNodeVariant::SearchSuggestion,
+            YTNode::SearchSuggestionsSection(_) => YTNodeVariant::SearchSuggestionsSection,
+            YTNode::SecondarySearchContainer(_) => YTNodeVariant::SecondarySearchContainer,
+            YTNode::SectionHeaderView(_) => YTNodeVariant::SectionHeaderView,
+            YTNode::SegmentedLikeDislikeButton(_) => YTNodeVariant::SegmentedLikeDislikeButton,
+            YTNode::SegmentedLikeDislikeButtonView(_) => YTNodeVariant::SegmentedLikeDislikeButtonView,
+            YTNode::SettingBoolean(_) => YTNodeVariant::SettingBoolean,
+            YTNode::SettingsCheckbox(_) => YTNodeVariant::SettingsCheckbox,
+            YTNode::SettingsOptions(_) => YTNodeVariant::SettingsOptions,
+            YTNode::SettingsSidebar(_) => YTNodeVariant::SettingsSidebar,
+            YTNode::SettingsSwitch(_) => YTNodeVariant::SettingsSwitch,
+            YTNode::SharePanelHeader(_) => YTNodeVariant::SharePanelHeader,
+            YTNode::SharePanelTitleV15(_) => YTNodeVariant::SharePanelTitleV15,
+            YTNode::ShareTarget(_) => YTNodeVariant::ShareTarget,
+            YTNode::SheetView(_) => YTNodeVariant::SheetView,
+            YTNode::ShowCustomThumbnail(_) => YTNodeVariant::ShowCustomThumbnail,
+            YTNode::SimpleCardContent(_) => YTNodeVariant::SimpleCardContent,
+            YTNode::SimpleCardTeaser(_) => YTNodeVariant::SimpleCardTeaser,
+            YTNode::SimpleTextSection(_) => YTNodeVariant::SimpleTextSection,
+            YTNode::SingleColumnBrowseResults(_) => YTNodeVariant::SingleColumnBrowseResults,
+            YTNode::SingleColumnMusicWatchNextResults(_) => YTNodeVariant::SingleColumnMusicWatchNextResults,
+            YTNode::SingleHeroImage(_) => YTNodeVariant::SingleHeroImage,
+            YTNode::SlimOwner(_) => YTNodeVariant::SlimOwner,
+            YTNode::SortFilterHeader(_) => YTNodeVariant::SortFilterHeader,
+            YTNode::SortFilterSubMenu(_) => YTNodeVariant::SortFilterSubMenu,
+            YTNode::StartAt(_) => YTNodeVariant::StartAt,
+            YTNode::StructuredDescriptionContent(_) => YTNodeVariant::StructuredDescriptionContent,
+            YTNode::StructuredDescriptionPlaylistLockup(_) => YTNodeVariant::StructuredDescriptionPlaylistLockup,
+            YTNode::SubFeedOption(_) => YTNodeVariant::SubFeedOption,
+            YTNode::SubFeedSelector(_) => YTNodeVariant::SubFeedSelector,
+            YTNode::SubscribeButton(_) => YTNodeVariant::SubscribeButton,
+            YTNode::SubscribeButtonView(_) => YTNodeVariant::SubscribeButtonView,
+            YTNode::Tabbed(_) => YTNodeVariant::Tabbed,
+            YTNode::TabbedSearchResults(_) => YTNodeVariant::TabbedSearchResults,
+            YTNode::TextCarouselItemView(_) => YTNodeVariant::TextCarouselItemView,
+            YTNode::TextFieldView(_) => YTNodeVariant::TextFieldView,
+            YTNode::ThirdPartyShareTargetSection(_) => YTNodeVariant::ThirdPartyShareTargetSection,
+            YTNode::ThumbnailBadgeView(_) => YTNodeVariant::ThumbnailBadgeView,
+            YTNode::ThumbnailBottomOverlayView(_) => YTNodeVariant::ThumbnailBottomOverlayView,
+            YTNode::ThumbnailHoverOverlayToggleActionsView(_) => YTNodeVariant::ThumbnailHoverOverlayToggleActionsView,
+            YTNode::ThumbnailHoverOverlayView(_) => YTNodeVariant::ThumbnailHoverOverlayView,
+            YTNode::ThumbnailLandscapePortrait(_) => YTNodeVariant::ThumbnailLandscapePortrait,
+            YTNode::ThumbnailOverlayAvatarStackView(_) => YTNodeVariant::ThumbnailOverlayAvatarStackView,
+            YTNode::ThumbnailOverlayBadgeView(_) => YTNodeVariant::ThumbnailOverlayBadgeView,
+            YTNode::ThumbnailOverlayPinking(_) => YTNodeVariant::ThumbnailOverlayPinking,
+            YTNode::ThumbnailOverlayPlaybackStatus(_) => YTNodeVariant::ThumbnailOverlayPlaybackStatus,
+            YTNode::ThumbnailOverlayProgressBarView(_) => YTNodeVariant::ThumbnailOverlayProgressBarView,
+            YTNode::ThumbnailOverlayResumePlayback(_) => YTNodeVariant::ThumbnailOverlayResumePlayback,
+            YTNode::ThumbnailOverlayTitleView(_) => YTNodeVariant::ThumbnailOverlayTitleView,
+            YTNode::ThumbnailView(_) => YTNodeVariant::ThumbnailView,
+            YTNode::TicketEvent(_) => YTNodeVariant::TicketEvent,
+            YTNode::TicketShelf(_) => YTNodeVariant::TicketShelf,
+            YTNode::TitleAndButtonListHeader(_) => YTNodeVariant::TitleAndButtonListHeader,
+            YTNode::ToggleButtonView(_) => YTNodeVariant::ToggleButtonView,
+            YTNode::ToggleFormField(_) => YTNodeVariant::ToggleFormField,
+            YTNode::ToggleMenuServiceItem(_) => YTNodeVariant::ToggleMenuServiceItem,
+            YTNode::Tooltip(_) => YTNodeVariant::Tooltip,
+            YTNode::Transcript(_) => YTNodeVariant::Transcript,
+            YTNode::TranscriptFooter(_) => YTNodeVariant::TranscriptFooter,
+            YTNode::TranscriptSearchBox(_) => YTNodeVariant::TranscriptSearchBox,
+            YTNode::TranscriptSearchPanel(_) => YTNodeVariant::TranscriptSearchPanel,
+            YTNode::TranscriptSectionHeader(_) => YTNodeVariant::TranscriptSectionHeader,
+            YTNode::TranscriptSegment(_) => YTNodeVariant::TranscriptSegment,
+            YTNode::TranscriptSegmentList(_) => YTNodeVariant::TranscriptSegmentList,
+            YTNode::TwoColumnBrowseResults(_) => YTNodeVariant::TwoColumnBrowseResults,
+            YTNode::TwoColumnSearchResults(_) => YTNodeVariant::TwoColumnSearchResults,
+            YTNode::TwoColumnWatchNextResults(_) => YTNodeVariant::TwoColumnWatchNextResults,
+            YTNode::UnifiedSharePanel(_) => YTNodeVariant::UnifiedSharePanel,
+            YTNode::UniversalWatchCard(_) => YTNodeVariant::UniversalWatchCard,
+            YTNode::UploadTimeFactoid(_) => YTNodeVariant::UploadTimeFactoid,
+            YTNode::UpsellDialog(_) => YTNodeVariant::UpsellDialog,
+            YTNode::VerticalWatchCardList(_) => YTNodeVariant::VerticalWatchCardList,
+            YTNode::VideoAttributesSectionView(_) => YTNodeVariant::VideoAttributesSectionView,
+            YTNode::VideoDescriptionCourseSection(_) => YTNodeVariant::VideoDescriptionCourseSection,
+            YTNode::VideoDescriptionInfocardsSection(_) => YTNodeVariant::VideoDescriptionInfocardsSection,
+            YTNode::VideoDescriptionMusicSection(_) => YTNodeVariant::VideoDescriptionMusicSection,
+            YTNode::VideoDescriptionTranscriptSection(_) => YTNodeVariant::VideoDescriptionTranscriptSection,
+            YTNode::VideoDescriptionYouchatSectionView(_) => YTNodeVariant::VideoDescriptionYouchatSectionView,
+            YTNode::VideoMetadataCarouselView(_) => YTNodeVariant::VideoMetadataCarouselView,
+            YTNode::ViewCountFactoid(_) => YTNodeVariant::ViewCountFactoid,
+            YTNode::WatchCardRichHeader(_) => YTNodeVariant::WatchCardRichHeader,
+            YTNode::WatchCardSectionSequence(_) => YTNodeVariant::WatchCardSectionSequence,
+            YTNode::WatchNextEndScreen(_) => YTNodeVariant::WatchNextEndScreen,
+            YTNode::WatchNextTabbedResults(_) => YTNodeVariant::WatchNextTabbedResults,
+            YTNode::YpcTrailer(_) => YTNodeVariant::YpcTrailer,
+            YTNode::CommandExecutorCommand(_) => YTNodeVariant::CommandExecutorCommand,
+            YTNode::GetKidsBlocklistPickerCommand(_) => YTNodeVariant::GetKidsBlocklistPickerCommand,
+            YTNode::ShowDialogCommand(_) => YTNodeVariant::ShowDialogCommand,
+            YTNode::CommentDialog(_) => YTNodeVariant::CommentDialog,
+            YTNode::CommentReplyDialog(_) => YTNodeVariant::CommentReplyDialog,
+            YTNode::EmojiPicker(_) => YTNodeVariant::EmojiPicker,
+            YTNode::VoiceReplyContainerView(_) => YTNodeVariant::VoiceReplyContainerView,
+            YTNode::AddToPlaylistEndpoint(_) => YTNodeVariant::AddToPlaylistEndpoint,
+            YTNode::AddToPlaylistServiceEndpoint(_) => YTNodeVariant::AddToPlaylistServiceEndpoint,
+            YTNode::CreateCommentEndpoint(_) => YTNodeVariant::CreateCommentEndpoint,
+            YTNode::CreatePlaylistServiceEndpoint(_) => YTNodeVariant::CreatePlaylistServiceEndpoint,
+            YTNode::DeletePlaylistEndpoint(_) => YTNodeVariant::DeletePlaylistEndpoint,
+            YTNode::FeedbackEndpoint(_) => YTNodeVariant::FeedbackEndpoint,
+            YTNode::GetAccountsListInnertubeEndpoint(_) => YTNodeVariant::GetAccountsListInnertubeEndpoint,
+            YTNode::HideEngagementPanelEndpoint(_) => YTNodeVariant::HideEngagementPanelEndpoint,
+            YTNode::LiveChatItemContextMenuEndpoint(_) => YTNodeVariant::LiveChatItemContextMenuEndpoint,
+            YTNode::ModifyChannelNotificationPreferenceEndpoint(_) => YTNodeVariant::ModifyChannelNotificationPreferenceEndpoint,
+            YTNode::PerformCommentActionEndpoint(_) => YTNodeVariant::PerformCommentActionEndpoint,
+            YTNode::PlaylistEditEndpoint(_) => YTNodeVariant::PlaylistEditEndpoint,
+            YTNode::PrefetchWatchCommand(_) => YTNodeVariant::PrefetchWatchCommand,
+            YTNode::ShareEndpoint(_) => YTNodeVariant::ShareEndpoint,
+            YTNode::ShareEntityEndpoint(_) => YTNodeVariant::ShareEntityEndpoint,
+            YTNode::MenuFlexibleItem(_) => YTNodeVariant::MenuFlexibleItem,
+            YTNode::MenuNavigationItem(_) => YTNodeVariant::MenuNavigationItem,
+            YTNode::MenuPopup(_) => YTNodeVariant::MenuPopup,
+            YTNode::MenuServiceItem(_) => YTNodeVariant::MenuServiceItem,
+            YTNode::MenuServiceItemDownload(_) => YTNodeVariant::MenuServiceItemDownload,
+            YTNode::MultiPageMenu(_) => YTNodeVariant::MultiPageMenu,
+            YTNode::MultiPageMenuNotificationSection(_) => YTNodeVariant::MultiPageMenuNotificationSection,
+            YTNode::SimpleMenuHeader(_) => YTNodeVariant::SimpleMenuHeader,
+            YTNode::MobileTopbar(_) => YTNodeVariant::MobileTopbar,
+            YTNode::MultiPageMenuSection(_) => YTNodeVariant::MultiPageMenuSection,
+            YTNode::PivotBar(_) => YTNodeVariant::PivotBar,
+            YTNode::PivotBarItem(_) => YTNodeVariant::PivotBarItem,
+            YTNode::TopbarMenuButton(_) => YTNodeVariant::TopbarMenuButton,
+            YTNode::ReplaceLiveChatAction(_) => YTNodeVariant::ReplaceLiveChatAction,
+            YTNode::UpdateDateTextAction(_) => YTNodeVariant::UpdateDateTextAction,
+            YTNode::UpdateDescriptionAction(_) => YTNodeVariant::UpdateDescriptionAction,
+            YTNode::UpdateTitleAction(_) => YTNodeVariant::UpdateTitleAction,
+            YTNode::UpdateToggleButtonTextAction(_) => YTNodeVariant::UpdateToggleButtonTextAction,
+            YTNode::UpdateViewershipAction(_) => YTNodeVariant::UpdateViewershipAction,
+            YTNode::BumperUserEduContentView(_) => YTNodeVariant::BumperUserEduContentView,
+            YTNode::PdgReplyButtonView(_) => YTNodeVariant::PdgReplyButtonView,
+            YTNode::PlaylistCollaborationFormSchema(_) => YTNodeVariant::PlaylistCollaborationFormSchema,
+            YTNode::PlaylistCollaborationViewModelPlaylistCollaboratorData(_) => YTNodeVariant::PlaylistCollaborationViewModelPlaylistCollaboratorData,
+            YTNode::SubscriptionButton(_) => YTNodeVariant::SubscriptionButton,
+            YTNode::CommandContext(_) => YTNodeVariant::CommandContext,
+            YTNode::ShareEntityServiceEndpoint(_) => YTNodeVariant::ShareEntityServiceEndpoint,
+            YTNode::SignalServiceEndpoint(_) => YTNodeVariant::SignalServiceEndpoint,
+            YTNode::UnsubscribeEndpoint(_) => YTNodeVariant::UnsubscribeEndpoint,
+            YTNode::WatchNextEndpoint(_) => YTNodeVariant::WatchNextEndpoint,
+            YTNode::AccessibilityContext(_) => YTNodeVariant::AccessibilityContext,
+            YTNode::AccessibilityData(_) => YTNodeVariant::AccessibilityData,
+            YTNode::ChildElement(_) => YTNodeVariant::ChildElement,
+            YTNode::EmojiRun(_) => YTNodeVariant::EmojiRun,
+            YTNode::RendererContext(_) => YTNodeVariant::RendererContext,
+            YTNode::AnchoredSection(_) => YTNodeVariant::AnchoredSection,
+            YTNode::KidsBlocklistPicker(_) => YTNodeVariant::KidsBlocklistPicker,
+            YTNode::KidsBlocklistPickerItem(_) => YTNodeVariant::KidsBlocklistPickerItem,
+            YTNode::MusicResponsiveListItem(_) => YTNodeVariant::MusicResponsiveListItem,
+            YTNode::NavigationEndpoint(_) => YTNodeVariant::NavigationEndpoint,
+            YTNode::ThumbnailOverlayTimeStatus(_) => YTNodeVariant::ThumbnailOverlayTimeStatus,
+            YTNode::BrowseEndpoint(_) => YTNodeVariant::BrowseEndpoint,
+            YTNode::LikeEndpoint(_) => YTNodeVariant::LikeEndpoint,
+            YTNode::ReelWatchEndpoint(_) => YTNodeVariant::ReelWatchEndpoint,
+            YTNode::SearchEndpoint(_) => YTNodeVariant::SearchEndpoint,
+            YTNode::SubscribeEndpoint(_) => YTNodeVariant::SubscribeEndpoint,
+            YTNode::WatchEndpoint(_) => YTNodeVariant::WatchEndpoint,
+            YTNode::Author(_) => YTNodeVariant::Author,
+            YTNode::Text(_) => YTNodeVariant::Text,
+            YTNode::TextRun(_) => YTNodeVariant::TextRun,
+            YTNode::Thumbnail(_) => YTNodeVariant::Thumbnail,
+            YTNode::AutomixPreviewVideo(_) => YTNodeVariant::AutomixPreviewVideo,
+            YTNode::VideoViewCount(_) => YTNodeVariant::VideoViewCount,
+            YTNode::BrowserMediaSession(_) => YTNodeVariant::BrowserMediaSession,
+            YTNode::ChannelVideoPlayer(_) => YTNodeVariant::ChannelVideoPlayer,
+            YTNode::ChildVideo(_) => YTNodeVariant::ChildVideo,
+            YTNode::EndScreenVideo(_) => YTNodeVariant::EndScreenVideo,
+            YTNode::ExpandableVideoDescriptionBody(_) => YTNodeVariant::ExpandableVideoDescriptionBody,
+            YTNode::PlayerAnnotationsExpanded(_) => YTNodeVariant::PlayerAnnotationsExpanded,
+            YTNode::PlayerCaptchaView(_) => YTNodeVariant::PlayerCaptchaView,
+            YTNode::PlayerControlsOverlay(_) => YTNodeVariant::PlayerControlsOverlay,
+            YTNode::PlayerLegacyDesktopYpcOffer(_) => YTNodeVariant::PlayerLegacyDesktopYpcOffer,
+            YTNode::PlayerMicroformat(_) => YTNodeVariant::PlayerMicroformat,
+            YTNode::PlayerOverflow(_) => YTNodeVariant::PlayerOverflow,
+            YTNode::PlayerOverlayAutoplay(_) => YTNodeVariant::PlayerOverlayAutoplay,
+            YTNode::PlayerOverlayVideoDetails(_) => YTNodeVariant::PlayerOverlayVideoDetails,
+            YTNode::SlimVideoMetadata(_) => YTNodeVariant::SlimVideoMetadata,
+            YTNode::VideoAttributeView(_) => YTNodeVariant::VideoAttributeView,
+            YTNode::VideoCard(_) => YTNodeVariant::VideoCard,
+            YTNode::VideoDescriptionHeader(_) => YTNodeVariant::VideoDescriptionHeader,
+            YTNode::VideoInfoCardContent(_) => YTNodeVariant::VideoInfoCardContent,
+            YTNode::VideoSummaryContentView(_) => YTNodeVariant::VideoSummaryContentView,
+            YTNode::VideoSummaryParagraphView(_) => YTNodeVariant::VideoSummaryParagraphView,
+            YTNode::WatchCardCompactVideo(_) => YTNodeVariant::WatchCardCompactVideo,
+            YTNode::WatchCardHeroVideo(_) => YTNodeVariant::WatchCardHeroVideo,
+            YTNode::Format(_) => YTNodeVariant::Format,
+            YTNode::VideoDetails(_) => YTNodeVariant::VideoDetails,
+            YTNode::LiveChatAuthorBadge(_) => YTNodeVariant::LiveChatAuthorBadge,
+            YTNode::LiveChatHeader(_) => YTNodeVariant::LiveChatHeader,
+            YTNode::LiveChatMessageInput(_) => YTNodeVariant::LiveChatMessageInput,
+            YTNode::LiveChatParticipant(_) => YTNodeVariant::LiveChatParticipant,
+            YTNode::LiveChatBannerChatSummary(_) => YTNodeVariant::LiveChatBannerChatSummary,
+            YTNode::LiveChatBannerHeader(_) => YTNodeVariant::LiveChatBannerHeader,
+            YTNode::LiveChatBannerRedirect(_) => YTNodeVariant::LiveChatBannerRedirect,
+            YTNode::LiveChatItemBumperView(_) => YTNodeVariant::LiveChatItemBumperView,
+            YTNode::LiveChatPaidMessage(_) => YTNodeVariant::LiveChatPaidMessage,
+            YTNode::LiveChatPlaceholderItem(_) => YTNodeVariant::LiveChatPlaceholderItem,
+            YTNode::LiveChatProductItem(_) => YTNodeVariant::LiveChatProductItem,
+            YTNode::LiveChatRestrictedParticipation(_) => YTNodeVariant::LiveChatRestrictedParticipation,
+            YTNode::LiveChatSponsorshipsGiftPurchaseAnnouncement(_) => YTNodeVariant::LiveChatSponsorshipsGiftPurchaseAnnouncement,
+            YTNode::LiveChatSponsorshipsGiftRedemptionAnnouncement(_) => YTNodeVariant::LiveChatSponsorshipsGiftRedemptionAnnouncement,
+            YTNode::LiveChatSponsorshipsHeader(_) => YTNodeVariant::LiveChatSponsorshipsHeader,
+            YTNode::LiveChatTextMessage(_) => YTNodeVariant::LiveChatTextMessage,
+            YTNode::LiveChatTickerPaidMessageItem(_) => YTNodeVariant::LiveChatTickerPaidMessageItem,
+            YTNode::LiveChatTickerPaidStickerItem(_) => YTNodeVariant::LiveChatTickerPaidStickerItem,
+            YTNode::LiveChatTickerSponsorItem(_) => YTNodeVariant::LiveChatTickerSponsorItem,
+            YTNode::ShowLiveChatActionPanelAction(_) => YTNodeVariant::ShowLiveChatActionPanelAction,
+            YTNode::ShowLiveChatDialogAction(_) => YTNodeVariant::ShowLiveChatDialogAction,
+            YTNode::ShowLiveChatTooltipCommand(_) => YTNodeVariant::ShowLiveChatTooltipCommand,
+            YTNode::MarkChatItemsByAuthorAsDeletedAction(_) => YTNodeVariant::MarkChatItemsByAuthorAsDeletedAction,
+            YTNode::LiveChatBannerPoll(_) => YTNodeVariant::LiveChatBannerPoll,
+            YTNode::AboutChannel(_) => YTNodeVariant::AboutChannel,
+            YTNode::AboutChannelView(_) => YTNodeVariant::AboutChannelView,
+            YTNode::AccountChannel(_) => YTNodeVariant::AccountChannel,
+            YTNode::Channel(_) => YTNodeVariant::Channel,
+            YTNode::ChannelAgeGate(_) => YTNodeVariant::ChannelAgeGate,
+            YTNode::ChannelExternalLinkView(_) => YTNodeVariant::ChannelExternalLinkView,
+            YTNode::ChannelFeaturedContent(_) => YTNodeVariant::ChannelFeaturedContent,
+            YTNode::ChannelOptions(_) => YTNodeVariant::ChannelOptions,
+            YTNode::ChannelTagline(_) => YTNodeVariant::ChannelTagline,
+            YTNode::ChannelThumbnailWithLink(_) => YTNodeVariant::ChannelThumbnailWithLink,
+            YTNode::TopicChannelDetails(_) => YTNodeVariant::TopicChannelDetails,
+            YTNode::ActiveAccountHeader(_) => YTNodeVariant::ActiveAccountHeader,
+            YTNode::ChannelHeaderLinks(_) => YTNodeVariant::ChannelHeaderLinks,
+            YTNode::ChannelHeaderLinksView(_) => YTNodeVariant::ChannelHeaderLinksView,
+            YTNode::ChannelMobileHeader(_) => YTNodeVariant::ChannelMobileHeader,
+            YTNode::ChannelSwitcherHeader(_) => YTNodeVariant::ChannelSwitcherHeader,
+            YTNode::AuthorCommentBadge(_) => YTNodeVariant::AuthorCommentBadge,
+            YTNode::CommentReplies(_) => YTNodeVariant::CommentReplies,
+            YTNode::CommentView(_) => YTNodeVariant::CommentView,
+            YTNode::CommentsEntryPointTeaser(_) => YTNodeVariant::CommentsEntryPointTeaser,
+            YTNode::CommentsSimplebox(_) => YTNodeVariant::CommentsSimplebox,
+            YTNode::PdgCommentChip(_) => YTNodeVariant::PdgCommentChip,
+            YTNode::SponsorCommentBadge(_) => YTNodeVariant::SponsorCommentBadge,
+            YTNode::CommentsContinuation(_) => YTNodeVariant::CommentsContinuation,
+            YTNode::MusicDownloadStateBadge(_) => YTNodeVariant::MusicDownloadStateBadge,
+            YTNode::MusicElementHeader(_) => YTNodeVariant::MusicElementHeader,
+            YTNode::MusicSortFilterButton(_) => YTNodeVariant::MusicSortFilterButton,
+            YTNode::MusicThumbnail(_) => YTNodeVariant::MusicThumbnail,
+            YTNode::MusicMenuItemDivider(_) => YTNodeVariant::MusicMenuItemDivider,
+            YTNode::MusicMultiSelectMenu(_) => YTNodeVariant::MusicMultiSelectMenu,
+            YTNode::MusicMultiSelectMenuItem(_) => YTNodeVariant::MusicMultiSelectMenuItem,
+            YTNode::BackstagePost(_) => YTNodeVariant::BackstagePost,
+            YTNode::BackstagePostThread(_) => YTNodeVariant::BackstagePostThread,
+            YTNode::SharedPost(_) => YTNodeVariant::SharedPost,
+            YTNode::ReelItem(_) => YTNodeVariant::ReelItem,
+            YTNode::ReelPlayerHeader(_) => YTNodeVariant::ReelPlayerHeader,
+            YTNode::ReelPlayerOverlay(_) => YTNodeVariant::ReelPlayerOverlay,
+            YTNode::ShortsLockupView(_) => YTNodeVariant::ShortsLockupView,
+            YTNode::AlertWithButton(_) => YTNodeVariant::AlertWithButton,
+            YTNode::CompositeVideoPrimaryInfo(_) => YTNodeVariant::CompositeVideoPrimaryInfo,
+            YTNode::EmergencyOnebox(_) => YTNodeVariant::EmergencyOnebox,
+            YTNode::SingleActionEmergencySupport(_) => YTNodeVariant::SingleActionEmergencySupport,
+            YTNode::PlayerLiveStoryboardSpec(_) => YTNodeVariant::PlayerLiveStoryboardSpec,
+            YTNode::PollHeader(_) => YTNodeVariant::PollHeader,
+            YTNode::ChangeEngagementPanelVisibilityAction(_) => YTNodeVariant::ChangeEngagementPanelVisibilityAction,
+            YTNode::ShowEngagementPanelEndpoint(_) => YTNodeVariant::ShowEngagementPanelEndpoint,
+            YTNode::CreatorHeartView(_) => YTNodeVariant::CreatorHeartView,
+            YTNode::KidsCategoryTab(_) => YTNodeVariant::KidsCategoryTab,
+        }
+    }
+
     /// Attempt to parse a single JSON value into a known `YTNode` variant.
     pub fn parse(val: &Value) -> Option<Self> {
         if val.is_null() {
@@ -741,10 +1536,7 @@ impl YTNode {
                 return Some(YTNode::VideoSecondaryInfo(vsi));
             }
         }
-        if val.get("videoRenderer").is_some()
-            || val.get("compactVideoRenderer").is_some()
-            || val.get("gridVideoRenderer").is_some()
-        {
+        if val.get("videoRenderer").is_some() {
             if let Some(v) = VideoNode::from_value(val) {
                 return Some(YTNode::Video(v));
             }
@@ -754,11 +1546,6 @@ impl YTNode {
         if val.get("reelShelfRenderer").is_some() {
             if let Some(rs) = ReelShelfNode::from_value(val) {
                 return Some(YTNode::ReelShelf(rs));
-            }
-        }
-        if val.get("reelItemRenderer").is_some() || val.get("shortsLockupViewModel").is_some() {
-            if let Some(s) = ShortNode::from_value(val) {
-                return Some(YTNode::Short(s));
             }
         }
 
@@ -803,24 +1590,19 @@ impl YTNode {
                 return Some(YTNode::PlaylistVideo(pv));
             }
         }
-        if val.get("playlistRenderer").is_some()
-            || val.get("gridPlaylistRenderer").is_some()
-            || val.get("playlistHeaderRenderer").is_some()
-        {
+        if val.get("playlistRenderer").is_some() {
             if let Some(p) = PlaylistNode::from_value(val) {
                 return Some(YTNode::Playlist(p));
             }
         }
 
         // 6. Check for Channel Renderers
-        if val.get("channelRenderer").is_some() || val.get("gridChannelRenderer").is_some() {
+        if val.get("channelCardRenderer").is_some() {
             if let Some(c) = ChannelCardNode::from_value(val) {
                 return Some(YTNode::ChannelCard(c));
             }
         }
-        if val.get("c4TabbedHeaderRenderer").is_some()
-            || val.get("pageHeaderRenderer").is_some()
-        {
+        if val.get("channelHeaderRenderer").is_some() {
             if let Some(ch) = ChannelHeaderNode::from_value(val) {
                 return Some(YTNode::ChannelHeader(ch));
             }
@@ -861,11 +1643,7 @@ impl YTNode {
         }
 
         // 9. Check for Community Post Renderers
-        if val.get("backstagePostRenderer").is_some()
-            || val.get("postRenderer").is_some()
-            || val.get("sharedPostRenderer").is_some()
-            || val.get("backstagePostThreadRenderer").is_some()
-        {
+        if val.get("postRenderer").is_some() {
             if let Some(p) = PostNode::from_value(val) {
                 return Some(YTNode::Post(p));
             }
@@ -914,26 +1692,24 @@ impl YTNode {
         }
 
         // 11. Check for Live Chat Messages
-        if val.get("liveChatTextMessageRenderer").is_some()
-            || val.get("liveChatPaidMessageRenderer").is_some()
-        {
+        if val.get("liveChatRenderer").is_some() || val.get("liveChatMessageRenderer").is_some() {
             if let Some(lc) = LiveChatMessageNode::from_value(val) {
                 return Some(YTNode::LiveChat(lc));
             }
         }
 
         // 12. Check for Buttons and Menus
-        if val.get("toggleButtonRenderer").is_some() || val.get("toggleButtonViewModel").is_some() {
+        if val.get("toggleButtonRenderer").is_some() {
             if let Some(tb) = ToggleButtonNode::from_value(val) {
                 return Some(YTNode::ToggleButton(tb));
             }
         }
-        if val.get("buttonRenderer").is_some() || val.get("buttonViewModel").is_some() {
+        if val.get("buttonRenderer").is_some() {
             if let Some(b) = ButtonNode::from_value(val) {
                 return Some(YTNode::Button(b));
             }
         }
-        if val.get("menuRenderer").is_some() || val.get("menuPopupRenderer").is_some() {
+        if val.get("menuRenderer").is_some() {
             if let Some(m) = MenuNode::from_value(val) {
                 return Some(YTNode::Menu(m));
             }
@@ -974,9 +1750,19 @@ impl YTNode {
                 return Some(YTNode::MetadataBadge(mb));
             }
         }
-        if val.get("viewCountRenderer").is_some() || val.get("videoViewCountRenderer").is_some() {
+        if val.get("viewCountRenderer").is_some() {
             if let Some(vc) = ViewCountNode::from_value(val) {
                 return Some(YTNode::ViewCount(vc));
+            }
+        }
+        if val.get("videoViewCountRenderer").is_some() {
+            if let Some(vc) = VideoViewCountNode::from_value(val) {
+                return Some(YTNode::VideoViewCount(vc));
+            }
+        }
+        if val.get("automixPreviewVideoRenderer").is_some() || val.get("automixPreviewVideo").is_some() {
+            if let Some(ap) = AutomixPreviewVideoNode::from_value(val) {
+                return Some(YTNode::AutomixPreviewVideo(ap));
             }
         }
         if val.get("videoOwnerRenderer").is_some() {
@@ -1025,7 +1811,7 @@ impl YTNode {
         }
 
         // 18. Check for Music Header / Badges / Buttons
-        if val.get("musicHeaderRenderer").is_some() || val.get("musicVisualHeaderRenderer").is_some() {
+        if val.get("musicHeaderRenderer").is_some() {
             if let Some(mh) = MusicHeaderNode::from_value(val) {
                 return Some(YTNode::MusicHeader(mh));
             }
@@ -1052,7 +1838,7 @@ impl YTNode {
                 return Some(YTNode::Card(c));
             }
         }
-        if val.get("clarificationRenderer").is_some() || val.get("emergencyOneboxRenderer").is_some() {
+        if val.get("clarificationRenderer").is_some() {
             if let Some(cl) = ClarificationNode::from_value(val) {
                 return Some(YTNode::Clarification(cl));
             }
@@ -1070,7 +1856,6 @@ impl YTNode {
             }
         }
         if val.get("markChatItemAsDeletedAction").is_some()
-            || val.get("markChatItemsByAuthorAsDeletedAction").is_some()
         {
             if let Some(m) = MarkChatItemAsDeletedActionNode::from_value(val) {
                 return Some(YTNode::MarkChatItemAsDeletedAction(m));
@@ -1094,7 +1879,6 @@ impl YTNode {
             }
         }
         if val.get("playerStoryboardSpecRenderer").is_some()
-            || val.get("playerLiveStoryboardSpecRenderer").is_some()
         {
             if let Some(pss) = PlayerStoryboardSpecNode::from_value(val) {
                 return Some(YTNode::PlayerStoryboardSpec(pss));
@@ -1180,9 +1964,7 @@ impl YTNode {
         }
 
         // 26. Check for Engagement & Live Actions
-        if val.get("showEngagementPanelEndpoint").is_some()
-            || val.get("showEngagementPanelAction").is_some()
-        {
+        if val.get("showEngagementPanelAction").is_some() {
             if let Some(se) = ShowEngagementPanelActionNode::from_value(val) {
                 return Some(YTNode::ShowEngagementPanelAction(se));
             }
@@ -1197,7 +1979,7 @@ impl YTNode {
                 return Some(YTNode::NavigateAction(na));
             }
         }
-        if val.get("showLiveChatAction").is_some() || val.get("showLiveChatItemEndpoint").is_some() {
+        if val.get("showLiveChatAction").is_some() {
             if let Some(slc) = ShowLiveChatActionNode::from_value(val) {
                 return Some(YTNode::ShowLiveChatAction(slc));
             }
@@ -1273,7 +2055,6 @@ impl YTNode {
 
         // 31. Check for Kids & Music Specialty Renderers
         if val.get("kidsCategoriesHeaderRenderer").is_some()
-            || val.get("kidsCategoryTabRenderer").is_some()
         {
             if let Some(kch) = KidsCategoriesHeaderNode::from_value(val) {
                 return Some(YTNode::KidsCategoriesHeader(kch));
@@ -2571,6 +3352,296 @@ impl YTNode {
         }
         if val.get("thumbnail").is_some() || val.get("thumbnails").is_some() {
             if let Some(n) = ThumbnailNode::from_value(val) { return Some(YTNode::Thumbnail(n)); }
+        }
+
+        // 67. Full 574 Unique AST Nodes (Phase 16)
+        if val.get("browserMediaSession").is_some() {
+            if let Some(n) = BrowserMediaSessionNode::from_value(val) { return Some(YTNode::BrowserMediaSession(n)); }
+        }
+        if val.get("channelVideoPlayerRenderer").is_some() {
+            if let Some(n) = ChannelVideoPlayerNode::from_value(val) { return Some(YTNode::ChannelVideoPlayer(n)); }
+        }
+        if val.get("childVideoRenderer").is_some() {
+            if let Some(n) = ChildVideoNode::from_value(val) { return Some(YTNode::ChildVideo(n)); }
+        }
+        if val.get("endScreenVideoRenderer").is_some() {
+            if let Some(n) = EndScreenVideoNode::from_value(val) { return Some(YTNode::EndScreenVideo(n)); }
+        }
+        if val.get("expandableVideoDescriptionBodyRenderer").is_some() {
+            if let Some(n) = ExpandableVideoDescriptionBodyNode::from_value(val) { return Some(YTNode::ExpandableVideoDescriptionBody(n)); }
+        }
+        if val.get("playerAnnotationsExpandedRenderer").is_some() {
+            if let Some(n) = PlayerAnnotationsExpandedNode::from_value(val) { return Some(YTNode::PlayerAnnotationsExpanded(n)); }
+        }
+        if val.get("playerCaptchaView").is_some() {
+            if let Some(n) = PlayerCaptchaViewNode::from_value(val) { return Some(YTNode::PlayerCaptchaView(n)); }
+        }
+        if val.get("playerControlsOverlayRenderer").is_some() {
+            if let Some(n) = PlayerControlsOverlayNode::from_value(val) { return Some(YTNode::PlayerControlsOverlay(n)); }
+        }
+        if val.get("playerLegacyDesktopYpcOfferRenderer").is_some() {
+            if let Some(n) = PlayerLegacyDesktopYpcOfferNode::from_value(val) { return Some(YTNode::PlayerLegacyDesktopYpcOffer(n)); }
+        }
+        if val.get("playerMicroformatRenderer").is_some() {
+            if let Some(n) = PlayerMicroformatNode::from_value(val) { return Some(YTNode::PlayerMicroformat(n)); }
+        }
+        if val.get("playerOverflowRenderer").is_some() {
+            if let Some(n) = PlayerOverflowNode::from_value(val) { return Some(YTNode::PlayerOverflow(n)); }
+        }
+        if val.get("playerOverlayAutoplayRenderer").is_some() {
+            if let Some(n) = PlayerOverlayAutoplayNode::from_value(val) { return Some(YTNode::PlayerOverlayAutoplay(n)); }
+        }
+        if val.get("playerOverlayVideoDetailsRenderer").is_some() {
+            if let Some(n) = PlayerOverlayVideoDetailsNode::from_value(val) { return Some(YTNode::PlayerOverlayVideoDetails(n)); }
+        }
+        if val.get("slimVideoMetadataRenderer").is_some() {
+            if let Some(n) = SlimVideoMetadataNode::from_value(val) { return Some(YTNode::SlimVideoMetadata(n)); }
+        }
+        if val.get("videoAttributeView").is_some() {
+            if let Some(n) = VideoAttributeViewNode::from_value(val) { return Some(YTNode::VideoAttributeView(n)); }
+        }
+        if val.get("videoCardRenderer").is_some() {
+            if let Some(n) = VideoCardNode::from_value(val) { return Some(YTNode::VideoCard(n)); }
+        }
+        if val.get("videoDescriptionHeaderRenderer").is_some() {
+            if let Some(n) = VideoDescriptionHeaderNode::from_value(val) { return Some(YTNode::VideoDescriptionHeader(n)); }
+        }
+        if val.get("videoInfoCardContentRenderer").is_some() {
+            if let Some(n) = VideoInfoCardContentNode::from_value(val) { return Some(YTNode::VideoInfoCardContent(n)); }
+        }
+        if val.get("videoSummaryContentView").is_some() {
+            if let Some(n) = VideoSummaryContentViewNode::from_value(val) { return Some(YTNode::VideoSummaryContentView(n)); }
+        }
+        if val.get("videoSummaryParagraphView").is_some() {
+            if let Some(n) = VideoSummaryParagraphViewNode::from_value(val) { return Some(YTNode::VideoSummaryParagraphView(n)); }
+        }
+        if val.get("watchCardCompactVideoRenderer").is_some() {
+            if let Some(n) = WatchCardCompactVideoNode::from_value(val) { return Some(YTNode::WatchCardCompactVideo(n)); }
+        }
+        if val.get("watchCardHeroVideoRenderer").is_some() {
+            if let Some(n) = WatchCardHeroVideoNode::from_value(val) { return Some(YTNode::WatchCardHeroVideo(n)); }
+        }
+        if val.get("format").is_some() {
+            if let Some(n) = FormatNode::from_value(val) { return Some(YTNode::Format(n)); }
+        }
+        if val.get("videoDetails").is_some() {
+            if let Some(n) = VideoDetailsNode::from_value(val) { return Some(YTNode::VideoDetails(n)); }
+        }
+        if val.get("liveChatAuthorBadgeRenderer").is_some() {
+            if let Some(n) = LiveChatAuthorBadgeNode::from_value(val) { return Some(YTNode::LiveChatAuthorBadge(n)); }
+        }
+        if val.get("liveChatHeaderRenderer").is_some() {
+            if let Some(n) = LiveChatHeaderNode::from_value(val) { return Some(YTNode::LiveChatHeader(n)); }
+        }
+        if val.get("liveChatMessageInputRenderer").is_some() {
+            if let Some(n) = LiveChatMessageInputNode::from_value(val) { return Some(YTNode::LiveChatMessageInput(n)); }
+        }
+        if val.get("liveChatParticipantRenderer").is_some() {
+            if let Some(n) = LiveChatParticipantNode::from_value(val) { return Some(YTNode::LiveChatParticipant(n)); }
+        }
+        if val.get("liveChatBannerChatSummaryRenderer").is_some() {
+            if let Some(n) = LiveChatBannerChatSummaryNode::from_value(val) { return Some(YTNode::LiveChatBannerChatSummary(n)); }
+        }
+        if val.get("liveChatBannerHeaderRenderer").is_some() {
+            if let Some(n) = LiveChatBannerHeaderNode::from_value(val) { return Some(YTNode::LiveChatBannerHeader(n)); }
+        }
+        if val.get("liveChatBannerRedirectRenderer").is_some() {
+            if let Some(n) = LiveChatBannerRedirectNode::from_value(val) { return Some(YTNode::LiveChatBannerRedirect(n)); }
+        }
+        if val.get("liveChatItemBumperView").is_some() {
+            if let Some(n) = LiveChatItemBumperViewNode::from_value(val) { return Some(YTNode::LiveChatItemBumperView(n)); }
+        }
+        if val.get("liveChatPaidMessageRenderer").is_some() {
+            if let Some(n) = LiveChatPaidMessageNode::from_value(val) { return Some(YTNode::LiveChatPaidMessage(n)); }
+        }
+        if val.get("liveChatPlaceholderItemRenderer").is_some() {
+            if let Some(n) = LiveChatPlaceholderItemNode::from_value(val) { return Some(YTNode::LiveChatPlaceholderItem(n)); }
+        }
+        if val.get("liveChatProductItemRenderer").is_some() {
+            if let Some(n) = LiveChatProductItemNode::from_value(val) { return Some(YTNode::LiveChatProductItem(n)); }
+        }
+        if val.get("liveChatRestrictedParticipationRenderer").is_some() {
+            if let Some(n) = LiveChatRestrictedParticipationNode::from_value(val) { return Some(YTNode::LiveChatRestrictedParticipation(n)); }
+        }
+        if val.get("liveChatSponsorshipsGiftPurchaseAnnouncementRenderer").is_some() {
+            if let Some(n) = LiveChatSponsorshipsGiftPurchaseAnnouncementNode::from_value(val) { return Some(YTNode::LiveChatSponsorshipsGiftPurchaseAnnouncement(n)); }
+        }
+        if val.get("liveChatSponsorshipsGiftRedemptionAnnouncementRenderer").is_some() {
+            if let Some(n) = LiveChatSponsorshipsGiftRedemptionAnnouncementNode::from_value(val) { return Some(YTNode::LiveChatSponsorshipsGiftRedemptionAnnouncement(n)); }
+        }
+        if val.get("liveChatSponsorshipsHeaderRenderer").is_some() {
+            if let Some(n) = LiveChatSponsorshipsHeaderNode::from_value(val) { return Some(YTNode::LiveChatSponsorshipsHeader(n)); }
+        }
+        if val.get("liveChatTextMessageRenderer").is_some() {
+            if let Some(n) = LiveChatTextMessageNode::from_value(val) { return Some(YTNode::LiveChatTextMessage(n)); }
+        }
+        if val.get("liveChatTickerPaidMessageItemRenderer").is_some() {
+            if let Some(n) = LiveChatTickerPaidMessageItemNode::from_value(val) { return Some(YTNode::LiveChatTickerPaidMessageItem(n)); }
+        }
+        if val.get("liveChatTickerPaidStickerItemRenderer").is_some() {
+            if let Some(n) = LiveChatTickerPaidStickerItemNode::from_value(val) { return Some(YTNode::LiveChatTickerPaidStickerItem(n)); }
+        }
+        if val.get("liveChatTickerSponsorItemRenderer").is_some() {
+            if let Some(n) = LiveChatTickerSponsorItemNode::from_value(val) { return Some(YTNode::LiveChatTickerSponsorItem(n)); }
+        }
+        if val.get("showLiveChatActionPanelAction").is_some() {
+            if let Some(n) = ShowLiveChatActionPanelActionNode::from_value(val) { return Some(YTNode::ShowLiveChatActionPanelAction(n)); }
+        }
+        if val.get("showLiveChatDialogAction").is_some() {
+            if let Some(n) = ShowLiveChatDialogActionNode::from_value(val) { return Some(YTNode::ShowLiveChatDialogAction(n)); }
+        }
+        if val.get("showLiveChatTooltipCommand").is_some() {
+            if let Some(n) = ShowLiveChatTooltipCommandNode::from_value(val) { return Some(YTNode::ShowLiveChatTooltipCommand(n)); }
+        }
+        if val.get("markChatItemsByAuthorAsDeletedAction").is_some() {
+            if let Some(n) = MarkChatItemsByAuthorAsDeletedActionNode::from_value(val) { return Some(YTNode::MarkChatItemsByAuthorAsDeletedAction(n)); }
+        }
+        if val.get("liveChatBannerPollRenderer").is_some() {
+            if let Some(n) = LiveChatBannerPollNode::from_value(val) { return Some(YTNode::LiveChatBannerPoll(n)); }
+        }
+        if val.get("aboutChannelRenderer").is_some() {
+            if let Some(n) = AboutChannelNode::from_value(val) { return Some(YTNode::AboutChannel(n)); }
+        }
+        if val.get("aboutChannelViewModel").is_some() {
+            if let Some(n) = AboutChannelViewNode::from_value(val) { return Some(YTNode::AboutChannelView(n)); }
+        }
+        if val.get("accountChannelRenderer").is_some() {
+            if let Some(n) = AccountChannelNode::from_value(val) { return Some(YTNode::AccountChannel(n)); }
+        }
+        if val.get("channelRenderer").is_some() {
+            if let Some(n) = ChannelNode::from_value(val) { return Some(YTNode::Channel(n)); }
+        }
+        if val.get("channelAgeGateRenderer").is_some() {
+            if let Some(n) = ChannelAgeGateNode::from_value(val) { return Some(YTNode::ChannelAgeGate(n)); }
+        }
+        if val.get("channelExternalLinkViewModel").is_some() {
+            if let Some(n) = ChannelExternalLinkViewNode::from_value(val) { return Some(YTNode::ChannelExternalLinkView(n)); }
+        }
+        if val.get("channelFeaturedContentRenderer").is_some() {
+            if let Some(n) = ChannelFeaturedContentNode::from_value(val) { return Some(YTNode::ChannelFeaturedContent(n)); }
+        }
+        if val.get("channelOptionsRenderer").is_some() {
+            if let Some(n) = ChannelOptionsNode::from_value(val) { return Some(YTNode::ChannelOptions(n)); }
+        }
+        if val.get("channelTaglineRenderer").is_some() {
+            if let Some(n) = ChannelTaglineNode::from_value(val) { return Some(YTNode::ChannelTagline(n)); }
+        }
+        if val.get("channelThumbnailWithLinkRenderer").is_some() {
+            if let Some(n) = ChannelThumbnailWithLinkNode::from_value(val) { return Some(YTNode::ChannelThumbnailWithLink(n)); }
+        }
+        if val.get("topicChannelDetailsRenderer").is_some() {
+            if let Some(n) = TopicChannelDetailsNode::from_value(val) { return Some(YTNode::TopicChannelDetails(n)); }
+        }
+        if val.get("activeAccountHeaderRenderer").is_some() {
+            if let Some(n) = ActiveAccountHeaderNode::from_value(val) { return Some(YTNode::ActiveAccountHeader(n)); }
+        }
+        if val.get("channelHeaderLinksRenderer").is_some() {
+            if let Some(n) = ChannelHeaderLinksNode::from_value(val) { return Some(YTNode::ChannelHeaderLinks(n)); }
+        }
+        if val.get("channelHeaderLinksViewModel").is_some() {
+            if let Some(n) = ChannelHeaderLinksViewNode::from_value(val) { return Some(YTNode::ChannelHeaderLinksView(n)); }
+        }
+        if val.get("channelMobileHeaderRenderer").is_some() {
+            if let Some(n) = ChannelMobileHeaderNode::from_value(val) { return Some(YTNode::ChannelMobileHeader(n)); }
+        }
+        if val.get("channelSwitcherHeaderRenderer").is_some() {
+            if let Some(n) = ChannelSwitcherHeaderNode::from_value(val) { return Some(YTNode::ChannelSwitcherHeader(n)); }
+        }
+        if val.get("authorCommentBadgeRenderer").is_some() {
+            if let Some(n) = AuthorCommentBadgeNode::from_value(val) { return Some(YTNode::AuthorCommentBadge(n)); }
+        }
+        if val.get("commentRepliesRenderer").is_some() {
+            if let Some(n) = CommentRepliesNode::from_value(val) { return Some(YTNode::CommentReplies(n)); }
+        }
+        if val.get("commentViewModel").is_some() {
+            if let Some(n) = CommentViewNode::from_value(val) { return Some(YTNode::CommentView(n)); }
+        }
+        if val.get("commentsEntryPointTeaserRenderer").is_some() {
+            if let Some(n) = CommentsEntryPointTeaserNode::from_value(val) { return Some(YTNode::CommentsEntryPointTeaser(n)); }
+        }
+        if val.get("commentsSimpleboxRenderer").is_some() {
+            if let Some(n) = CommentsSimpleboxNode::from_value(val) { return Some(YTNode::CommentsSimplebox(n)); }
+        }
+        if val.get("pdgCommentChipRenderer").is_some() {
+            if let Some(n) = PdgCommentChipNode::from_value(val) { return Some(YTNode::PdgCommentChip(n)); }
+        }
+        if val.get("sponsorCommentBadgeRenderer").is_some() {
+            if let Some(n) = SponsorCommentBadgeNode::from_value(val) { return Some(YTNode::SponsorCommentBadge(n)); }
+        }
+        if val.get("commentsContinuation").is_some() {
+            if let Some(n) = CommentsContinuationNode::from_value(val) { return Some(YTNode::CommentsContinuation(n)); }
+        }
+        if val.get("musicDownloadStateBadgeRenderer").is_some() {
+            if let Some(n) = MusicDownloadStateBadgeNode::from_value(val) { return Some(YTNode::MusicDownloadStateBadge(n)); }
+        }
+        if val.get("musicElementHeaderRenderer").is_some() {
+            if let Some(n) = MusicElementHeaderNode::from_value(val) { return Some(YTNode::MusicElementHeader(n)); }
+        }
+        if val.get("musicSortFilterButtonRenderer").is_some() {
+            if let Some(n) = MusicSortFilterButtonNode::from_value(val) { return Some(YTNode::MusicSortFilterButton(n)); }
+        }
+        if val.get("musicThumbnailRenderer").is_some() {
+            if let Some(n) = MusicThumbnailNode::from_value(val) { return Some(YTNode::MusicThumbnail(n)); }
+        }
+        if val.get("musicMenuItemDividerRenderer").is_some() {
+            if let Some(n) = MusicMenuItemDividerNode::from_value(val) { return Some(YTNode::MusicMenuItemDivider(n)); }
+        }
+        if val.get("musicMultiSelectMenuRenderer").is_some() {
+            if let Some(n) = MusicMultiSelectMenuNode::from_value(val) { return Some(YTNode::MusicMultiSelectMenu(n)); }
+        }
+        if val.get("musicMultiSelectMenuItemRenderer").is_some() {
+            if let Some(n) = MusicMultiSelectMenuItemNode::from_value(val) { return Some(YTNode::MusicMultiSelectMenuItem(n)); }
+        }
+        if val.get("backstagePostRenderer").is_some() {
+            if let Some(n) = BackstagePostNode::from_value(val) { return Some(YTNode::BackstagePost(n)); }
+        }
+        if val.get("backstagePostThreadRenderer").is_some() {
+            if let Some(n) = BackstagePostThreadNode::from_value(val) { return Some(YTNode::BackstagePostThread(n)); }
+        }
+        if val.get("sharedPostRenderer").is_some() {
+            if let Some(n) = SharedPostNode::from_value(val) { return Some(YTNode::SharedPost(n)); }
+        }
+        if val.get("reelItemRenderer").is_some() {
+            if let Some(n) = ReelItemNode::from_value(val) { return Some(YTNode::ReelItem(n)); }
+        }
+        if val.get("reelPlayerHeaderRenderer").is_some() {
+            if let Some(n) = ReelPlayerHeaderNode::from_value(val) { return Some(YTNode::ReelPlayerHeader(n)); }
+        }
+        if val.get("reelPlayerOverlayRenderer").is_some() {
+            if let Some(n) = ReelPlayerOverlayNode::from_value(val) { return Some(YTNode::ReelPlayerOverlay(n)); }
+        }
+        if val.get("shortsLockupViewModel").is_some() {
+            if let Some(n) = ShortsLockupViewNode::from_value(val) { return Some(YTNode::ShortsLockupView(n)); }
+        }
+        if val.get("alertWithButtonRenderer").is_some() {
+            if let Some(n) = AlertWithButtonNode::from_value(val) { return Some(YTNode::AlertWithButton(n)); }
+        }
+        if val.get("compositeVideoPrimaryInfoRenderer").is_some() {
+            if let Some(n) = CompositeVideoPrimaryInfoNode::from_value(val) { return Some(YTNode::CompositeVideoPrimaryInfo(n)); }
+        }
+        if val.get("emergencyOneboxRenderer").is_some() {
+            if let Some(n) = EmergencyOneboxNode::from_value(val) { return Some(YTNode::EmergencyOnebox(n)); }
+        }
+        if val.get("singleActionEmergencySupportRenderer").is_some() {
+            if let Some(n) = SingleActionEmergencySupportNode::from_value(val) { return Some(YTNode::SingleActionEmergencySupport(n)); }
+        }
+        if val.get("playerLiveStoryboardSpecRenderer").is_some() {
+            if let Some(n) = PlayerLiveStoryboardSpecNode::from_value(val) { return Some(YTNode::PlayerLiveStoryboardSpec(n)); }
+        }
+        if val.get("pollHeaderRenderer").is_some() {
+            if let Some(n) = PollHeaderNode::from_value(val) { return Some(YTNode::PollHeader(n)); }
+        }
+        if val.get("changeEngagementPanelVisibilityAction").is_some() {
+            if let Some(n) = ChangeEngagementPanelVisibilityActionNode::from_value(val) { return Some(YTNode::ChangeEngagementPanelVisibilityAction(n)); }
+        }
+        if val.get("showEngagementPanelEndpoint").is_some() {
+            if let Some(n) = ShowEngagementPanelEndpointNode::from_value(val) { return Some(YTNode::ShowEngagementPanelEndpoint(n)); }
+        }
+        if val.get("creatorHeartViewModel").is_some() {
+            if let Some(n) = CreatorHeartViewNode::from_value(val) { return Some(YTNode::CreatorHeartView(n)); }
+        }
+        if val.get("kidsCategoryTabRenderer").is_some() {
+            if let Some(n) = KidsCategoryTabNode::from_value(val) { return Some(YTNode::KidsCategoryTab(n)); }
         }
 
         None
