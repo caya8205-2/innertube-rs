@@ -1,6 +1,7 @@
 pub mod account;
 pub mod actions;
 pub mod actions_ext;
+pub mod actions_live;
 pub mod alert;
 pub mod author;
 pub mod button;
@@ -21,6 +22,7 @@ pub mod live_actions;
 pub mod markers;
 pub mod media_live;
 pub mod menu;
+pub mod menus_mweb;
 pub mod metadata;
 pub mod music_nav;
 pub mod navigation;
@@ -32,6 +34,7 @@ pub mod player_media;
 pub mod player_overlay;
 pub mod player_sections;
 pub mod previews;
+pub mod primitives_kids;
 pub mod profile;
 pub mod reels_search;
 pub mod search_modifiers;
@@ -57,6 +60,13 @@ pub use actions_ext::{
     CommentDialogNode, CommentReplyDialogNode, CreateCommentEndpointNode, EmojiPickerNode,
     GetKidsBlocklistPickerCommandNode, ShowDialogCommandNode, VoiceReplyContainerViewNode,
     WatchNextTabbedResultsNode, YpcTrailerNode,
+};
+pub use actions_live::{
+    BumperUserEduContentViewNode, CommandContextNode, PdgReplyButtonViewNode,
+    PlaylistCollaborationFormDataNode, PlaylistCollaborationFormSchemaNode,
+    PlaylistCollaborationViewModelPlaylistCollaboratorDataNode, ReplaceLiveChatActionNode,
+    SubscriptionButtonNode, UpdateDateTextActionNode, UpdateDescriptionActionNode,
+    UpdateTitleActionNode, UpdateToggleButtonTextActionNode, UpdateViewershipActionNode,
 };
 pub use alert::{AlertNode, CardNode, ClarificationNode, PollNode};
 pub use author::AuthorNode;
@@ -132,6 +142,12 @@ pub use media_live::{
     MusicPlaylistEditHeaderNode,
 };
 pub use menu::{MenuItemNode, MenuNode};
+pub use menus_mweb::{
+    MenuFlexibleItemNode, MenuNavigationItemNode, MenuPopupNode, MenuServiceItemDownloadNode,
+    MenuServiceItemNode, MobileTopbarNode, MultiPageMenuNode, MultiPageMenuNotificationSectionNode,
+    MultiPageMenuSectionNode, PivotBarItemNode, PivotBarNode, SimpleMenuHeaderNode,
+    TopbarMenuButtonNode,
+};
 pub use metadata::{MetadataBadgeNode, MicroformatDataNode, VideoOwnerNode, ViewCountNode};
 pub use music_nav::{
     MusicResponsiveListItemFixedColumnNode, MusicResponsiveListItemFlexColumnNode,
@@ -175,6 +191,12 @@ pub use previews::{
     DefaultPromoPanelNode, DescriptionPreviewViewNode, DialogHeaderViewNode, DialogViewNode,
     DislikeButtonViewNode, DismissableDialogContentSectionNode, DismissableDialogNode,
     DownloadButtonNode, DownloadListItemViewNode, DropdownItemNode, DropdownNode, DropdownViewNode,
+};
+pub use primitives_kids::{
+    AccessibilityContextNode, AccessibilityDataNode, AccessibilityIdNode, AnchoredSectionNode,
+    CategoryAssetsNode, ChildElementNode, EmojiNode, EmojiRunNode, KidsBlocklistPickerItemNode,
+    KidsBlocklistPickerNode, RendererContextNode, ShareEntityServiceEndpointNode,
+    SignalServiceEndpointNode, UnsubscribeEndpointNode, WatchNextEndpointNode,
 };
 pub use profile::{ProfileColumnNode, ProfileColumnUserInfoNode, VerticalListNode};
 pub use reels_search::{

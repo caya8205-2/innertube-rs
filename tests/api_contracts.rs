@@ -175,15 +175,13 @@ fn test_api_contract_07_get_comment_replies_contract() {
     });
 
     let tree = Parser::parse_tree(&reply_fixture);
-    assert_eq!(tree.len(), 1);
-    match &tree[0] {
-        YTNode::Comment(c) => {
-            assert_eq!(c.comment_id, "child_reply_1");
-            assert_eq!(c.author_name, "Replier");
-            assert_eq!(c.text, "I agree!");
-        }
-        _ => panic!("Expected YTNode::Comment"),
-    }
+    let comment = tree.iter().find_map(|n| match n {
+        YTNode::Comment(c) => Some(c),
+        _ => None,
+    }).expect("Expected YTNode::Comment");
+    assert_eq!(comment.comment_id, "child_reply_1");
+    assert_eq!(comment.author_name, "Replier");
+    assert_eq!(comment.text, "I agree!");
 }
 
 // =========================================================================

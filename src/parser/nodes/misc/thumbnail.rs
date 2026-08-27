@@ -17,9 +17,12 @@ pub struct ThumbnailListNode {
 
 impl ThumbnailNode {
     pub fn from_value(val: &Value) -> Option<Self> {
-        let url = val.get("url").and_then(|u| u.as_str())?.to_string();
-        let width = val.get("width").and_then(|w| w.as_u64()).map(|w| w as u32);
-        let height = val.get("height").and_then(|h| h.as_u64()).map(|h| h as u32);
+        let node = val.get("thumbnail")
+            .or_else(|| val.pointer("/thumbnails/0"))
+            .unwrap_or(val);
+        let url = node.get("url").and_then(|u| u.as_str())?.to_string();
+        let width = node.get("width").and_then(|w| w.as_u64()).map(|w| w as u32);
+        let height = node.get("height").and_then(|h| h.as_u64()).map(|h| h as u32);
 
         Some(Self { url, width, height })
     }

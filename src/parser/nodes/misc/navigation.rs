@@ -27,11 +27,37 @@ pub struct WatchEndpointNode {
     pub player_params: Option<String>,
 }
 
+impl WatchEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("watchEndpoint").unwrap_or(val);
+        let video_id = node.get("videoId").and_then(|v| v.as_str())?.to_string();
+        Some(Self {
+            video_id,
+            playlist_id: node.get("playlistId").and_then(|p| p.as_str()).map(|s| s.to_string()),
+            index: node.get("index").and_then(|i| i.as_u64()).map(|i| i as u32),
+            params: node.get("params").and_then(|p| p.as_str()).map(|s| s.to_string()),
+            player_params: node.get("playerParams").and_then(|p| p.as_str()).map(|s| s.to_string()),
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct BrowseEndpointNode {
     pub browse_id: String,
     pub params: Option<String>,
     pub canonical_base_url: Option<String>,
+}
+
+impl BrowseEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("browseEndpoint").unwrap_or(val);
+        let browse_id = node.get("browseId").and_then(|b| b.as_str())?.to_string();
+        Some(Self {
+            browse_id,
+            params: node.get("params").and_then(|p| p.as_str()).map(|s| s.to_string()),
+            canonical_base_url: node.get("canonicalBaseUrl").and_then(|u| u.as_str()).map(|s| s.to_string()),
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -41,10 +67,33 @@ pub struct ReelWatchEndpointNode {
     pub sequence_params: Option<String>,
 }
 
+impl ReelWatchEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("reelWatchEndpoint").unwrap_or(val);
+        let video_id = node.get("videoId").and_then(|v| v.as_str())?.to_string();
+        Some(Self {
+            video_id,
+            params: node.get("params").and_then(|p| p.as_str()).map(|s| s.to_string()),
+            sequence_params: node.get("sequenceParams").and_then(|p| p.as_str()).map(|s| s.to_string()),
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct SearchEndpointNode {
     pub query: String,
     pub params: Option<String>,
+}
+
+impl SearchEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("searchEndpoint").unwrap_or(val);
+        let query = node.get("query").and_then(|q| q.as_str())?.to_string();
+        Some(Self {
+            query,
+            params: node.get("params").and_then(|p| p.as_str()).map(|s| s.to_string()),
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -53,16 +102,67 @@ pub struct LikeEndpointNode {
     pub status: Option<String>,
 }
 
+impl LikeEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("likeEndpoint").unwrap_or(val);
+        let target = node
+            .get("target")
+            .and_then(|t| {
+                if let Some(s) = t.as_str() {
+                    Some(s.to_string())
+                } else {
+                    t.get("videoId").and_then(|v| v.as_str()).map(|s| s.to_string())
+                }
+            })
+            .or_else(|| node.get("status").and_then(|s| s.as_str()).map(|s| s.to_string()))
+            .unwrap_or_default();
+        Some(Self {
+            target,
+            status: node.get("status").and_then(|s| s.as_str()).map(|s| s.to_string()),
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct SubscribeEndpointNode {
     pub channel_ids: Vec<String>,
     pub params: Option<String>,
 }
 
+impl SubscribeEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("subscribeEndpoint").unwrap_or(val);
+        let channel_ids = node
+            .get("channelIds")
+            .and_then(|c| c.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_default();
+        Some(Self {
+            channel_ids,
+            params: node.get("params").and_then(|p| p.as_str()).map(|s| s.to_string()),
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct ContinuationEndpointNode {
     pub token: String,
     pub request: Option<String>,
+}
+
+impl ContinuationEndpointNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("continuationEndpoint").or_else(|| val.get("continuationCommand")).unwrap_or(val);
+        let token = node.get("token").and_then(|t| t.as_str())?.to_string();
+        Some(Self {
+            token,
+            request: node.get("request").and_then(|r| r.as_str()).map(|s| s.to_string()),
+        })
+    }
 }
 
 impl NavigationEndpointNode {

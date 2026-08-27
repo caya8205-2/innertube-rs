@@ -149,6 +149,22 @@ pub use misc::{
     ViewCountFactoidNode, ViewCountNode, VoiceReplyContainerViewNode, WatchCardRichHeaderNode,
     WatchCardSectionSequenceNode, WatchEndpointNode, WatchNextEndScreenNode,
     WatchNextTabbedResultsNode, YpcTrailerNode,
+    // Batch 15: Menus & Mobile Topbar
+    MenuFlexibleItemNode, MenuNavigationItemNode, MenuPopupNode, MenuServiceItemDownloadNode,
+    MenuServiceItemNode, MobileTopbarNode, MultiPageMenuNode, MultiPageMenuNotificationSectionNode,
+    MultiPageMenuSectionNode, PivotBarItemNode, PivotBarNode, SimpleMenuHeaderNode,
+    TopbarMenuButtonNode,
+    // Batch 15: Livechat Actions & Collaboration
+    BumperUserEduContentViewNode, CommandContextNode, PdgReplyButtonViewNode,
+    PlaylistCollaborationFormDataNode, PlaylistCollaborationFormSchemaNode,
+    PlaylistCollaborationViewModelPlaylistCollaboratorDataNode, ReplaceLiveChatActionNode,
+    SubscriptionButtonNode, UpdateDateTextActionNode, UpdateDescriptionActionNode,
+    UpdateTitleActionNode, UpdateToggleButtonTextActionNode, UpdateViewershipActionNode,
+    // Batch 15: Endpoints Primitives & Kids
+    AccessibilityContextNode, AccessibilityDataNode, AnchoredSectionNode, ChildElementNode,
+    EmojiRunNode, KidsBlocklistPickerItemNode, KidsBlocklistPickerNode, RendererContextNode,
+    ShareEntityServiceEndpointNode, SignalServiceEndpointNode, UnsubscribeEndpointNode,
+    WatchNextEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
@@ -642,6 +658,60 @@ pub enum YTNode {
     PrefetchWatchCommand(PrefetchWatchCommandNode),
     ShareEndpoint(ShareEndpointNode),
     ShareEntityEndpoint(ShareEntityEndpointNode),
+    // Batch 15: Menus & Mobile Topbar
+    MenuFlexibleItem(MenuFlexibleItemNode),
+    MenuNavigationItem(MenuNavigationItemNode),
+    MenuPopup(MenuPopupNode),
+    MenuServiceItem(MenuServiceItemNode),
+    MenuServiceItemDownload(MenuServiceItemDownloadNode),
+    MultiPageMenu(MultiPageMenuNode),
+    MultiPageMenuNotificationSection(MultiPageMenuNotificationSectionNode),
+    SimpleMenuHeader(SimpleMenuHeaderNode),
+    MobileTopbar(MobileTopbarNode),
+    MultiPageMenuSection(MultiPageMenuSectionNode),
+    PivotBar(PivotBarNode),
+    PivotBarItem(PivotBarItemNode),
+    TopbarMenuButton(TopbarMenuButtonNode),
+    // Batch 15: Livechat Actions & Collaboration
+    ReplaceLiveChatAction(ReplaceLiveChatActionNode),
+    UpdateDateTextAction(UpdateDateTextActionNode),
+    UpdateDescriptionAction(UpdateDescriptionActionNode),
+    UpdateTitleAction(UpdateTitleActionNode),
+    UpdateToggleButtonTextAction(UpdateToggleButtonTextActionNode),
+    UpdateViewershipAction(UpdateViewershipActionNode),
+    BumperUserEduContentView(BumperUserEduContentViewNode),
+    PdgReplyButtonView(PdgReplyButtonViewNode),
+    PlaylistCollaborationFormSchema(PlaylistCollaborationFormSchemaNode),
+    PlaylistCollaborationViewModelPlaylistCollaboratorData(PlaylistCollaborationViewModelPlaylistCollaboratorDataNode),
+    SubscriptionButton(SubscriptionButtonNode),
+    CommandContext(CommandContextNode),
+    // Batch 15: Endpoints Primitives & Kids
+    ShareEntityServiceEndpoint(ShareEntityServiceEndpointNode),
+    SignalServiceEndpoint(SignalServiceEndpointNode),
+    UnsubscribeEndpoint(UnsubscribeEndpointNode),
+    WatchNextEndpoint(WatchNextEndpointNode),
+    AccessibilityContext(AccessibilityContextNode),
+    AccessibilityData(AccessibilityDataNode),
+    ChildElement(ChildElementNode),
+    EmojiRun(EmojiRunNode),
+    RendererContext(RendererContextNode),
+    AnchoredSection(AnchoredSectionNode),
+    KidsBlocklistPicker(KidsBlocklistPickerNode),
+    KidsBlocklistPickerItem(KidsBlocklistPickerItemNode),
+    // Batch 15: Direct Primitives & Core Variants
+    MusicResponsiveListItem(MusicResponsiveListItemNode),
+    NavigationEndpoint(NavigationEndpointNode),
+    ThumbnailOverlayTimeStatus(ThumbnailOverlayTimeStatusNode),
+    BrowseEndpoint(BrowseEndpointNode),
+    LikeEndpoint(LikeEndpointNode),
+    ReelWatchEndpoint(ReelWatchEndpointNode),
+    SearchEndpoint(SearchEndpointNode),
+    SubscribeEndpoint(SubscribeEndpointNode),
+    WatchEndpoint(WatchEndpointNode),
+    Author(AuthorNode),
+    Text(TextNode),
+    TextRun(TextRunNode),
+    Thumbnail(ThumbnailNode),
 }
 
 impl YTNode {
@@ -2343,6 +2413,164 @@ impl YTNode {
         }
         if val.get("shareEntityEndpoint").is_some() {
             if let Some(n) = ShareEntityEndpointNode::from_value(val) { return Some(YTNode::ShareEntityEndpoint(n)); }
+        }
+
+        // 63. Menus & Mobile Topbar (Batch 15)
+        if val.get("menuFlexibleItemRenderer").is_some() {
+            if let Some(n) = MenuFlexibleItemNode::from_value(val) { return Some(YTNode::MenuFlexibleItem(n)); }
+        }
+        if val.get("menuNavigationItemRenderer").is_some() {
+            if let Some(n) = MenuNavigationItemNode::from_value(val) { return Some(YTNode::MenuNavigationItem(n)); }
+        }
+        if val.get("menuPopupRenderer").is_some() {
+            if let Some(n) = MenuPopupNode::from_value(val) { return Some(YTNode::MenuPopup(n)); }
+        }
+        if val.get("menuServiceItemRenderer").is_some() {
+            if let Some(n) = MenuServiceItemNode::from_value(val) { return Some(YTNode::MenuServiceItem(n)); }
+        }
+        if val.get("menuServiceItemDownloadRenderer").is_some() {
+            if let Some(n) = MenuServiceItemDownloadNode::from_value(val) { return Some(YTNode::MenuServiceItemDownload(n)); }
+        }
+        if val.get("multiPageMenuRenderer").is_some() {
+            if let Some(n) = MultiPageMenuNode::from_value(val) { return Some(YTNode::MultiPageMenu(n)); }
+        }
+        if val.get("multiPageMenuNotificationSectionRenderer").is_some() {
+            if let Some(n) = MultiPageMenuNotificationSectionNode::from_value(val) { return Some(YTNode::MultiPageMenuNotificationSection(n)); }
+        }
+        if val.get("simpleMenuHeaderRenderer").is_some() {
+            if let Some(n) = SimpleMenuHeaderNode::from_value(val) { return Some(YTNode::SimpleMenuHeader(n)); }
+        }
+        if val.get("mobileTopbarRenderer").is_some() {
+            if let Some(n) = MobileTopbarNode::from_value(val) { return Some(YTNode::MobileTopbar(n)); }
+        }
+        if val.get("multiPageMenuSectionRenderer").is_some() {
+            if let Some(n) = MultiPageMenuSectionNode::from_value(val) { return Some(YTNode::MultiPageMenuSection(n)); }
+        }
+        if val.get("pivotBarRenderer").is_some() {
+            if let Some(n) = PivotBarNode::from_value(val) { return Some(YTNode::PivotBar(n)); }
+        }
+        if val.get("pivotBarItemRenderer").is_some() {
+            if let Some(n) = PivotBarItemNode::from_value(val) { return Some(YTNode::PivotBarItem(n)); }
+        }
+        if val.get("topbarMenuButtonRenderer").is_some() {
+            if let Some(n) = TopbarMenuButtonNode::from_value(val) { return Some(YTNode::TopbarMenuButton(n)); }
+        }
+
+        // 64. Livechat Actions & Collaboration (Batch 15)
+        if val.get("replaceLiveChatAction").is_some() {
+            if let Some(n) = ReplaceLiveChatActionNode::from_value(val) { return Some(YTNode::ReplaceLiveChatAction(n)); }
+        }
+        if val.get("updateDateTextAction").is_some() {
+            if let Some(n) = UpdateDateTextActionNode::from_value(val) { return Some(YTNode::UpdateDateTextAction(n)); }
+        }
+        if val.get("updateDescriptionAction").is_some() {
+            if let Some(n) = UpdateDescriptionActionNode::from_value(val) { return Some(YTNode::UpdateDescriptionAction(n)); }
+        }
+        if val.get("updateTitleAction").is_some() {
+            if let Some(n) = UpdateTitleActionNode::from_value(val) { return Some(YTNode::UpdateTitleAction(n)); }
+        }
+        if val.get("updateToggleButtonTextAction").is_some() {
+            if let Some(n) = UpdateToggleButtonTextActionNode::from_value(val) { return Some(YTNode::UpdateToggleButtonTextAction(n)); }
+        }
+        if val.get("updateViewershipAction").is_some() {
+            if let Some(n) = UpdateViewershipActionNode::from_value(val) { return Some(YTNode::UpdateViewershipAction(n)); }
+        }
+        if val.get("bumperUserEduContentView").is_some() {
+            if let Some(n) = BumperUserEduContentViewNode::from_value(val) { return Some(YTNode::BumperUserEduContentView(n)); }
+        }
+        if val.get("pdgReplyButtonView").is_some() {
+            if let Some(n) = PdgReplyButtonViewNode::from_value(val) { return Some(YTNode::PdgReplyButtonView(n)); }
+        }
+        if val.get("playlistCollaborationFormSchema").is_some() {
+            if let Some(n) = PlaylistCollaborationFormSchemaNode::from_value(val) { return Some(YTNode::PlaylistCollaborationFormSchema(n)); }
+        }
+        if val.get("playlistCollaborationViewModelPlaylistCollaboratorData").is_some() {
+            if let Some(n) = PlaylistCollaborationViewModelPlaylistCollaboratorDataNode::from_value(val) { return Some(YTNode::PlaylistCollaborationViewModelPlaylistCollaboratorData(n)); }
+        }
+        if val.get("subscriptionButton").is_some() {
+            if let Some(n) = SubscriptionButtonNode::from_value(val) { return Some(YTNode::SubscriptionButton(n)); }
+        }
+        if val.get("commandContext").is_some() {
+            if let Some(n) = CommandContextNode::from_value(val) { return Some(YTNode::CommandContext(n)); }
+        }
+
+        // 65. Endpoints Primitives & Kids (Batch 15)
+        if val.get("shareEntityServiceEndpoint").is_some() {
+            if let Some(n) = ShareEntityServiceEndpointNode::from_value(val) { return Some(YTNode::ShareEntityServiceEndpoint(n)); }
+        }
+        if val.get("signalServiceEndpoint").is_some() {
+            if let Some(n) = SignalServiceEndpointNode::from_value(val) { return Some(YTNode::SignalServiceEndpoint(n)); }
+        }
+        if val.get("unsubscribeEndpoint").is_some() {
+            if let Some(n) = UnsubscribeEndpointNode::from_value(val) { return Some(YTNode::UnsubscribeEndpoint(n)); }
+        }
+        if val.get("watchNextEndpoint").is_some() {
+            if let Some(n) = WatchNextEndpointNode::from_value(val) { return Some(YTNode::WatchNextEndpoint(n)); }
+        }
+        if val.get("accessibilityContext").is_some() {
+            if let Some(n) = AccessibilityContextNode::from_value(val) { return Some(YTNode::AccessibilityContext(n)); }
+        }
+        if val.get("accessibilityData").is_some() {
+            if let Some(n) = AccessibilityDataNode::from_value(val) { return Some(YTNode::AccessibilityData(n)); }
+        }
+        if val.get("childElement").is_some() {
+            if let Some(n) = ChildElementNode::from_value(val) { return Some(YTNode::ChildElement(n)); }
+        }
+        if val.get("emojiRun").is_some() {
+            if let Some(n) = EmojiRunNode::from_value(val) { return Some(YTNode::EmojiRun(n)); }
+        }
+        if val.get("rendererContext").is_some() {
+            if let Some(n) = RendererContextNode::from_value(val) { return Some(YTNode::RendererContext(n)); }
+        }
+        if val.get("anchoredSectionRenderer").is_some() {
+            if let Some(n) = AnchoredSectionNode::from_value(val) { return Some(YTNode::AnchoredSection(n)); }
+        }
+        if val.get("kidsBlocklistPickerRenderer").is_some() {
+            if let Some(n) = KidsBlocklistPickerNode::from_value(val) { return Some(YTNode::KidsBlocklistPicker(n)); }
+        }
+        if val.get("kidsBlocklistPickerItemRenderer").is_some() {
+            if let Some(n) = KidsBlocklistPickerItemNode::from_value(val) { return Some(YTNode::KidsBlocklistPickerItem(n)); }
+        }
+
+        // 66. Direct Primitives & Core Variants (Batch 15)
+        if val.get("musicResponsiveListItemRenderer").is_some() {
+            if let Some(n) = MusicResponsiveListItemNode::from_value(val) { return Some(YTNode::MusicResponsiveListItem(n)); }
+        }
+        if val.get("navigationEndpoint").is_some() {
+            if let Some(n) = NavigationEndpointNode::from_value(val) { return Some(YTNode::NavigationEndpoint(n)); }
+        }
+        if val.get("thumbnailOverlayTimeStatusRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayTimeStatusNode::from_value(val) { return Some(YTNode::ThumbnailOverlayTimeStatus(n)); }
+        }
+        if val.get("browseEndpoint").is_some() {
+            if let Some(n) = BrowseEndpointNode::from_value(val) { return Some(YTNode::BrowseEndpoint(n)); }
+        }
+        if val.get("likeEndpoint").is_some() {
+            if let Some(n) = LikeEndpointNode::from_value(val) { return Some(YTNode::LikeEndpoint(n)); }
+        }
+        if val.get("reelWatchEndpoint").is_some() {
+            if let Some(n) = ReelWatchEndpointNode::from_value(val) { return Some(YTNode::ReelWatchEndpoint(n)); }
+        }
+        if val.get("searchEndpoint").is_some() {
+            if let Some(n) = SearchEndpointNode::from_value(val) { return Some(YTNode::SearchEndpoint(n)); }
+        }
+        if val.get("subscribeEndpoint").is_some() {
+            if let Some(n) = SubscribeEndpointNode::from_value(val) { return Some(YTNode::SubscribeEndpoint(n)); }
+        }
+        if val.get("watchEndpoint").is_some() {
+            if let Some(n) = WatchEndpointNode::from_value(val) { return Some(YTNode::WatchEndpoint(n)); }
+        }
+        if val.get("author").is_some() {
+            if let Some(n) = AuthorNode::from_value(val) { return Some(YTNode::Author(n)); }
+        }
+        if val.get("textRun").is_some() {
+            if let Some(n) = TextRunNode::from_value(val) { return Some(YTNode::TextRun(n)); }
+        }
+        if val.get("text").is_some() || val.get("simpleText").is_some() || val.get("runs").is_some() {
+            if let Some(n) = TextNode::from_value(val) { return Some(YTNode::Text(n)); }
+        }
+        if val.get("thumbnail").is_some() || val.get("thumbnails").is_some() {
+            if let Some(n) = ThumbnailNode::from_value(val) { return Some(YTNode::Thumbnail(n)); }
         }
 
         None

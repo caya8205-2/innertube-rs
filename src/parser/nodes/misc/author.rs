@@ -21,16 +21,23 @@ impl AuthorNode {
             return None;
         }
 
-        // Try direct TextNode parsing
-        let text_node = TextNode::from_value(val);
-        let name = text_node.as_ref().map(|t| t.text.clone()).unwrap_or_default();
+        let node = val.get("author").unwrap_or(val);
 
-        let id = val.pointer("/runs/0/navigationEndpoint/browseEndpoint/browseId")
-            .or_else(|| val.pointer("/navigationEndpoint/browseEndpoint/browseId"))
-            .or_else(|| val.pointer("/browseEndpoint/browseId"))
-            .or_else(|| val.get("channelId"))
-            .or_else(|| val.get("browseId"))
-            .or_else(|| val.get("id"))
+        // Try direct TextNode parsing or name string
+        let text_node = TextNode::from_value(node);
+        let name = node
+            .get("name")
+            .and_then(|n| n.as_str())
+            .map(String::from)
+            .or_else(|| text_node.as_ref().map(|t| t.text.clone()))
+            .unwrap_or_default();
+
+        let id = node.pointer("/runs/0/navigationEndpoint/browseEndpoint/browseId")
+            .or_else(|| node.pointer("/navigationEndpoint/browseEndpoint/browseId"))
+            .or_else(|| node.pointer("/browseEndpoint/browseId"))
+            .or_else(|| node.get("channelId"))
+            .or_else(|| node.get("browseId"))
+            .or_else(|| node.get("id"))
             .and_then(|id| id.as_str())
             .map(|s| s.to_string());
 

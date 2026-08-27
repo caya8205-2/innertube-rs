@@ -110,6 +110,32 @@ impl TextNode {
     }
 }
 
+impl TextRunNode {
+    pub fn from_value(val: &Value) -> Option<Self> {
+        let node = val.get("textRun").unwrap_or(val);
+        let text = node
+            .get("text")
+            .and_then(|v| v.as_str())
+            .map(String::from)
+            .or_else(|| {
+                if let Some(s) = node.as_str() {
+                    Some(s.to_string())
+                } else {
+                    None
+                }
+            })?;
+        Some(Self {
+            text,
+            bold: node.get("bold").and_then(|b| b.as_bool()).unwrap_or(false),
+            italics: node.get("italics").and_then(|i| i.as_bool()).unwrap_or(false),
+            strikethrough: node.get("strikethrough").and_then(|s| s.as_bool()).unwrap_or(false),
+            endpoint: node.get("navigationEndpoint")
+                .or_else(|| node.get("endpoint"))
+                .and_then(NavigationEndpointNode::from_value),
+        })
+    }
+}
+
 impl std::fmt::Display for TextNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.text)
