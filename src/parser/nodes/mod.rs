@@ -2,9 +2,11 @@ pub mod channel;
 pub mod comments;
 pub mod containers;
 pub mod continuation;
+pub mod grid;
 pub mod livechat;
 pub mod misc;
 pub mod music;
+pub mod music_extended;
 pub mod playlist;
 pub mod post;
 pub mod short;
@@ -20,6 +22,11 @@ pub use containers::{
     RichShelfNode, SectionListNode, ShelfNode, TabNode,
 };
 pub use continuation::ContinuationNode;
+pub use grid::{
+    CompactChannelNode, CompactMixNode, CompactPlaylistNode, CompactVideoNode, GridChannelNode,
+    GridMixNode, GridMovieNode, GridPlaylistNode, GridShowNode, GridVideoNode, RichItemNode,
+    RichSectionNode,
+};
 pub use livechat::{
     AddChatItemActionNode, LiveChatAutoModMessageNode, LiveChatBannerNode,
     LiveChatMembershipItemNode, LiveChatMessageNode, LiveChatModeChangeMessageNode,
@@ -29,25 +36,40 @@ pub use livechat::{
 pub use misc::{
     AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
     AlertNode, AuthorNode, AvatarViewNode, BadgeViewNode, BrowseEndpointNode, ButtonCardViewNode,
-    ButtonNode, CallToActionButtonNode, CardNode, ChapterNode, ClarificationNode, ClipCreationNode,
-    ClipCreationScrubberNode, CompactLinkNode, ContinuationEndpointNode, DidYouMeanNode,
-    EndscreenElementNode, EndscreenNode, ExpandableTabNode, HeatmapNode, HistorySuggestionNode,
-    HorizontalCardListNode, KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode,
-    MacroMarkersListItemNode, MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode,
-    MicroformatDataNode, NavigateActionNode, NavigationEndpointNode, NotificationNode,
+    ButtonNode, CallToActionButtonNode, CardNode, ChannelOwnerEmptyStateNode, ChapterNode,
+    ClarificationNode, ClipCreationNode, ClipCreationScrubberNode, CollageHeroImageNode,
+    CommentActionButtonsNode, CommentSimpleboxNode, CommentsEntryPointHeaderNode,
+    CommentsHeaderNode, CompactLinkNode, ConfirmDialogNode, ContinuationEndpointNode,
+    DecoratedPlayerBarNode, DialogNode, DidYouMeanNode, EndscreenElementNode, EndscreenNode,
+    EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, ExpandableTabNode,
+    FeedNudgeNode, HeatmapNode, HistorySuggestionNode, HorizontalCardListNode, InfoRowNode,
+    KidsCategoriesHeaderNode, KidsHomeScreenNode, LikeEndpointNode, MacroMarkersListItemNode,
+    MacroMarkersListNode, MenuItemNode, MenuNode, MetadataBadgeNode, MicroformatDataNode,
+    ModalWithTitleAndButtonNode, NavigateActionNode, NavigationEndpointNode, NotificationNode,
     PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
     PlayerOverlayNode, PlayerStoryboardSpecNode, PollNode, ProfileColumnNode,
     ProfileColumnUserInfoNode, ReelWatchEndpointNode, SearchEndpointNode, SearchFilterGroupNode,
-    SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode, ShowingResultsForNode,
-    ShowEngagementPanelActionNode, ShowLiveChatActionNode, SubscribeEndpointNode, TextNode,
-    TextRunNode, ThumbnailListNode, ThumbnailNode, ThumbnailOverlayProgressBarNode,
-    ThumbnailOverlayTimeStatusNode, TimedMarkerDecorationNode, ToggleButtonNode,
+    SearchFilterNode, SearchRefinementCardNode, SearchSubMenuNode, ShowEngagementPanelActionNode,
+    ShowLiveChatActionNode, ShowingResultsForNode, SubscribeEndpointNode,
+    SubscriptionNotificationToggleButtonNode, TextHeaderNode, TextNode, TextRunNode,
+    ThumbnailListNode, ThumbnailNode, ThumbnailOverlayBottomPanelNode,
+    ThumbnailOverlayEndorsementNode, ThumbnailOverlayHoverTextNode,
+    ThumbnailOverlayInlineUnplayableNode, ThumbnailOverlayLoadingPreviewNode,
+    ThumbnailOverlayNowPlayingNode, ThumbnailOverlayProgressBarNode,
+    ThumbnailOverlaySidePanelNode, ThumbnailOverlayTimeStatusNode,
+    ThumbnailOverlayToggleButtonNode, TimedMarkerDecorationNode, ToggleButtonNode,
     UpdateEngagementPanelActionNode, VerticalListNode, VideoOwnerNode, ViewCountNode,
     WatchEndpointNode,
 };
 pub use music::{
     MusicDescriptionShelfNode, MusicHeaderNode, MusicInlineBadgeNode, MusicNavigationButtonNode,
     MusicPlayButtonNode, MusicQueueNode, MusicResponsiveListItemNode, MusicTwoRowItemNode,
+};
+pub use music_extended::{
+    MusicAutoplayNode, MusicCardShelfNode, MusicCarouselShelfNode, MusicDetailHeaderNode,
+    MusicEditablePlaylistDetailHeaderNode, MusicImmersiveHeaderNode,
+    MusicItemThumbnailOverlayNode, MusicPlaylistShelfNode, MusicResponsiveHeaderNode,
+    MusicShelfNode, MusicSideAlignedItemNode, MusicVisualHeaderNode,
 };
 pub use playlist::{
     PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
@@ -167,6 +189,58 @@ pub enum YTNode {
     ButtonCardView(ButtonCardViewNode),
     AvatarView(AvatarViewNode),
     CompactLink(CompactLinkNode),
+    // Batch 8: Grid & Compact renderers
+    GridVideo(GridVideoNode),
+    GridChannel(GridChannelNode),
+    GridPlaylist(GridPlaylistNode),
+    GridMix(GridMixNode),
+    GridMovie(GridMovieNode),
+    GridShow(GridShowNode),
+    CompactVideo(CompactVideoNode),
+    CompactChannel(CompactChannelNode),
+    CompactPlaylist(CompactPlaylistNode),
+    CompactMix(CompactMixNode),
+    RichItem(RichItemNode),
+    RichSection(RichSectionNode),
+    // Batch 8: Music Extended renderers
+    MusicCarouselShelf(MusicCarouselShelfNode),
+    MusicShelf(MusicShelfNode),
+    MusicSideAlignedItem(MusicSideAlignedItemNode),
+    MusicVisualHeader(MusicVisualHeaderNode),
+    MusicItemThumbnailOverlay(MusicItemThumbnailOverlayNode),
+    MusicPlaylistShelf(MusicPlaylistShelfNode),
+    MusicCardShelf(MusicCardShelfNode),
+    MusicImmersiveHeader(MusicImmersiveHeaderNode),
+    MusicDetailHeader(MusicDetailHeaderNode),
+    MusicEditablePlaylistDetailHeader(MusicEditablePlaylistDetailHeaderNode),
+    MusicResponsiveHeader(MusicResponsiveHeaderNode),
+    MusicAutoplay(MusicAutoplayNode),
+    // Batch 8: Overlay & Dialog renderers
+    ThumbnailOverlayHoverText(ThumbnailOverlayHoverTextNode),
+    ThumbnailOverlayEndorsement(ThumbnailOverlayEndorsementNode),
+    ThumbnailOverlayNowPlaying(ThumbnailOverlayNowPlayingNode),
+    ThumbnailOverlayLoadingPreview(ThumbnailOverlayLoadingPreviewNode),
+    ThumbnailOverlayInlineUnplayable(ThumbnailOverlayInlineUnplayableNode),
+    ThumbnailOverlayBottomPanel(ThumbnailOverlayBottomPanelNode),
+    ThumbnailOverlaySidePanel(ThumbnailOverlaySidePanelNode),
+    ThumbnailOverlayToggleButton(ThumbnailOverlayToggleButtonNode),
+    DecoratedPlayerBar(DecoratedPlayerBarNode),
+    ConfirmDialog(ConfirmDialogNode),
+    Dialog(DialogNode),
+    ModalWithTitleAndButton(ModalWithTitleAndButtonNode),
+    // Batch 8: Engagement & Comments renderers
+    EngagementPanelSectionList(EngagementPanelSectionListNode),
+    EngagementPanelTitleHeader(EngagementPanelTitleHeaderNode),
+    CommentsHeader(CommentsHeaderNode),
+    CommentsEntryPointHeader(CommentsEntryPointHeaderNode),
+    CommentActionButtons(CommentActionButtonsNode),
+    CommentSimplebox(CommentSimpleboxNode),
+    SubscriptionNotificationToggleButton(SubscriptionNotificationToggleButtonNode),
+    InfoRow(InfoRowNode),
+    CollageHeroImage(CollageHeroImageNode),
+    FeedNudge(FeedNudgeNode),
+    ChannelOwnerEmptyState(ChannelOwnerEmptyStateNode),
+    TextHeader(TextHeaderNode),
 }
 
 impl YTNode {
@@ -806,6 +880,159 @@ impl YTNode {
             }
         }
 
+        // 35. Grid & Compact renderers
+        if val.get("gridVideoRenderer").is_some() {
+            if let Some(n) = GridVideoNode::from_value(val) { return Some(YTNode::GridVideo(n)); }
+        }
+        if val.get("gridChannelRenderer").is_some() {
+            if let Some(n) = GridChannelNode::from_value(val) { return Some(YTNode::GridChannel(n)); }
+        }
+        if val.get("gridPlaylistRenderer").is_some() {
+            if let Some(n) = GridPlaylistNode::from_value(val) { return Some(YTNode::GridPlaylist(n)); }
+        }
+        if val.get("gridRadioRenderer").is_some() {
+            if let Some(n) = GridMixNode::from_value(val) { return Some(YTNode::GridMix(n)); }
+        }
+        if val.get("gridMovieRenderer").is_some() {
+            if let Some(n) = GridMovieNode::from_value(val) { return Some(YTNode::GridMovie(n)); }
+        }
+        if val.get("gridShowRenderer").is_some() {
+            if let Some(n) = GridShowNode::from_value(val) { return Some(YTNode::GridShow(n)); }
+        }
+        if val.get("compactVideoRenderer").is_some() {
+            if let Some(n) = CompactVideoNode::from_value(val) { return Some(YTNode::CompactVideo(n)); }
+        }
+        if val.get("compactChannelRenderer").is_some() {
+            if let Some(n) = CompactChannelNode::from_value(val) { return Some(YTNode::CompactChannel(n)); }
+        }
+        if val.get("compactPlaylistRenderer").is_some() {
+            if let Some(n) = CompactPlaylistNode::from_value(val) { return Some(YTNode::CompactPlaylist(n)); }
+        }
+        if val.get("compactRadioRenderer").is_some() {
+            if let Some(n) = CompactMixNode::from_value(val) { return Some(YTNode::CompactMix(n)); }
+        }
+        if val.get("richItemRenderer").is_some() {
+            if let Some(n) = RichItemNode::from_value(val) { return Some(YTNode::RichItem(n)); }
+        }
+        if val.get("richSectionRenderer").is_some() {
+            if let Some(n) = RichSectionNode::from_value(val) { return Some(YTNode::RichSection(n)); }
+        }
+
+        // 36. Music Extended renderers
+        if val.get("musicCarouselShelfRenderer").is_some() {
+            if let Some(n) = MusicCarouselShelfNode::from_value(val) { return Some(YTNode::MusicCarouselShelf(n)); }
+        }
+        if val.get("musicShelfRenderer").is_some() {
+            if let Some(n) = MusicShelfNode::from_value(val) { return Some(YTNode::MusicShelf(n)); }
+        }
+        if val.get("musicSideAlignedItemRenderer").is_some() {
+            if let Some(n) = MusicSideAlignedItemNode::from_value(val) { return Some(YTNode::MusicSideAlignedItem(n)); }
+        }
+        if val.get("musicVisualHeaderRenderer").is_some() {
+            if let Some(n) = MusicVisualHeaderNode::from_value(val) { return Some(YTNode::MusicVisualHeader(n)); }
+        }
+        if val.get("musicItemThumbnailOverlayRenderer").is_some() {
+            if let Some(n) = MusicItemThumbnailOverlayNode::from_value(val) { return Some(YTNode::MusicItemThumbnailOverlay(n)); }
+        }
+        if val.get("musicPlaylistShelfRenderer").is_some() {
+            if let Some(n) = MusicPlaylistShelfNode::from_value(val) { return Some(YTNode::MusicPlaylistShelf(n)); }
+        }
+        if val.get("musicCardShelfRenderer").is_some() {
+            if let Some(n) = MusicCardShelfNode::from_value(val) { return Some(YTNode::MusicCardShelf(n)); }
+        }
+        if val.get("musicImmersiveHeaderRenderer").is_some() {
+            if let Some(n) = MusicImmersiveHeaderNode::from_value(val) { return Some(YTNode::MusicImmersiveHeader(n)); }
+        }
+        if val.get("musicDetailHeaderRenderer").is_some() {
+            if let Some(n) = MusicDetailHeaderNode::from_value(val) { return Some(YTNode::MusicDetailHeader(n)); }
+        }
+        if val.get("musicEditablePlaylistDetailHeaderRenderer").is_some() {
+            if let Some(n) = MusicEditablePlaylistDetailHeaderNode::from_value(val) { return Some(YTNode::MusicEditablePlaylistDetailHeader(n)); }
+        }
+        if val.get("musicResponsiveHeaderRenderer").is_some() {
+            if let Some(n) = MusicResponsiveHeaderNode::from_value(val) { return Some(YTNode::MusicResponsiveHeader(n)); }
+        }
+        if val.get("automixPreviewVideoRenderer").is_some() {
+            if let Some(n) = MusicAutoplayNode::from_value(val) { return Some(YTNode::MusicAutoplay(n)); }
+        }
+
+        // 37. Overlay & Dialog renderers
+        if val.get("thumbnailOverlayHoverTextRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayHoverTextNode::from_value(val) { return Some(YTNode::ThumbnailOverlayHoverText(n)); }
+        }
+        if val.get("thumbnailOverlayEndorsementRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayEndorsementNode::from_value(val) { return Some(YTNode::ThumbnailOverlayEndorsement(n)); }
+        }
+        if val.get("thumbnailOverlayNowPlayingRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayNowPlayingNode::from_value(val) { return Some(YTNode::ThumbnailOverlayNowPlaying(n)); }
+        }
+        if val.get("thumbnailOverlayLoadingPreviewRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayLoadingPreviewNode::from_value(val) { return Some(YTNode::ThumbnailOverlayLoadingPreview(n)); }
+        }
+        if val.get("thumbnailOverlayInlineUnplayableRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayInlineUnplayableNode::from_value(val) { return Some(YTNode::ThumbnailOverlayInlineUnplayable(n)); }
+        }
+        if val.get("thumbnailOverlayBottomPanelRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayBottomPanelNode::from_value(val) { return Some(YTNode::ThumbnailOverlayBottomPanel(n)); }
+        }
+        if val.get("thumbnailOverlaySidePanelRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlaySidePanelNode::from_value(val) { return Some(YTNode::ThumbnailOverlaySidePanel(n)); }
+        }
+        if val.get("thumbnailOverlayToggleButtonRenderer").is_some() {
+            if let Some(n) = ThumbnailOverlayToggleButtonNode::from_value(val) { return Some(YTNode::ThumbnailOverlayToggleButton(n)); }
+        }
+        if val.get("decoratedPlayerBarRenderer").is_some() {
+            if let Some(n) = DecoratedPlayerBarNode::from_value(val) { return Some(YTNode::DecoratedPlayerBar(n)); }
+        }
+        if val.get("confirmDialogRenderer").is_some() {
+            if let Some(n) = ConfirmDialogNode::from_value(val) { return Some(YTNode::ConfirmDialog(n)); }
+        }
+        if val.get("dialogRenderer").is_some() {
+            if let Some(n) = DialogNode::from_value(val) { return Some(YTNode::Dialog(n)); }
+        }
+        if val.get("modalWithTitleAndButtonRenderer").is_some() {
+            if let Some(n) = ModalWithTitleAndButtonNode::from_value(val) { return Some(YTNode::ModalWithTitleAndButton(n)); }
+        }
+
+        // 38. Engagement & Comments renderers
+        if val.get("engagementPanelSectionListRenderer").is_some() {
+            if let Some(n) = EngagementPanelSectionListNode::from_value(val) { return Some(YTNode::EngagementPanelSectionList(n)); }
+        }
+        if val.get("engagementPanelTitleHeaderRenderer").is_some() {
+            if let Some(n) = EngagementPanelTitleHeaderNode::from_value(val) { return Some(YTNode::EngagementPanelTitleHeader(n)); }
+        }
+        if val.get("commentsHeaderRenderer").is_some() {
+            if let Some(n) = CommentsHeaderNode::from_value(val) { return Some(YTNode::CommentsHeader(n)); }
+        }
+        if val.get("commentsEntryPointHeaderRenderer").is_some() {
+            if let Some(n) = CommentsEntryPointHeaderNode::from_value(val) { return Some(YTNode::CommentsEntryPointHeader(n)); }
+        }
+        if val.get("commentActionButtonsRenderer").is_some() {
+            if let Some(n) = CommentActionButtonsNode::from_value(val) { return Some(YTNode::CommentActionButtons(n)); }
+        }
+        if val.get("commentSimpleboxRenderer").is_some() {
+            if let Some(n) = CommentSimpleboxNode::from_value(val) { return Some(YTNode::CommentSimplebox(n)); }
+        }
+        if val.get("subscriptionNotificationToggleButtonRenderer").is_some() {
+            if let Some(n) = SubscriptionNotificationToggleButtonNode::from_value(val) { return Some(YTNode::SubscriptionNotificationToggleButton(n)); }
+        }
+        if val.get("infoRowRenderer").is_some() {
+            if let Some(n) = InfoRowNode::from_value(val) { return Some(YTNode::InfoRow(n)); }
+        }
+        if val.get("collageHeroImageRenderer").is_some() {
+            if let Some(n) = CollageHeroImageNode::from_value(val) { return Some(YTNode::CollageHeroImage(n)); }
+        }
+        if val.get("feedNudgeRenderer").is_some() {
+            if let Some(n) = FeedNudgeNode::from_value(val) { return Some(YTNode::FeedNudge(n)); }
+        }
+        if val.get("channelOwnerEmptyStateRenderer").is_some() {
+            if let Some(n) = ChannelOwnerEmptyStateNode::from_value(val) { return Some(YTNode::ChannelOwnerEmptyState(n)); }
+        }
+        if val.get("textHeaderRenderer").is_some() {
+            if let Some(n) = TextHeaderNode::from_value(val) { return Some(YTNode::TextHeader(n)); }
+        }
+
         None
     }
 }
+

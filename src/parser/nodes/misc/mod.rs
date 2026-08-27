@@ -6,12 +6,14 @@ pub mod button;
 pub mod cards;
 pub mod clip;
 pub mod endscreen;
+pub mod engagement;
 pub mod kids;
 pub mod markers;
 pub mod menu;
 pub mod metadata;
 pub mod navigation;
 pub mod overlay;
+pub mod overlays_ext;
 pub mod player_media;
 pub mod player_overlay;
 pub mod profile;
@@ -34,6 +36,12 @@ pub use button::{ButtonNode, ToggleButtonNode};
 pub use cards::{ExpandableTabNode, HorizontalCardListNode, SearchRefinementCardNode};
 pub use clip::{ClipCreationNode, ClipCreationScrubberNode};
 pub use endscreen::{EndscreenElementNode, EndscreenNode};
+pub use engagement::{
+    ChannelOwnerEmptyStateNode, CollageHeroImageNode, CommentActionButtonsNode,
+    CommentSimpleboxNode, CommentsEntryPointHeaderNode, CommentsHeaderNode,
+    EngagementPanelSectionListNode, EngagementPanelTitleHeaderNode, FeedNudgeNode, InfoRowNode,
+    SubscriptionNotificationToggleButtonNode, TextHeaderNode,
+};
 pub use kids::{KidsCategoriesHeaderNode, KidsHomeScreenNode};
 pub use markers::{ChapterNode, HeatmapNode, MacroMarkersListItemNode, MacroMarkersListNode};
 pub use menu::{MenuItemNode, MenuNode};
@@ -43,6 +51,13 @@ pub use navigation::{
     ReelWatchEndpointNode, SearchEndpointNode, SubscribeEndpointNode, WatchEndpointNode,
 };
 pub use overlay::{ThumbnailOverlayProgressBarNode, ThumbnailOverlayTimeStatusNode};
+pub use overlays_ext::{
+    ConfirmDialogNode, DecoratedPlayerBarNode, DialogNode, ModalWithTitleAndButtonNode,
+    ThumbnailOverlayBottomPanelNode, ThumbnailOverlayEndorsementNode,
+    ThumbnailOverlayHoverTextNode, ThumbnailOverlayInlineUnplayableNode,
+    ThumbnailOverlayLoadingPreviewNode, ThumbnailOverlayNowPlayingNode,
+    ThumbnailOverlaySidePanelNode, ThumbnailOverlayToggleButtonNode,
+};
 pub use player_media::{
     PlayerCaptionsTracklistNode, PlayerErrorMessageNode, PlayerLegacyDesktopYpcTrailerNode,
 };
@@ -57,3 +72,4 @@ pub use thumbnail::{ThumbnailListNode, ThumbnailNode};
 pub use views::{
     AvatarViewNode, BadgeViewNode, ButtonCardViewNode, CallToActionButtonNode, CompactLinkNode,
 };
+
