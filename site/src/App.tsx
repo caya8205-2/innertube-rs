@@ -150,7 +150,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
               / innertube-rs
             </span>
             <span className="hidden sm:inline font-mono text-[11px] text-[var(--color-ink-faint)] uppercase tracking-wider">
-              v0.7.0
+              v0.8.0
             </span>
 
             {/* Install Button */}

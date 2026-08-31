@@ -28,11 +28,13 @@ struct StreamFormatOutput {
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 3 {
-        eprintln!("Usage: innertube <command> <video_id_or_url> [options]");
+    if args.len() < 3 && (args.len() < 2 || (args.len() >= 2 && args[1] != "help" && args[1] != "--help")) {
+        eprintln!("Usage: innertube <command> <query_or_id_or_url> [options]");
         eprintln!("Commands:");
         eprintln!("  info <id>                                      Output video metadata as JSON");
         eprintln!("  stream <id> [--format <ext>] [--quality <q>]   Output resolved stream URLs as JSON");
+        eprintln!("  search <query> [--limit <n>]                   Output search results as JSON");
+        eprintln!("  playlist <id_or_url> [--limit <n>]             Output playlist details and tracks as JSON");
         eprintln!("  download <id> [--output-audio <p>] [--output-video <p>] [--format <ext>]");
         exit(1);
     }
@@ -42,6 +44,7 @@ async fn main() {
 
     let mut target_format = "mp3".to_string();
     let mut target_quality = "best".to_string();
+    let mut target_limit: usize = 10;
     let mut output_audio: Option<String> = None;
     let mut output_video: Option<String> = None;
     let mut po_token: Option<String> = std::env::var("INNERTUBE_PO_TOKEN").or_else(|_| std::env::var("POT")).ok();
@@ -58,6 +61,14 @@ async fn main() {
         } else if args[i] == "--quality" || args[i] == "-q" {
             if i + 1 < args.len() {
                 target_quality = args[i + 1].to_lowercase();
+                i += 2;
+                continue;
+            }
+        } else if args[i] == "--limit" || args[i] == "-l" || args[i] == "-n" {
+            if i + 1 < args.len() {
+                if let Ok(lim) = args[i + 1].parse::<usize>() {
+                    target_limit = lim;
+                }
                 i += 2;
                 continue;
             }
@@ -102,6 +113,94 @@ async fn main() {
     };
 
     match command.as_str() {
+        "search" => {
+            let search_query = &args[2];
+            match yt.search(search_query, None).await {
+                Ok(results) => {
+                    let mut tracks: Vec<serde_json::Value> = Vec::new();
+                    for item in results.items.into_iter() {
+                        if tracks.len() >= target_limit {
+                            break;
+                        }
+                        if let innertube_rs::models::search::SearchResultItem::Video(v) = item {
+                            let duration_sec = parse_duration_to_seconds(v.duration.as_deref().unwrap_or(""));
+                            let thumb = v.thumbnails.iter().max_by_key(|t| t.width).map(|t| t.url.clone()).unwrap_or_default();
+                            tracks.push(serde_json::json!({
+                                "id": v.video_id,
+                                "title": v.title,
+                                "artist": v.author,
+                                "duration": duration_sec,
+                                "thumbnail": thumb,
+                            }));
+                        }
+                    }
+                    println!("{}", serde_json::to_string(&tracks).unwrap_or_default());
+                }
+                Err(e) => {
+                    eprintln!(r#"{{"error": "{}"}}"#, e);
+                    exit(1);
+                }
+            }
+        }
+        "playlist" => {
+            let playlist_id = clean_playlist_id(&args[2]);
+            match yt.get_playlist(&playlist_id).await {
+                Ok(mut playlist) => {
+                    let mut tracks: Vec<serde_json::Value> = Vec::new();
+                    for v in &playlist.videos {
+                        if tracks.len() >= target_limit {
+                            break;
+                        }
+                        let duration_sec = v.duration_ms.map(|ms| ms / 1000).unwrap_or_else(|| {
+                            parse_duration_to_seconds(v.duration.as_deref().unwrap_or(""))
+                        });
+                        tracks.push(serde_json::json!({
+                            "id": v.id,
+                            "title": v.title,
+                            "artist": v.author,
+                            "duration": duration_sec,
+                            "thumbnail": v.thumbnail.clone().unwrap_or_default(),
+                        }));
+                    }
+
+                    // Paginate if requested limit is higher than current page
+                    while tracks.len() < target_limit && playlist.has_continuation() {
+                        match playlist.get_continuation(&yt.session).await {
+                            Ok(continuation) => {
+                                for v in &continuation.videos {
+                                    if tracks.len() >= target_limit {
+                                        break;
+                                    }
+                                    let duration_sec = v.duration_ms.map(|ms| ms / 1000).unwrap_or_else(|| {
+                                        parse_duration_to_seconds(v.duration.as_deref().unwrap_or(""))
+                                    });
+                                    tracks.push(serde_json::json!({
+                                        "id": v.id,
+                                        "title": v.title,
+                                        "artist": v.author,
+                                        "duration": duration_sec,
+                                        "thumbnail": v.thumbnail.clone().unwrap_or_default(),
+                                    }));
+                                }
+                                playlist.continuation_token = continuation.continuation_token;
+                            }
+                            Err(_) => break,
+                        }
+                    }
+
+                    let output = serde_json::json!({
+                        "name": playlist.title,
+                        "author": playlist.author.unwrap_or_default(),
+                        "tracks": tracks,
+                    });
+                    println!("{}", serde_json::to_string(&output).unwrap_or_default());
+                }
+                Err(e) => {
+                    eprintln!(r#"{{"error": "{}"}}"#, e);
+                    exit(1);
+                }
+            }
+        }
         "info" => {
             match yt.get_video_info(&video_id).await {
                 Ok(info) => {
@@ -595,6 +694,38 @@ async fn download_stream_to_file(
 
     file.flush().await?;
     Ok(())
+}
+
+fn parse_duration_to_seconds(d: &str) -> u64 {
+    let parts: Vec<&str> = d.trim().split(':').collect();
+    if parts.is_empty() {
+        return 0;
+    }
+    if parts.len() == 1 {
+        return parts[0].parse::<u64>().unwrap_or(0);
+    }
+    if parts.len() == 2 {
+        let m = parts[0].parse::<u64>().unwrap_or(0);
+        let s = parts[1].parse::<u64>().unwrap_or(0);
+        return m * 60 + s;
+    }
+    if parts.len() == 3 {
+        let h = parts[0].parse::<u64>().unwrap_or(0);
+        let m = parts[1].parse::<u64>().unwrap_or(0);
+        let s = parts[2].parse::<u64>().unwrap_or(0);
+        return h * 3600 + m * 60 + s;
+    }
+    0
+}
+
+fn clean_playlist_id(input: &str) -> String {
+    let s = input.trim();
+    if let Some(pos) = s.find("list=") {
+        let rest = &s[pos + 5..];
+        let end = rest.find('&').unwrap_or(rest.len());
+        return rest[..end].to_string();
+    }
+    s.to_string()
 }
 
 fn clean_video_id(input: &str) -> String {
