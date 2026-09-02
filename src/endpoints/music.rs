@@ -4,8 +4,9 @@ use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
     MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
-    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem, MusicWatchPage,
 };
+use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
 
@@ -29,6 +30,79 @@ pub async fn search_music(
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_search_response(query, filter, &raw)
+}
+
+fn music_radio_payload(video_id: &str) -> Value {
+    json!({
+        "enablePersistentPlaylistPanel": true,
+        "isAudioOnly": true,
+        "tunerSettingValue": "AUTOMIX_SETTING_NORMAL",
+        "videoId": video_id,
+        "playlistId": format!("RDAMVM{video_id}"),
+        "watchEndpointMusicSupportedConfigs": {
+            "watchEndpointMusicConfig": {
+                "hasPersistentPlaylistPanel": true,
+                "musicVideoType": "MUSIC_VIDEO_TYPE_ATV"
+            }
+        }
+    })
+}
+
+fn music_shuffle_payload(playlist_id: &str) -> Value {
+    let clean_id = playlist_id.strip_prefix("VL").unwrap_or(playlist_id);
+    json!({
+        "enablePersistentPlaylistPanel": true,
+        "isAudioOnly": true,
+        "tunerSettingValue": "AUTOMIX_SETTING_NORMAL",
+        "playlistId": clean_id,
+        "params": "wAEB8gECKAE%3D"
+    })
+}
+
+/// Fetch one native page from a persistent YouTube Music recommendation radio.
+pub async fn get_music_radio_page(
+    session: &Session,
+    video_id: &str,
+    continuation: Option<&str>,
+) -> Result<MusicWatchPage> {
+    if video_id.is_empty() {
+        return Err(InnertubeError::Format(
+            "video_id is required for Music radio".to_string(),
+        ));
+    }
+    let response = session
+        .post_innertube_client_continuation(
+            "YTMUSIC",
+            "/next",
+            music_radio_payload(video_id),
+            continuation,
+        )
+        .await?;
+    let raw: Value = response.json().await.map_err(InnertubeError::Network)?;
+    parse_music_watch_response(&raw, true)
+}
+
+/// Fetch one native page from YouTube Music's shuffled playlist queue.
+pub async fn get_music_shuffled_playlist_page(
+    session: &Session,
+    playlist_id: &str,
+    continuation: Option<&str>,
+) -> Result<MusicWatchPage> {
+    if playlist_id.is_empty() {
+        return Err(InnertubeError::Format(
+            "playlist_id is required for Music playlist shuffle".to_string(),
+        ));
+    }
+    let response = session
+        .post_innertube_client_continuation(
+            "YTMUSIC",
+            "/next",
+            music_shuffle_payload(playlist_id),
+            continuation,
+        )
+        .await?;
+    let raw: Value = response.json().await.map_err(InnertubeError::Network)?;
+    parse_music_watch_response(&raw, false)
 }
 
 /// Fetch song lyrics from YouTube Music for a given video ID.
@@ -1024,6 +1098,139 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
     Ok(page)
 }
 
+fn music_watch_panel(raw: &Value) -> Option<&Value> {
+    raw.pointer("/contents/singleColumnMusicWatchNextResultsRenderer/tabbedRenderer/watchNextTabbedResultsRenderer/tabs/0/tabRenderer/content/musicQueueRenderer/content/playlistPanelRenderer")
+        .or_else(|| raw.pointer("/continuationContents/playlistPanelContinuation"))
+}
+
+fn music_watch_continuation(panel: &Value, radio: bool) -> Option<String> {
+    let primary = if radio {
+        "nextRadioContinuationData"
+    } else {
+        "nextContinuationData"
+    };
+    let fallback = if radio {
+        "nextContinuationData"
+    } else {
+        "nextRadioContinuationData"
+    };
+
+    panel
+        .pointer(&format!("/continuations/0/{primary}/continuation"))
+        .or_else(|| panel.pointer(&format!("/continuations/0/{fallback}/continuation")))
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+}
+
+fn duration_text_to_ms(duration: &str) -> Option<u64> {
+    let mut seconds = 0u64;
+    for part in duration.split(':') {
+        seconds = seconds.checked_mul(60)?;
+        seconds = seconds.checked_add(part.parse::<u64>().ok()?)?;
+    }
+    seconds.checked_mul(1000)
+}
+
+fn parse_music_playlist_panel_track(value: &Value) -> Option<MusicTrackItem> {
+    let renderer = value.get("playlistPanelVideoRenderer").unwrap_or(value);
+    let video_id = renderer.get("videoId").and_then(Value::as_str)?.to_string();
+    let title = renderer
+        .pointer("/title/runs/0/text")
+        .or_else(|| renderer.pointer("/title/simpleText"))
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string();
+
+    let mut artists = Vec::new();
+    let mut album = None;
+    if let Some(runs) = renderer.pointer("/longBylineText/runs").and_then(Value::as_array) {
+        for run in runs {
+            let text = run.get("text").and_then(Value::as_str).unwrap_or("");
+            let browse_id = run
+                .pointer("/navigationEndpoint/browseEndpoint/browseId")
+                .and_then(Value::as_str);
+            let page_type = run
+                .pointer("/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
+                .and_then(Value::as_str);
+
+            match page_type {
+                Some("MUSIC_PAGE_TYPE_ARTIST" | "MUSIC_PAGE_TYPE_USER_CHANNEL" | "MUSIC_PAGE_TYPE_UNKNOWN") => {
+                    if !text.is_empty() {
+                        artists.push(MusicArtistRef {
+                            name: text.to_string(),
+                            browse_id: browse_id.map(ToString::to_string),
+                        });
+                    }
+                }
+                Some("MUSIC_PAGE_TYPE_ALBUM" | "MUSIC_PAGE_TYPE_AUDIOBOOK") => {
+                    if !text.is_empty() {
+                        album = Some(MusicAlbumRef {
+                            title: text.to_string(),
+                            browse_id: browse_id.map(ToString::to_string),
+                        });
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    if artists.is_empty() {
+        if let Some(name) = renderer
+            .pointer("/shortBylineText/runs/0/text")
+            .and_then(Value::as_str)
+            .filter(|name| !name.is_empty())
+        {
+            artists.push(MusicArtistRef {
+                name: name.to_string(),
+                browse_id: None,
+            });
+        }
+    }
+
+    let duration = renderer
+        .pointer("/lengthText/runs/0/text")
+        .or_else(|| renderer.pointer("/lengthText/simpleText"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+    let duration_ms = duration.as_deref().and_then(duration_text_to_ms);
+    let thumbnails = ThumbnailListNode::from_value(renderer.get("thumbnail").unwrap_or(renderer));
+    let is_explicit = renderer
+        .pointer("/badges/0/musicInlineBadgeRenderer/icon/iconType")
+        .and_then(Value::as_str)
+        == Some("MUSIC_EXPLICIT_BADGE");
+
+    Some(MusicTrackItem {
+        video_id,
+        title,
+        artists,
+        album,
+        duration,
+        duration_ms,
+        thumbnail: thumbnails.best_url().map(ToString::to_string),
+        is_explicit,
+    })
+}
+
+/// Parse one initial or continuation page from a persistent YouTube Music queue.
+pub fn parse_music_watch_response(raw: &Value, radio: bool) -> Result<MusicWatchPage> {
+    let panel = music_watch_panel(raw).ok_or_else(|| {
+        InnertubeError::Format("unsupported Music watch playlist response shape".to_string())
+    })?;
+    let tracks = panel
+        .get("contents")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(parse_music_playlist_panel_track)
+        .collect();
+
+    Ok(MusicWatchPage {
+        tracks,
+        continuation_token: music_watch_continuation(panel, radio),
+    })
+}
+
 /// Parse YouTube Music Home Feed response (`HomeFeed.ts`).
 pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
     let mut feed = MusicHomeFeed::default();
@@ -1147,5 +1354,129 @@ fn convert_music_node_to_track_item(item: &MusicResponsiveListItemNode) -> Music
         like_status: crate::models::music::MusicLikeStatus::from_api_status(
             item.like_status.as_deref(),
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn watch_track(video_id: &str) -> Value {
+        json!({
+            "playlistPanelVideoRenderer": {
+                "videoId": video_id,
+                "title": { "runs": [{ "text": "Test Song" }] },
+                "longBylineText": { "runs": [
+                    {
+                        "text": "Artist One",
+                        "navigationEndpoint": {
+                            "browseEndpoint": {
+                                "browseId": "UC_artist_one",
+                                "browseEndpointContextSupportedConfigs": {
+                                    "browseEndpointContextMusicConfig": {
+                                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    { "text": " • " },
+                    {
+                        "text": "Test Album",
+                        "navigationEndpoint": {
+                            "browseEndpoint": {
+                                "browseId": "MPREb_test_album",
+                                "browseEndpointContextSupportedConfigs": {
+                                    "browseEndpointContextMusicConfig": {
+                                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ] },
+                "lengthText": { "runs": [{ "text": "4:12" }] },
+                "thumbnail": { "thumbnails": [
+                    { "url": "https://example.test/60.jpg", "width": 60, "height": 60 },
+                    { "url": "https://example.test/544.jpg", "width": 544, "height": 544 }
+                ] }
+            }
+        })
+    }
+
+    #[test]
+    fn music_watch_payloads_match_native_contract() {
+        let radio = music_radio_payload("video123");
+        assert_eq!(radio["videoId"], "video123");
+        assert_eq!(radio["playlistId"], "RDAMVMvideo123");
+        assert_eq!(radio["enablePersistentPlaylistPanel"], true);
+        assert_eq!(
+            radio["watchEndpointMusicSupportedConfigs"]["watchEndpointMusicConfig"]
+                ["hasPersistentPlaylistPanel"],
+            true
+        );
+
+        let shuffle = music_shuffle_payload("VLPL_test_playlist");
+        assert_eq!(shuffle["playlistId"], "PL_test_playlist");
+        assert_eq!(shuffle["params"], "wAEB8gECKAE%3D");
+    }
+
+    #[test]
+    fn music_watch_pages_parse_tracks_and_typed_continuations() {
+        let initial = json!({
+            "contents": {
+                "singleColumnMusicWatchNextResultsRenderer": {
+                    "tabbedRenderer": {
+                        "watchNextTabbedResultsRenderer": {
+                            "tabs": [{
+                                "tabRenderer": {
+                                    "content": {
+                                        "musicQueueRenderer": {
+                                            "content": {
+                                                "playlistPanelRenderer": {
+                                                    "contents": [watch_track("radio-1")],
+                                                    "continuations": [{
+                                                        "nextRadioContinuationData": {
+                                                            "continuation": "radio-next"
+                                                        }
+                                                    }]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }]
+                        }
+                    }
+                }
+            }
+        });
+        let radio = parse_music_watch_response(&initial, true).expect("radio page should parse");
+        assert_eq!(radio.tracks.len(), 1);
+        assert_eq!(radio.tracks[0].video_id, "radio-1");
+        assert_eq!(radio.tracks[0].artists[0].name, "Artist One");
+        assert_eq!(
+            radio.tracks[0].album.as_ref().map(|album| album.title.as_str()),
+            Some("Test Album")
+        );
+        assert_eq!(radio.tracks[0].duration_ms, Some(252_000));
+        assert_eq!(radio.continuation_token.as_deref(), Some("radio-next"));
+
+        let continuation = json!({
+            "continuationContents": {
+                "playlistPanelContinuation": {
+                    "contents": [watch_track("shuffle-2")],
+                    "continuations": [{
+                        "nextContinuationData": {
+                            "continuation": "shuffle-next"
+                        }
+                    }]
+                }
+            }
+        });
+        let shuffle = parse_music_watch_response(&continuation, false)
+            .expect("shuffle continuation should parse");
+        assert_eq!(shuffle.tracks[0].video_id, "shuffle-2");
+        assert_eq!(shuffle.continuation_token.as_deref(), Some("shuffle-next"));
     }
 }

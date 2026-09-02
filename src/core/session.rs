@@ -77,6 +77,27 @@ impl Clone for Session {
     }
 }
 
+fn build_innertube_url(
+    api_key: &str,
+    endpoint: &str,
+    continuation: Option<&str>,
+) -> Result<url::Url> {
+    let clean_endpoint = endpoint.trim_start_matches('/');
+    let mut url = url::Url::parse(&format!("{INNERTUBE_API_BASE_URL}/{clean_endpoint}"))
+        .map_err(|error| InnertubeError::Other(format!("invalid InnerTube endpoint URL: {error}")))?;
+    {
+        let mut query = url.query_pairs_mut();
+        query.append_pair("prettyPrint", "false");
+        query.append_pair("alt", "json");
+        query.append_pair("key", api_key);
+        if let Some(token) = continuation {
+            query.append_pair("ctoken", token);
+            query.append_pair("continuation", token);
+        }
+    }
+    Ok(url)
+}
+
 impl Session {
     /// Create a new `Session` instance.
     /// Fetches initial config from YouTube's `sw.js_data` or falls back to local generation.
@@ -1055,13 +1076,22 @@ impl Session {
         &self,
         client_name: &str,
         endpoint: &str,
+        payload: Value,
+    ) -> Result<reqwest::Response> {
+        self.post_innertube_client_continuation(client_name, endpoint, payload, None)
+            .await
+    }
+
+    /// POST request using a specific client while preserving an opaque continuation in the query.
+    pub async fn post_innertube_client_continuation(
+        &self,
+        client_name: &str,
+        endpoint: &str,
         mut payload: Value,
+        continuation: Option<&str>,
     ) -> Result<reqwest::Response> {
         let clean_endpoint = endpoint.trim_start_matches('/');
-        let url = format!(
-            "{INNERTUBE_API_BASE_URL}/{clean_endpoint}?prettyPrint=false&alt=json&key={}",
-            self.api_key
-        );
+        let url = build_innertube_url(&self.api_key, clean_endpoint, continuation)?;
 
         let mut adjusted_context = self.context.clone();
         Self::adjust_context(&mut adjusted_context, client_name)?;
@@ -1086,7 +1116,7 @@ impl Session {
 
         let res = self
             .http_client
-            .post(&url)
+            .post(url)
             .headers(headers)
             .json(&payload)
             .send()
@@ -1304,5 +1334,17 @@ mod tests {
             ..valid
         };
         assert!(!OAuth2::validate_tokens(&invalid));
+    }
+
+    #[test]
+    fn continuation_url_preserves_opaque_token_in_both_query_parameters() {
+        let token = "opaque+token/with=padding%3D";
+        let url = build_innertube_url("test-key", "/next", Some(token))
+            .expect("continuation URL should build");
+        let pairs: std::collections::HashMap<_, _> = url.query_pairs().into_owned().collect();
+
+        assert_eq!(pairs.get("ctoken").map(String::as_str), Some(token));
+        assert_eq!(pairs.get("continuation").map(String::as_str), Some(token));
+        assert_eq!(pairs.get("key").map(String::as_str), Some("test-key"));
     }
 }

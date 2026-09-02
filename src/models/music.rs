@@ -232,3 +232,11 @@ pub struct MusicHomeFeed {
     pub shelves: Vec<MusicShelf>,
     pub continuation_token: Option<String>,
 }
+
+/// One native page from a persistent YouTube Music watch queue.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicWatchPage {
+    pub tracks: Vec<MusicTrackItem>,
+    pub continuation_token: Option<String>,
+}

@@ -150,6 +150,7 @@ pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
     MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics, MusicPlaylistItem,
     MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicWatchPage,
 };
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
@@ -430,7 +431,7 @@ use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
-    search_music,
+    get_music_radio_page, get_music_shuffled_playlist_page, search_music,
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
@@ -849,6 +850,24 @@ impl Innertube {
     /// Fetch song lyrics from YouTube Music for a given video ID.
     pub async fn get_music_lyrics(&self, video_id: &str) -> Result<MusicLyrics> {
         get_music_lyrics(&self.session, video_id).await
+    }
+
+    /// Fetch one page from a persistent YouTube Music recommendation radio.
+    pub async fn get_music_radio_page(
+        &self,
+        video_id: &str,
+        continuation: Option<&str>,
+    ) -> Result<MusicWatchPage> {
+        get_music_radio_page(&self.session, video_id, continuation).await
+    }
+
+    /// Fetch one page from YouTube Music's shuffled playlist queue.
+    pub async fn get_music_shuffled_playlist_page(
+        &self,
+        playlist_id: &str,
+        continuation: Option<&str>,
+    ) -> Result<MusicWatchPage> {
+        get_music_shuffled_playlist_page(&self.session, playlist_id, continuation).await
     }
 
     /// Fetch YouTube Music album details and tracklist by browse ID (e.g. `MPREb_...`).
