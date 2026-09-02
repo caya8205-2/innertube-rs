@@ -1509,3 +1509,61 @@ fn test_api_contract_33_music_playlist_details_metadata() {
     assert_eq!(playlist.author.as_ref().map(|author| author.name.as_str()), Some("Fixture Owner"));
     assert!(playlist.tracks.is_empty());
 }
+
+#[test]
+fn test_api_contract_34_music_search_pagination() {
+    let initial = json!({
+        "contents": {
+            "tabbedSearchResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicShelfRenderer": {
+                                        "contents": [music_home_track("search-song-1", "Search Song 1")],
+                                        "continuations": [{
+                                            "nextContinuationData": { "continuation": "search-page-2" }
+                                        }]
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        },
+        "unrelated": { "nextContinuationData": { "continuation": "wrong-token" } }
+    });
+
+    let first = endpoints::music::parse_music_search_response(
+        "test query",
+        Some(MusicSearchFilter::Songs),
+        &initial,
+    )
+    .expect("initial Music search fixture should parse");
+    assert_eq!(first.songs.len(), 1);
+    assert_eq!(first.songs[0].video_id, "search-song-1");
+    assert_eq!(first.continuation_token.as_deref(), Some("search-page-2"));
+
+    let continuation = json!({
+        "continuationContents": {
+            "musicShelfContinuation": {
+                "contents": [music_home_track("search-song-2", "Search Song 2")],
+                "continuations": [{
+                    "nextContinuationData": { "continuation": "search-page-3" }
+                }]
+            }
+        }
+    });
+
+    let second = endpoints::music::parse_music_search_response(
+        "test query",
+        Some(MusicSearchFilter::Songs),
+        &continuation,
+    )
+    .expect("Music search continuation fixture should parse");
+    assert_eq!(second.songs.len(), 1);
+    assert_eq!(second.songs[0].video_id, "search-song-2");
+    assert_eq!(second.continuation_token.as_deref(), Some("search-page-3"));
+}

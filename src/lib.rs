@@ -430,7 +430,7 @@ use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
-    search_music,
+    search_music, search_music_continuation,
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
@@ -844,6 +844,16 @@ impl Innertube {
         filter: Option<MusicSearchFilter>,
     ) -> Result<MusicSearchResults> {
         search_music(&self.session, query, filter).await
+    }
+
+    /// Fetch a continuation page of filtered YouTube Music search results.
+    pub async fn search_music_continuation(
+        &self,
+        query: &str,
+        filter: Option<MusicSearchFilter>,
+        continuation_token: &str,
+    ) -> Result<MusicSearchResults> {
+        search_music_continuation(&self.session, query, filter, continuation_token).await
     }
 
     /// Fetch song lyrics from YouTube Music for a given video ID.
