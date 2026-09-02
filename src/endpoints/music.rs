@@ -3,7 +3,8 @@ use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLyrics, MusicPlaylistItem,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLibraryKind, MusicLibraryPage,
+    MusicLyrics, MusicPlaylistItem,
     MusicPlaylistPage, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
     MusicWatchPage,
 };
@@ -183,6 +184,27 @@ pub async fn get_music_artist(session: &Session, artist_id: &str) -> Result<Musi
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_artist_response(clean_id, &raw)
+}
+
+/// Fetch one native page from a YouTube Music library destination.
+pub async fn get_music_library_page(
+    session: &Session,
+    kind: MusicLibraryKind,
+    continuation_token: Option<&str>,
+) -> Result<MusicLibraryPage> {
+    let mut payload = json!({
+        "browseId": kind.browse_id(),
+    });
+    if let Some(token) = continuation_token {
+        if let Some(object) = payload.as_object_mut() {
+            object.insert("continuation".to_string(), json!(token));
+        }
+    }
+
+    let resp = session.post_innertube_client("YTMUSIC", "/browse", payload).await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    parse_music_library_response(kind, &raw)
 }
 
 /// Fetch YouTube Music Home Feed (`FEmusic_home`).
@@ -1769,6 +1791,135 @@ pub fn parse_music_explore_response(raw: &Value) -> Result<MusicExplore> {
     }
 
     Ok(explore)
+}
+
+/// Parse a single native YouTube Music library page.
+pub fn parse_music_library_response(
+    kind: MusicLibraryKind,
+    raw: &Value,
+) -> Result<MusicLibraryPage> {
+    let tree = Parser::parse_tree(raw);
+    let mut page = MusicLibraryPage {
+        kind,
+        continuation_token: tree.find_continuation_token(),
+        ..Default::default()
+    };
+
+    match kind {
+        MusicLibraryKind::Songs => {
+            page.songs = tree
+                .find_music_items()
+                .into_iter()
+                .filter_map(|item| {
+                    let track = convert_music_node_to_track_item(item);
+                    (!track.video_id.is_empty()).then_some(track)
+                })
+                .collect();
+        }
+        MusicLibraryKind::Artists => {
+            page.artists = tree
+                .find_music_items()
+                .into_iter()
+                .filter_map(|item| {
+                    let browse_id = item.id.clone()?;
+                    (!item.title.is_empty()).then_some(MusicArtistItem {
+                        browse_id,
+                        name: item.title.clone(),
+                        subscribers: item.subtitle.clone(),
+                        thumbnail: item.thumbnails.best_url().map(ToString::to_string),
+                    })
+                })
+                .collect();
+        }
+        MusicLibraryKind::Albums => {
+            page.albums = tree
+                .iter()
+                .filter_map(|node| match node {
+                    YTNode::MusicCard(card) => music_card_to_album(card),
+                    _ => None,
+                })
+                .collect();
+        }
+        MusicLibraryKind::Playlists => {
+            page.playlists = tree
+                .iter()
+                .filter_map(|node| match node {
+                    YTNode::MusicCard(card) => music_card_to_playlist(card),
+                    _ => None,
+                })
+                .collect();
+        }
+    }
+
+    Ok(page)
+}
+
+fn music_card_to_album(
+    card: &crate::parser::nodes::music::MusicTwoRowItemNode,
+) -> Option<MusicAlbumItem> {
+    let browse_id = card.id.clone()?;
+    if card.title.is_empty() {
+        return None;
+    }
+    let (artist, year) = album_subtitle_parts(card.subtitle.as_deref());
+    Some(MusicAlbumItem {
+        browse_id,
+        title: card.title.clone(),
+        artist,
+        artists: Vec::new(),
+        year,
+        thumbnail: card.thumbnails.best_url().map(ToString::to_string),
+        track_count: None,
+    })
+}
+
+fn music_card_to_playlist(
+    card: &crate::parser::nodes::music::MusicTwoRowItemNode,
+) -> Option<MusicPlaylistItem> {
+    let browse_id = card.id.clone()?;
+    if card.title.is_empty() {
+        return None;
+    }
+    let author = card
+        .subtitle
+        .as_deref()
+        .and_then(|subtitle| subtitle.split(" • ").next())
+        .map(str::trim)
+        .filter(|part| !part.is_empty() && !part.eq_ignore_ascii_case("playlist"))
+        .map(ToString::to_string);
+    Some(MusicPlaylistItem {
+        browse_id,
+        title: card.title.clone(),
+        author,
+        track_count: card.track_count,
+        thumbnail: card.thumbnails.best_url().map(ToString::to_string),
+    })
+}
+
+fn album_subtitle_parts(subtitle: Option<&str>) -> (Option<String>, Option<String>) {
+    let Some(subtitle) = subtitle else {
+        return (None, None);
+    };
+    let mut parts: Vec<&str> = subtitle
+        .split(" • ")
+        .map(str::trim)
+        .filter(|part| !part.is_empty())
+        .collect();
+    if parts
+        .first()
+        .is_some_and(|part| matches!(part.to_ascii_lowercase().as_str(), "album" | "single" | "ep"))
+    {
+        parts.remove(0);
+    }
+    let year = parts
+        .iter()
+        .find(|part| part.len() == 4 && part.chars().all(|ch| ch.is_ascii_digit()))
+        .map(|part| (*part).to_string());
+    let artist = parts
+        .into_iter()
+        .find(|part| !(part.len() == 4 && part.chars().all(|ch| ch.is_ascii_digit())))
+        .map(ToString::to_string);
+    (artist, year)
 }
 
 fn convert_music_node_to_track_item(item: &MusicResponsiveListItemNode) -> MusicTrackItem {

@@ -134,6 +134,39 @@ pub struct MusicPlaylistView {
     pub is_collaborative: bool,
 }
 
+/// YouTube Music library browse destinations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum MusicLibraryKind {
+    #[default]
+    Songs,
+    Albums,
+    Artists,
+    Playlists,
+}
+
+impl MusicLibraryKind {
+    pub(crate) fn browse_id(self) -> &'static str {
+        match self {
+            Self::Songs => "FEmusic_liked_videos",
+            Self::Albums => "FEmusic_liked_albums",
+            Self::Artists => "FEmusic_library_corpus_track_artists",
+            Self::Playlists => "FEmusic_liked_playlists",
+        }
+    }
+}
+
+/// One native page from a YouTube Music library destination.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicLibraryPage {
+    pub kind: MusicLibraryKind,
+    pub songs: Vec<MusicTrackItem>,
+    pub albums: Vec<MusicAlbumItem>,
+    pub artists: Vec<MusicArtistItem>,
+    pub playlists: Vec<MusicPlaylistItem>,
+    pub continuation_token: Option<String>,
+}
+
 /// Consolidated YouTube Music search results.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
