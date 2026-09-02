@@ -94,6 +94,21 @@ pub async fn get_music_home(session: &Session) -> Result<MusicHomeFeed> {
     parse_music_home_response(&raw)
 }
 
+/// Fetch a continuation page of the YouTube Music Home Feed.
+pub async fn get_music_home_continuation(
+    session: &Session,
+    continuation_token: &str,
+) -> Result<MusicHomeFeed> {
+    let payload = json!({
+        "continuation": continuation_token,
+    });
+
+    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    parse_music_home_response(&raw)
+}
+
 /// Fetch YouTube Music Explore page (New Releases, Charts, Moods & Genres).
 pub async fn get_music_explore(session: &Session) -> Result<MusicExplore> {
     let payload = json!({
@@ -379,7 +394,9 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
 pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
     let mut feed = MusicHomeFeed::default();
 
-    if let Some(sections) = raw.pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
+    if let Some(sections) = raw
+        .pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
+        .or_else(|| raw.pointer("/continuationContents/sectionListContinuation/contents"))
         .and_then(|s| s.as_array())
     {
         for sec in sections {

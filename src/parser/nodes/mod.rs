@@ -1519,6 +1519,9 @@ impl YTNode {
         // 1. Check for Continuation
         if val.get("continuationItemRenderer").is_some()
             || val.get("continuationItemViewModel").is_some()
+            || val.get("nextContinuationData").is_some()
+            || val.get("nextRadioContinuationData").is_some()
+            || val.get("reloadContinuationData").is_some()
         {
             if let Some(c) = ContinuationNode::from_value(val) {
                 return Some(YTNode::Continuation(c));

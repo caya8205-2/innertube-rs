@@ -429,8 +429,8 @@ use crate::endpoints::feed::{
 use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
-    get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
-    search_music,
+    get_music_album, get_music_artist, get_music_explore, get_music_home,
+    get_music_home_continuation, get_music_lyrics, search_music,
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
@@ -869,6 +869,14 @@ impl Innertube {
     /// Fetch YouTube Music Home Feed with dynamic shelves (`FEmusic_home`).
     pub async fn get_music_home(&self) -> Result<MusicHomeFeed> {
         get_music_home(&self.session).await
+    }
+
+    /// Fetch a continuation page of the YouTube Music Home Feed.
+    pub async fn get_music_home_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<MusicHomeFeed> {
+        get_music_home_continuation(&self.session, continuation_token).await
     }
 
     /// Fetch the main YouTube Home Feed (`FEwhat_to_watch`).

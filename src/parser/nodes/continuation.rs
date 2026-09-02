@@ -23,6 +23,9 @@ impl ContinuationNode {
             .or_else(|| target.pointer("/continuationEndpoint/browseContinuationEndpoint/continuation"))
             .or_else(|| target.pointer("/continuationEndpoint/nextContinuationData/continuation"))
             .or_else(|| target.pointer("/continuationEndpoint/searchContinuationEndpoint/continuation"))
+            .or_else(|| target.pointer("/nextContinuationData/continuation"))
+            .or_else(|| target.pointer("/nextRadioContinuationData/continuation"))
+            .or_else(|| target.pointer("/reloadContinuationData/continuation"))
             .and_then(|t| t.as_str())?
             .to_string();
 
