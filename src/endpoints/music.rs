@@ -8,6 +8,7 @@ use crate::models::music::{
 };
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
+use crate::utils::proto::encode_music_search_filter;
 
 /// Perform a filtered search on YouTube Music (`WEB_REMIX`).
 pub async fn search_music(
@@ -40,7 +41,7 @@ async fn search_music_page(
 
     if let Some(object) = payload.as_object_mut() {
         if let Some(filter) = filter {
-            object.insert("params".to_string(), json!(filter.to_param_str()));
+            object.insert("params".to_string(), json!(encode_music_search_filter(filter)?));
         }
         if let Some(token) = continuation_token {
             object.insert("continuation".to_string(), json!(token));
