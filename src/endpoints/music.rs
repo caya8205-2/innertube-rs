@@ -4,7 +4,7 @@ use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
     MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
-    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicPlaylistPage, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
@@ -112,6 +112,40 @@ pub async fn get_music_home_continuation(
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_home_response(&raw)
+}
+
+/// Fetch the first native page of a YouTube Music playlist.
+pub async fn get_music_playlist_page(
+    session: &Session,
+    playlist_id: &str,
+) -> Result<MusicPlaylistPage> {
+    let browse_id = if playlist_id.starts_with("VL") {
+        playlist_id.to_string()
+    } else {
+        format!("VL{playlist_id}")
+    };
+    let resp = session
+        .post_innertube_client("YTMUSIC", "/browse", json!({ "browseId": browse_id }))
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    parse_music_playlist_response(&raw, false)
+}
+
+/// Fetch the next native page of a YouTube Music playlist.
+pub async fn get_music_playlist_continuation(
+    session: &Session,
+    continuation_token: &str,
+    is_collaborative: bool,
+) -> Result<MusicPlaylistPage> {
+    let resp = session
+        .post_innertube_client(
+            "YTMUSIC",
+            "/browse",
+            json!({ "continuation": continuation_token }),
+        )
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    parse_music_playlist_response(&raw, is_collaborative)
 }
 
 /// Fetch YouTube Music Explore page (New Releases, Charts, Moods & Genres).
@@ -1022,6 +1056,98 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
     }
 
     Ok(page)
+}
+
+fn find_music_playlist_container(value: &Value) -> Option<&Value> {
+    if let Some(container) = value.pointer("/continuationContents/musicPlaylistShelfContinuation") {
+        return Some(container);
+    }
+    if let Some(actions) = value.get("onResponseReceivedActions").and_then(Value::as_array) {
+        for action in actions {
+            if let Some(container) = action.get("appendContinuationItemsAction") {
+                return Some(container);
+            }
+        }
+    }
+
+    match value {
+        Value::Object(map) => {
+            if let Some(container) = map.get("musicPlaylistShelfRenderer") {
+                return Some(container);
+            }
+            map.values().find_map(find_music_playlist_container)
+        }
+        Value::Array(items) => items.iter().find_map(find_music_playlist_container),
+        _ => None,
+    }
+}
+
+fn music_playlist_items(container: &Value) -> Option<&Vec<Value>> {
+    container
+        .get("contents")
+        .or_else(|| container.get("continuationItems"))
+        .and_then(Value::as_array)
+}
+
+fn music_playlist_continuation_token(container: &Value, items: &[Value]) -> Option<String> {
+    let direct = items.iter().find_map(|item| {
+        item.pointer("/continuationItemRenderer/continuationEndpoint/continuationCommand/token")
+            .or_else(|| {
+                item.pointer(
+                    "/continuationItemViewModel/continuationEndpoint/continuationCommand/token",
+                )
+            })
+            .and_then(Value::as_str)
+            .map(ToString::to_string)
+    });
+    direct.or_else(|| {
+        container
+            .pointer("/continuations/0/nextContinuationData/continuation")
+            .or_else(|| container.pointer("/continuations/0/reloadContinuationData/continuation"))
+            .and_then(Value::as_str)
+            .map(ToString::to_string)
+    })
+}
+
+fn contains_playlist_collaboration_marker(value: &Value) -> bool {
+    match value {
+        Value::Object(map) => {
+            if map.get("tag").and_then(Value::as_str) == Some("PAplaylist_collaborate") {
+                return true;
+            }
+            map.values().any(contains_playlist_collaboration_marker)
+        }
+        Value::Array(items) => items.iter().any(contains_playlist_collaboration_marker),
+        _ => false,
+    }
+}
+
+/// Parse one native YouTube Music playlist page.
+pub fn parse_music_playlist_response(
+    raw: &Value,
+    is_collaborative_hint: bool,
+) -> Result<MusicPlaylistPage> {
+    let container = find_music_playlist_container(raw).ok_or_else(|| {
+        InnertubeError::Other("YouTube Music playlist shelf was not found in response".to_string())
+    })?;
+    let items = music_playlist_items(container).ok_or_else(|| {
+        InnertubeError::Other("YouTube Music playlist page did not contain items".to_string())
+    })?;
+
+    let tracks = items
+        .iter()
+        .filter_map(MusicResponsiveListItemNode::from_value)
+        .map(|item| convert_music_node_to_track_item(&item))
+        .filter(|track| !track.video_id.is_empty() && !track.title.is_empty())
+        .collect();
+    let continuation_token = music_playlist_continuation_token(container, items);
+    let is_collaborative = is_collaborative_hint || contains_playlist_collaboration_marker(raw);
+
+    Ok(MusicPlaylistPage {
+        tracks,
+        continuation_token,
+        is_collaborative,
+    })
 }
 
 /// Parse YouTube Music Home Feed response (`HomeFeed.ts`).

@@ -1509,3 +1509,94 @@ fn test_api_contract_33_music_playlist_details_metadata() {
     assert_eq!(playlist.author.as_ref().map(|author| author.name.as_str()), Some("Fixture Owner"));
     assert!(playlist.tracks.is_empty());
 }
+
+#[test]
+fn test_api_contract_34_music_playlist_pagination() {
+    let initial = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicResponsiveHeaderRenderer": {
+                                        "facepile": {
+                                            "avatarStackViewModel": {
+                                                "rendererContext": {
+                                                    "commandContext": {
+                                                        "onTap": {
+                                                            "innertubeCommand": {
+                                                                "showEngagementPanelEndpoint": {
+                                                                    "identifier": { "tag": "PAplaylist_collaborate" }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }],
+                "secondaryContents": {
+                    "sectionListRenderer": {
+                        "contents": [{
+                            "musicPlaylistShelfRenderer": {
+                                "contents": [
+                                    music_home_track("playlist-song-1", "Playlist Song 1"),
+                                    {
+                                        "continuationItemRenderer": {
+                                            "continuationEndpoint": {
+                                                "continuationCommand": {
+                                                    "token": "playlist-page-2"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }]
+                    }
+                }
+            }
+        }
+    });
+
+    let first = endpoints::music::parse_music_playlist_response(&initial, false)
+        .expect("initial Music playlist fixture should parse");
+    assert_eq!(first.tracks.len(), 1);
+    assert_eq!(first.tracks[0].video_id, "playlist-song-1");
+    assert_eq!(first.continuation_token.as_deref(), Some("playlist-page-2"));
+    assert!(first.is_collaborative);
+
+    let continuation = json!({
+        "onResponseReceivedActions": [{
+            "appendContinuationItemsAction": {
+                "targetId": "PL_fixture",
+                "continuationItems": [
+                    music_home_track("playlist-song-2", "Playlist Song 2"),
+                    {
+                        "continuationItemRenderer": {
+                            "continuationEndpoint": {
+                                "continuationCommand": {
+                                    "token": "playlist-page-3"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }]
+    });
+
+    let second = endpoints::music::parse_music_playlist_response(&continuation, first.is_collaborative)
+        .expect("Music playlist continuation fixture should parse");
+    assert_eq!(second.tracks.len(), 1);
+    assert_eq!(second.tracks[0].video_id, "playlist-song-2");
+    assert_eq!(second.continuation_token.as_deref(), Some("playlist-page-3"));
+    assert!(second.is_collaborative);
+}

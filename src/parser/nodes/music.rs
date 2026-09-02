@@ -68,28 +68,63 @@ impl MusicResponsiveListItemNode {
         let mut duration = None;
         let mut item_type = None;
 
-        if let Some(col1) = target.pointer("/flexColumns/1/musicResponsiveListItemFlexColumnRenderer/text/runs").and_then(|r| r.as_array()) {
-            for (i, run) in col1.iter().enumerate() {
-                let text = run.get("text").and_then(|t| t.as_str()).unwrap_or("");
-                if text == " • " || text.is_empty() {
+        if let Some(columns) = target.get("flexColumns").and_then(Value::as_array) {
+            for (column_index, column) in columns.iter().enumerate() {
+                let Some(runs) = column
+                    .pointer("/musicResponsiveListItemFlexColumnRenderer/text/runs")
+                    .and_then(Value::as_array)
+                else {
                     continue;
-                }
+                };
 
-                if let Some(bid) = run.pointer("/navigationEndpoint/browseEndpoint/browseId").and_then(|b| b.as_str()) {
-                    if bid.starts_with("UC") || bid.starts_with("FEmusic_library_privately_owned_artist") {
-                        if let Some(author) = AuthorNode::from_value(run) {
-                            artists.push(author);
-                        }
-                    } else if bid.starts_with("MPREb_") || bid.starts_with("FEmusic_library_privately_owned_release") {
-                        album = Some(text.to_string());
-                        album_id = Some(bid.to_string());
+                for (run_index, run) in runs.iter().enumerate() {
+                    let text = run.get("text").and_then(Value::as_str).unwrap_or("");
+                    if text.is_empty() || matches!(text, " • " | " & " | ", ") {
+                        continue;
                     }
-                } else if text.contains(':') && duration.is_none() {
-                    duration = Some(text.to_string());
-                } else if i == 0 && artists.is_empty() {
-                    item_type = Some(text.to_string());
+
+                    let browse = run.get("navigationEndpoint").and_then(|endpoint| endpoint.get("browseEndpoint"));
+                    if let Some(browse) = browse {
+                        let browse_id = browse.get("browseId").and_then(Value::as_str).unwrap_or("");
+                        let page_type = browse
+                            .pointer("/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
+                            .and_then(Value::as_str)
+                            .unwrap_or("");
+
+                        let is_artist = matches!(
+                            page_type,
+                            "MUSIC_PAGE_TYPE_ARTIST" | "MUSIC_PAGE_TYPE_UNKNOWN"
+                        ) || browse_id.starts_with("UC")
+                            || browse_id.starts_with("FEmusic_library_privately_owned_artist");
+                        let is_album = matches!(
+                            page_type,
+                            "MUSIC_PAGE_TYPE_ALBUM" | "MUSIC_PAGE_TYPE_AUDIOBOOK"
+                        ) || browse_id.starts_with("MPREb_")
+                            || browse_id.starts_with("FEmusic_library_privately_owned_release");
+
+                        if is_artist {
+                            if let Some(author) = AuthorNode::from_value(run) {
+                                artists.push(author);
+                            }
+                        } else if is_album {
+                            album = Some(text.to_string());
+                            album_id = (!browse_id.is_empty()).then(|| browse_id.to_string());
+                        }
+                    } else if duration.is_none() && parse_duration_string_to_ms(text).is_some() {
+                        duration = Some(text.to_string());
+                    } else if column_index > 0 && run_index == 0 && item_type.is_none() {
+                        item_type = Some(text.to_string());
+                    }
                 }
             }
+        }
+
+        if duration.is_none() {
+            duration = target
+                .pointer("/fixedColumns/0/musicResponsiveListItemFixedColumnRenderer/text")
+                .and_then(TextNode::from_value)
+                .map(|text| text.text)
+                .filter(|text| parse_duration_string_to_ms(text).is_some());
         }
 
         let duration_ms = duration.as_deref().and_then(parse_duration_string_to_ms);
@@ -398,4 +433,94 @@ impl MusicPlayButtonNode {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn playlist_rows_parse_semantic_columns_and_fixed_duration() {
+        let value = json!({
+            "musicResponsiveListItemRenderer": {
+                "playlistItemData": { "videoId": "video-1" },
+                "flexColumns": [
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{
+                                "text": "Track title",
+                                "navigationEndpoint": { "watchEndpoint": { "videoId": "video-1" } }
+                            }] }
+                        }
+                    },
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [
+                                {
+                                    "text": "Artist One",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": {
+                                            "browseId": "UC_artist_1",
+                                            "browseEndpointContextSupportedConfigs": {
+                                                "browseEndpointContextMusicConfig": {
+                                                    "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                { "text": " & " },
+                                {
+                                    "text": "Artist Two",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": {
+                                            "browseId": "UC_artist_2",
+                                            "browseEndpointContextSupportedConfigs": {
+                                                "browseEndpointContextMusicConfig": {
+                                                    "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ] }
+                        }
+                    },
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{
+                                "text": "Album title",
+                                "navigationEndpoint": {
+                                    "browseEndpoint": {
+                                        "browseId": "MPREb_album_1",
+                                        "browseEndpointContextSupportedConfigs": {
+                                            "browseEndpointContextMusicConfig": {
+                                                "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                                            }
+                                        }
+                                    }
+                                }
+                            }] }
+                        }
+                    }
+                ],
+                "fixedColumns": [{
+                    "musicResponsiveListItemFixedColumnRenderer": {
+                        "text": { "runs": [{ "text": "4:12" }] }
+                    }
+                }]
+            }
+        });
+
+        let item = MusicResponsiveListItemNode::from_value(&value).expect("playlist row should parse");
+        assert_eq!(item.id.as_deref(), Some("video-1"));
+        assert_eq!(item.title, "Track title");
+        assert_eq!(item.artists.len(), 2);
+        assert_eq!(item.artists[0].name, "Artist One");
+        assert_eq!(item.artists[1].name, "Artist Two");
+        assert_eq!(item.album.as_deref(), Some("Album title"));
+        assert_eq!(item.album_id.as_deref(), Some("MPREb_album_1"));
+        assert_eq!(item.duration.as_deref(), Some("4:12"));
+        assert_eq!(item.duration_ms, Some(252_000));
+    }
+}
 
