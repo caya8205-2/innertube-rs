@@ -1132,7 +1132,13 @@ fn duration_text_to_ms(duration: &str) -> Option<u64> {
 }
 
 fn parse_music_playlist_panel_track(value: &Value) -> Option<MusicTrackItem> {
-    let renderer = value.get("playlistPanelVideoRenderer").unwrap_or(value);
+    let renderer = value
+        .pointer("/playlistPanelVideoWrapperRenderer/primaryRenderer/playlistPanelVideoRenderer")
+        .or_else(|| value.get("playlistPanelVideoRenderer"))
+        .unwrap_or(value);
+    if renderer.get("unplayableText").is_some() {
+        return None;
+    }
     let video_id = renderer.get("videoId").and_then(Value::as_str)?.to_string();
     let title = renderer
         .pointer("/title/runs/0/text")
@@ -1209,6 +1215,7 @@ fn parse_music_playlist_panel_track(value: &Value) -> Option<MusicTrackItem> {
         duration_ms,
         thumbnail: thumbnails.best_url().map(ToString::to_string),
         is_explicit,
+        like_status: crate::models::music::MusicLikeStatus::Indifferent,
     })
 }
 
@@ -1402,6 +1409,39 @@ mod tests {
                 ] }
             }
         })
+    }
+
+    #[test]
+    fn music_watch_wrapper_uses_primary_renderer_and_skips_unplayable_rows() {
+        let wrapper = json!({
+            "playlistPanelVideoWrapperRenderer": {
+                "primaryRenderer": {
+                    "playlistPanelVideoRenderer": {
+                        "videoId": "primary-video",
+                        "title": { "runs": [{ "text": "Primary Track" }] },
+                        "shortBylineText": { "runs": [{ "text": "Artist" }] }
+                    }
+                },
+                "counterpart": [{
+                    "counterpartRenderer": {
+                        "playlistPanelVideoRenderer": {
+                            "videoId": "counterpart-video"
+                        }
+                    }
+                }]
+            }
+        });
+        let parsed = parse_music_playlist_panel_track(&wrapper)
+            .expect("wrapped primary renderer should parse");
+        assert_eq!(parsed.video_id, "primary-video");
+
+        let unplayable = json!({
+            "playlistPanelVideoRenderer": {
+                "videoId": "unplayable-video",
+                "unplayableText": { "runs": [{ "text": "Unavailable" }] }
+            }
+        });
+        assert!(parse_music_playlist_panel_track(&unplayable).is_none());
     }
 
     #[test]
