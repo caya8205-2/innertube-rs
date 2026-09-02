@@ -148,7 +148,8 @@ pub use models::live_chat::{
 pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLibraryKind,
+    MusicArtistRef, MusicExplore, MusicHistory, MusicHistoryEntry, MusicHomeFeed, MusicHomeItem,
+    MusicLibraryKind,
     MusicLibraryPage, MusicLikeStatus, MusicLyrics, MusicPlaylistItem, MusicPlaylistPage,
     MusicPlaylistView, MusicSearchFilter,
     MusicSearchResults, MusicShelf, MusicTrackItem, MusicWatchPage,
@@ -431,7 +432,8 @@ use crate::endpoints::feed::{
 use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
-    get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_library_page,
+    get_music_album, get_music_artist, get_music_explore, get_music_history, get_music_home,
+    get_music_library_page,
     get_music_lyrics, get_music_playlist_continuation, get_music_playlist_page, get_music_radio_page,
     get_music_shuffled_playlist_page, search_music, search_music_continuation,
 };
@@ -932,6 +934,11 @@ impl Innertube {
     }
 
     /// Fetch one native page from a YouTube Music library destination.
+    /// Fetch the complete authenticated YouTube Music playback history.
+    pub async fn get_music_history(&self) -> Result<MusicHistory> {
+        get_music_history(&self.session).await
+    }
+
     pub async fn get_music_library_page(
         &self,
         kind: MusicLibraryKind,

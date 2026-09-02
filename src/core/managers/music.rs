@@ -1,6 +1,6 @@
 use crate::core::session::Session;
 use crate::endpoints::music::{
-    get_music_album, get_music_artist, get_music_explore, get_music_home,
+    get_music_album, get_music_artist, get_music_explore, get_music_history, get_music_home,
     get_music_home_continuation, get_music_library_page, get_music_lyrics,
     get_music_playlist_continuation, get_music_playlist_details, get_music_playlist_page,
     get_music_radio_page,
@@ -8,7 +8,7 @@ use crate::endpoints::music::{
 };
 use crate::error::Result;
 use crate::models::music::{
-    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicLibraryKind,
+    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHistory, MusicHomeFeed, MusicLibraryKind,
     MusicLibraryPage, MusicLyrics, MusicPlaylistPage, MusicSearchFilter, MusicSearchResults,
     MusicWatchPage,
 };
@@ -64,6 +64,11 @@ impl<'a> MusicManager<'a> {
     /// Fetch song lyrics.
     pub async fn get_lyrics(&self, video_id: &str) -> Result<MusicLyrics> {
         get_music_lyrics(self.session, video_id).await
+    }
+
+    /// Fetch the complete authenticated YouTube Music playback history.
+    pub async fn get_history(&self) -> Result<MusicHistory> {
+        get_music_history(self.session).await
     }
 
     /// Fetch one native page from a YouTube Music library destination.
