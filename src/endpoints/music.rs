@@ -1793,6 +1793,42 @@ pub fn parse_music_explore_response(raw: &Value) -> Result<MusicExplore> {
     Ok(explore)
 }
 
+fn find_renderer<'a>(value: &'a Value, renderer_name: &str) -> Option<&'a Value> {
+    match value {
+        Value::Object(map) => {
+            if let Some(renderer) = map.get(renderer_name) {
+                return Some(renderer);
+            }
+            map.values()
+                .find_map(|child| find_renderer(child, renderer_name))
+        }
+        Value::Array(items) => items
+            .iter()
+            .find_map(|child| find_renderer(child, renderer_name)),
+        _ => None,
+    }
+}
+
+fn music_library_continuation_token(kind: MusicLibraryKind, raw: &Value) -> Option<String> {
+    let (continuation_name, renderer_name) = match kind {
+        MusicLibraryKind::Songs | MusicLibraryKind::Artists => {
+            ("musicShelfContinuation", "musicShelfRenderer")
+        }
+        MusicLibraryKind::Albums | MusicLibraryKind::Playlists => {
+            ("gridContinuation", "gridRenderer")
+        }
+    };
+
+    let container = raw
+        .pointer(&format!("/continuationContents/{continuation_name}"))
+        .or_else(|| find_renderer(raw, renderer_name))?;
+    container
+        .pointer("/continuations/0/nextContinuationData/continuation")
+        .or_else(|| container.pointer("/continuations/0/reloadContinuationData/continuation"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+}
+
 /// Parse a single native YouTube Music library page.
 pub fn parse_music_library_response(
     kind: MusicLibraryKind,
@@ -1801,7 +1837,7 @@ pub fn parse_music_library_response(
     let tree = Parser::parse_tree(raw);
     let mut page = MusicLibraryPage {
         kind,
-        continuation_token: tree.find_continuation_token(),
+        continuation_token: music_library_continuation_token(kind, raw),
         ..Default::default()
     };
 
