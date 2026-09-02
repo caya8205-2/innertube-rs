@@ -1511,59 +1511,92 @@ fn test_api_contract_33_music_playlist_details_metadata() {
 }
 
 #[test]
-fn test_api_contract_34_music_search_pagination() {
+fn test_api_contract_34_music_playlist_pagination() {
     let initial = json!({
         "contents": {
-            "tabbedSearchResultsRenderer": {
+            "twoColumnBrowseResultsRenderer": {
                 "tabs": [{
                     "tabRenderer": {
                         "content": {
                             "sectionListRenderer": {
                                 "contents": [{
-                                    "musicShelfRenderer": {
-                                        "contents": [music_home_track("search-song-1", "Search Song 1")],
-                                        "continuations": [{
-                                            "nextContinuationData": { "continuation": "search-page-2" }
-                                        }]
+                                    "musicResponsiveHeaderRenderer": {
+                                        "facepile": {
+                                            "avatarStackViewModel": {
+                                                "rendererContext": {
+                                                    "commandContext": {
+                                                        "onTap": {
+                                                            "innertubeCommand": {
+                                                                "showEngagementPanelEndpoint": {
+                                                                    "identifier": { "tag": "PAplaylist_collaborate" }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }]
                             }
                         }
                     }
-                }]
-            }
-        },
-        "unrelated": { "nextContinuationData": { "continuation": "wrong-token" } }
-    });
-
-    let first = endpoints::music::parse_music_search_response(
-        "test query",
-        Some(MusicSearchFilter::Songs),
-        &initial,
-    )
-    .expect("initial Music search fixture should parse");
-    assert_eq!(first.songs.len(), 1);
-    assert_eq!(first.songs[0].video_id, "search-song-1");
-    assert_eq!(first.continuation_token.as_deref(), Some("search-page-2"));
-
-    let continuation = json!({
-        "continuationContents": {
-            "musicShelfContinuation": {
-                "contents": [music_home_track("search-song-2", "Search Song 2")],
-                "continuations": [{
-                    "nextContinuationData": { "continuation": "search-page-3" }
-                }]
+                }],
+                "secondaryContents": {
+                    "sectionListRenderer": {
+                        "contents": [{
+                            "musicPlaylistShelfRenderer": {
+                                "contents": [
+                                    music_home_track("playlist-song-1", "Playlist Song 1"),
+                                    {
+                                        "continuationItemRenderer": {
+                                            "continuationEndpoint": {
+                                                "continuationCommand": {
+                                                    "token": "playlist-page-2"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }]
+                    }
+                }
             }
         }
     });
 
-    let second = endpoints::music::parse_music_search_response(
-        "test query",
-        Some(MusicSearchFilter::Songs),
-        &continuation,
-    )
-    .expect("Music search continuation fixture should parse");
-    assert_eq!(second.songs.len(), 1);
-    assert_eq!(second.songs[0].video_id, "search-song-2");
-    assert_eq!(second.continuation_token.as_deref(), Some("search-page-3"));
+    let first = endpoints::music::parse_music_playlist_response(&initial, false)
+        .expect("initial Music playlist fixture should parse");
+    assert_eq!(first.tracks.len(), 1);
+    assert_eq!(first.tracks[0].video_id, "playlist-song-1");
+    assert_eq!(first.continuation_token.as_deref(), Some("playlist-page-2"));
+    assert!(first.is_collaborative);
+
+    let continuation = json!({
+        "onResponseReceivedActions": [{
+            "appendContinuationItemsAction": {
+                "targetId": "PL_fixture",
+                "continuationItems": [
+                    music_home_track("playlist-song-2", "Playlist Song 2"),
+                    {
+                        "continuationItemRenderer": {
+                            "continuationEndpoint": {
+                                "continuationCommand": {
+                                    "token": "playlist-page-3"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }]
+    });
+
+    let second = endpoints::music::parse_music_playlist_response(&continuation, first.is_collaborative)
+        .expect("Music playlist continuation fixture should parse");
+    assert_eq!(second.tracks.len(), 1);
+    assert_eq!(second.tracks[0].video_id, "playlist-song-2");
+    assert_eq!(second.continuation_token.as_deref(), Some("playlist-page-3"));
+    assert!(second.is_collaborative);
 }

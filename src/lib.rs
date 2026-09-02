@@ -149,7 +149,8 @@ pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
     MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics, MusicPlaylistItem,
-    MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicPlaylistPage, MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf,
+    MusicTrackItem,
 };
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
@@ -430,7 +431,8 @@ use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
-    search_music, search_music_continuation,
+    get_music_playlist_continuation, get_music_playlist_page, search_music,
+    search_music_continuation,
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
@@ -921,6 +923,20 @@ impl Innertube {
         continuation_token: &str,
     ) -> Result<MusicHomeFeed> {
         crate::endpoints::music::get_music_home_continuation(&self.session, continuation_token).await
+    }
+
+    /// Fetch the first native typed page of a YouTube Music playlist.
+    pub async fn get_music_playlist_page(&self, playlist_id: &str) -> Result<MusicPlaylistPage> {
+        get_music_playlist_page(&self.session, playlist_id).await
+    }
+
+    /// Fetch a continuation page of a YouTube Music playlist.
+    pub async fn get_music_playlist_continuation(
+        &self,
+        continuation_token: &str,
+        is_collaborative: bool,
+    ) -> Result<MusicPlaylistPage> {
+        get_music_playlist_continuation(&self.session, continuation_token, is_collaborative).await
     }
 
     /// Fetch YouTube Music playlist details and the native initial track window.
