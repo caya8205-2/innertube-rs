@@ -3,7 +3,8 @@ use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLyrics, MusicPlaylistItem,
+    MusicArtistRef, MusicExplore, MusicHistory, MusicHistoryEntry, MusicHomeFeed, MusicHomeItem,
+    MusicLyrics, MusicPlaylistItem,
     MusicPlaylistPage, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
     MusicWatchPage,
 };
@@ -183,6 +184,20 @@ pub async fn get_music_artist(session: &Session, artist_id: &str) -> Result<Musi
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_artist_response(clean_id, &raw)
+}
+
+/// Fetch the complete authenticated YouTube Music playback history (`FEmusic_history`).
+pub async fn get_music_history(session: &Session) -> Result<MusicHistory> {
+    session.ensure_authenticated()?;
+    let response = session
+        .post_innertube_client(
+            "YTMUSIC",
+            "/browse",
+            json!({ "browseId": "FEmusic_history" }),
+        )
+        .await?;
+    let raw: Value = response.json().await.map_err(InnertubeError::Network)?;
+    parse_music_history_response(&raw)
 }
 
 /// Fetch YouTube Music Home Feed (`FEmusic_home`).
@@ -1183,6 +1198,86 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
     }
 
     Ok(page)
+}
+
+fn music_history_feedback_token(item: &Value) -> Option<String> {
+    let renderer = item.get("musicResponsiveListItemRenderer").unwrap_or(item);
+    let menu_items = renderer
+        .pointer("/menu/menuRenderer/items")
+        .and_then(Value::as_array)?;
+
+    menu_items.iter().find_map(|menu_item| {
+        let service = menu_item.get("menuServiceItemRenderer")?;
+        let icon_type = service
+            .pointer("/icon/iconType")
+            .or_else(|| service.pointer("/defaultIcon/iconType"))
+            .and_then(Value::as_str)?;
+        if icon_type != "REMOVE_FROM_HISTORY" {
+            return None;
+        }
+        service
+            .pointer("/serviceEndpoint/feedbackEndpoint/feedbackToken")
+            .and_then(Value::as_str)
+            .map(ToString::to_string)
+    })
+}
+
+fn music_history_shelf_title(shelf: &Value) -> String {
+    shelf
+        .pointer("/title/runs/0/text")
+        .or_else(|| shelf.pointer("/title/simpleText"))
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string()
+}
+
+/// Parse the complete grouped YouTube Music history response while preserving server order.
+pub fn parse_music_history_response(raw: &Value) -> Result<MusicHistory> {
+    let sections = raw
+        .pointer("/contents/singleColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            InnertubeError::Other(
+                "YouTube Music history section list was not found in response".to_string(),
+            )
+        })?;
+
+    let mut entries = Vec::new();
+    for section in sections {
+        let Some(shelf) = section.get("musicShelfRenderer") else {
+            if let Some(message) = section
+                .pointer("/musicNotifierShelfRenderer/title/runs/0/text")
+                .or_else(|| section.pointer("/musicNotifierShelfRenderer/title/simpleText"))
+                .and_then(Value::as_str)
+            {
+                return Err(InnertubeError::Other(format!(
+                    "YouTube Music history unavailable: {message}"
+                )));
+            }
+            continue;
+        };
+        let played = music_history_shelf_title(shelf);
+        let Some(items) = shelf.get("contents").and_then(Value::as_array) else {
+            continue;
+        };
+
+        for item in items {
+            let Some(node) = MusicResponsiveListItemNode::from_value(item) else {
+                continue;
+            };
+            let track = convert_music_node_to_track_item(&node);
+            if track.video_id.is_empty() || track.title.is_empty() {
+                continue;
+            }
+            entries.push(MusicHistoryEntry {
+                track,
+                played: played.clone(),
+                feedback_token: music_history_feedback_token(item),
+            });
+        }
+    }
+
+    Ok(MusicHistory { entries })
 }
 
 fn find_music_playlist_container(value: &Value) -> Option<&Value> {

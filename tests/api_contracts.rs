@@ -1798,3 +1798,53 @@ fn test_api_contract_37_music_playlist_card_metadata() {
     assert_eq!(playlists[2].description.as_deref(), Some("Auto playlist"));
     assert_eq!(playlists[2].author, None);
 }
+
+#[test]
+fn test_api_contract_38_music_history_preserves_order_duplicates_and_feedback() {
+    fn history_row(video_id: &str, title: &str, feedback_token: &str) -> Value {
+        json!({
+            "musicResponsiveListItemRenderer": {
+                "playlistItemData": { "videoId": video_id },
+                "flexColumns": [{
+                    "musicResponsiveListItemFlexColumnRenderer": {
+                        "text": { "runs": [{
+                            "text": title,
+                            "navigationEndpoint": { "watchEndpoint": { "videoId": video_id } }
+                        }] }
+                    }
+                }],
+                "menu": { "menuRenderer": { "items": [{
+                    "menuServiceItemRenderer": {
+                        "icon": { "iconType": "REMOVE_FROM_HISTORY" },
+                        "serviceEndpoint": { "feedbackEndpoint": { "feedbackToken": feedback_token } }
+                    }
+                }] } }
+            }
+        })
+    }
+
+    let history_shelf = |played: &str, row: Value| {
+        json!({ "musicShelfRenderer": {
+            "title": { "runs": [{ "text": played }] },
+            "contents": [row]
+        } })
+    };
+    let raw = json!({
+        "contents": { "singleColumnBrowseResultsRenderer": { "tabs": [{ "tabRenderer": {
+            "content": { "sectionListRenderer": { "contents": [
+                history_shelf("Today", history_row("duplicate-id", "First Play", "feedback-first")),
+                history_shelf("Yesterday", history_row("duplicate-id", "Second Play", "feedback-second"))
+            ] } }
+        } }] } }
+    });
+
+    let history = endpoints::music::parse_music_history_response(&raw)
+        .expect("Music history fixture should parse");
+    assert_eq!(history.entries.len(), 2);
+    assert_eq!(history.entries[0].track.video_id, "duplicate-id");
+    assert_eq!(history.entries[1].track.video_id, "duplicate-id");
+    assert_eq!(history.entries[0].played, "Today");
+    assert_eq!(history.entries[1].played, "Yesterday");
+    assert_eq!(history.entries[0].feedback_token.as_deref(), Some("feedback-first"));
+    assert_eq!(history.entries[1].feedback_token.as_deref(), Some("feedback-second"));
+}
