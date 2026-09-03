@@ -90,6 +90,24 @@ pub struct MusicPlaylistItem {
     pub thumbnail: Option<String>,
 }
 
+/// Full YouTube Music playlist details with the native initial track window.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicPlaylistView {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub author: Option<MusicArtistRef>,
+    pub track_count: Option<u32>,
+    pub thumbnail: Option<String>,
+    pub tracks: Vec<MusicTrackItem>,
+    pub owned: bool,
+    pub privacy: Option<String>,
+    pub duration: Option<String>,
+    pub year: Option<String>,
+    pub is_collaborative: bool,
+}
+
 /// Consolidated YouTube Music search results.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
