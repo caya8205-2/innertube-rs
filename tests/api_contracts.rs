@@ -5,8 +5,9 @@ use innertube_rs::{
     CommentThread, CommentsResult, CreateCommentResult, CreatePlaylistResult, DownloadOptions,
     DownloadRange, FormatFilter, FormatOptions, FormatType, GetVideoInfoOptions, GuideResponse,
     HashtagFeed, HistoryFeed, HomeFeed, Innertube, LibraryFeed, LiveChatMessage, LiveChatResponse,
-    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicLyrics, MusicSearchFilter,
-    MusicSearchResults, NavigationEndpointNode, NodeListExt, NotificationPreferenceType, Parser,
+    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics,
+    MusicSearchFilter, MusicSearchResults, NavigationEndpointNode, NodeListExt,
+    NotificationPreferenceType, Parser,
     PlaylistContinuation, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
     PlaylistVideoItem, PlaylistVideoNode, PlaylistView, PostCommentSort, PostNode,
     QualityPreference, ReelShelfNode, SearchFilters, SearchPrioritize, SearchResultItem,
@@ -657,4 +658,115 @@ fn test_api_contract_25_attestation_challenge_contract() {
     );
     assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_SIGNIN");
     assert_eq!(payload["ids"][0]["key"], "val");
+}
+
+#[test]
+fn test_api_contract_26_music_track_like_status() {
+    let raw = json!({
+        "contents": [
+            {
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "liked-track" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Liked Track" }] }
+                        }
+                    }],
+                    "menu": {
+                        "menuRenderer": {
+                            "topLevelButtons": [{
+                                "likeButtonRenderer": { "likeStatus": "LIKE" }
+                            }]
+                        }
+                    }
+                }
+            },
+            {
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "disliked-track" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Disliked Track" }] }
+                        }
+                    }],
+                    "menu": {
+                        "menuRenderer": {
+                            "topLevelButtons": [{
+                                "likeButtonRenderer": { "likeStatus": "DISLIKE" }
+                            }]
+                        }
+                    }
+                }
+            },
+            {
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "neutral-track" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Neutral Track" }] }
+                        }
+                    }]
+                }
+            }
+        ]
+    });
+
+    let parsed = endpoints::music::parse_music_search_response(
+        "fixture",
+        Some(MusicSearchFilter::Songs),
+        &raw,
+    )
+    .expect("Music track-rating fixture should parse");
+    assert_eq!(parsed.songs.len(), 3);
+    assert_eq!(parsed.songs[0].like_status, MusicLikeStatus::Like);
+    assert_eq!(parsed.songs[1].like_status, MusicLikeStatus::Dislike);
+    assert_eq!(parsed.songs[2].like_status, MusicLikeStatus::Indifferent);
+
+    let currently_liked = json!({
+        "playlistPanelVideoRenderer": {
+            "videoId": "watch-liked",
+            "title": { "runs": [{ "text": "Watch Liked" }] },
+            "menu": {
+                "menuRenderer": {
+                    "items": [{
+                        "toggleMenuServiceItemRenderer": {
+                            "defaultServiceEndpoint": {
+                                "likeEndpoint": { "status": "INDIFFERENT" }
+                            },
+                            "toggledServiceEndpoint": {
+                                "likeEndpoint": { "status": "LIKE" }
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    });
+    let watch = PlaylistPanelVideoNode::from_value(&currently_liked)
+        .expect("watch playlist rating fixture should parse");
+    assert_eq!(watch.like_status.as_deref(), Some("LIKE"));
+
+    let currently_indifferent = json!({
+        "playlistPanelVideoRenderer": {
+            "videoId": "watch-neutral",
+            "title": { "runs": [{ "text": "Watch Neutral" }] },
+            "menu": {
+                "menuRenderer": {
+                    "items": [{
+                        "toggleMenuServiceItemRenderer": {
+                            "defaultServiceEndpoint": {
+                                "likeEndpoint": { "status": "LIKE" }
+                            },
+                            "toggledServiceEndpoint": {
+                                "likeEndpoint": { "status": "INDIFFERENT" }
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    });
+    let watch = PlaylistPanelVideoNode::from_value(&currently_indifferent)
+        .expect("watch playlist neutral fixture should parse");
+    assert_eq!(watch.like_status.as_deref(), Some("INDIFFERENT"));
 }

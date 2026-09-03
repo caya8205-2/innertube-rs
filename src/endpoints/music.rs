@@ -3,7 +3,7 @@ use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics, MusicPlaylistItem,
     MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
@@ -485,5 +485,6 @@ fn convert_music_node_to_track_item(item: &MusicResponsiveListItemNode) -> Music
         duration_ms: item.duration_ms,
         thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
         is_explicit: item.is_explicit,
+        like_status: MusicLikeStatus::from_api_status(item.like_status.as_deref()),
     }
 }

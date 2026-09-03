@@ -243,6 +243,7 @@ pub struct PlaylistPanelVideoNode {
     pub author: Option<String>,
     pub duration: Option<String>,
     pub selected: bool,
+    pub like_status: Option<String>,
 }
 
 impl PlaylistPanelVideoNode {
@@ -276,12 +277,29 @@ impl PlaylistPanelVideoNode {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
+        let like_status = target
+            .pointer("/menu/menuRenderer/items")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .find_map(|item| {
+                let action = item
+                    .pointer("/toggleMenuServiceItemRenderer/defaultServiceEndpoint/likeEndpoint/status")
+                    .and_then(Value::as_str)?;
+                match action {
+                    "LIKE" => Some("INDIFFERENT".to_string()),
+                    "INDIFFERENT" => Some("LIKE".to_string()),
+                    _ => None,
+                }
+            });
+
         Some(Self {
             id,
             title,
             author,
             duration,
             selected,
+            like_status,
         })
     }
 }
