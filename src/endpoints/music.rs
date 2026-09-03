@@ -425,7 +425,7 @@ pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
                             browse_id: card.id.clone().unwrap_or_default(),
                             title: card.title.clone(),
                             author: card.subtitle.clone(),
-                            track_count: None,
+                            track_count: card.track_count,
                             thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
                         });
                     }
