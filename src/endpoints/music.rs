@@ -576,6 +576,7 @@ pub fn parse_music_search_response(
                     author: item.artists.first().map(|a| a.name.clone()),
                     track_count: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+                    owned: false,
                 });
             }
             None => {
@@ -589,6 +590,7 @@ pub fn parse_music_search_response(
                     author: item.artists.first().map(|a| a.name.clone()),
                     track_count: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
+                    owned: false,
                 });
             }
         }
@@ -1692,6 +1694,27 @@ fn music_home_album_card(target: &Value) -> Option<MusicAlbumItem> {
     })
 }
 
+fn music_card_is_owned_playlist(
+    card: &crate::parser::nodes::music::MusicTwoRowItemNode,
+) -> bool {
+    let Some(playlist_id) = card
+        .id
+        .as_deref()
+        .map(|id| id.strip_prefix("VL").unwrap_or(id))
+    else {
+        return false;
+    };
+    card.menu.as_ref().is_some_and(|menu| {
+        menu.items.iter().any(|item| {
+            let Some(endpoint) = item.endpoint.as_ref() else {
+                return false;
+            };
+            endpoint.endpoint_name.as_deref() == Some("playlistEditorEndpoint")
+                && endpoint.payload.get("playlistId").and_then(Value::as_str) == Some(playlist_id)
+        })
+    })
+}
+
 fn music_home_playlist_card(target: &Value) -> Option<MusicPlaylistItem> {
     let browse_id = target
         .pointer("/title/runs/0/navigationEndpoint/browseEndpoint/browseId")
@@ -1730,6 +1753,7 @@ fn music_home_playlist_card(target: &Value) -> Option<MusicPlaylistItem> {
         author,
         track_count,
         thumbnail,
+        owned: card.as_ref().is_some_and(music_card_is_owned_playlist),
     })
 }
 
@@ -2018,6 +2042,7 @@ fn music_card_to_playlist(
         author: card.author.as_ref().map(|author| author.name.clone()),
         track_count: card.track_count,
         thumbnail: card.thumbnails.best_url().map(ToString::to_string),
+        owned: music_card_is_owned_playlist(card),
     })
 }
 
