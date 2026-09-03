@@ -376,6 +376,7 @@ pub fn parse_music_search_response(
                 results.playlists.push(MusicPlaylistItem {
                     browse_id: item.id.clone().unwrap_or_default(),
                     title: item.title.clone(),
+                    description: None,
                     author: item.artists.first().map(|a| a.name.clone()),
                     track_count: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
@@ -388,6 +389,7 @@ pub fn parse_music_search_response(
                 results.playlists.push(MusicPlaylistItem {
                     browse_id: item.id.clone().unwrap_or_default(),
                     title: item.title.clone(),
+                    description: None,
                     author: item.artists.first().map(|a| a.name.clone()),
                     track_count: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
@@ -1076,7 +1078,8 @@ pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
                         shelf.playlists.push(MusicPlaylistItem {
                             browse_id: card.id.clone().unwrap_or_default(),
                             title: card.title.clone(),
-                            author: card.subtitle.clone(),
+                            description: card.subtitle.clone(),
+                            author: card.author.as_ref().map(|author| author.name.clone()),
                             track_count: card.track_count,
                             thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
                         });

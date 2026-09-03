@@ -110,6 +110,7 @@ pub struct MusicArtistItem {
 pub struct MusicPlaylistItem {
     pub browse_id: String,
     pub title: String,
+    pub description: Option<String>,
     pub author: Option<String>,
     pub track_count: Option<u32>,
     pub thumbnail: Option<String>,

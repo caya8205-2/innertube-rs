@@ -30,6 +30,7 @@ pub struct MusicTwoRowItemNode {
     pub title: String,
     pub subtitle: Option<String>,
     pub track_count: Option<u32>,
+    pub author: Option<AuthorNode>,
     pub thumbnails: ThumbnailListNode,
     pub endpoint: Option<NavigationEndpointNode>,
     pub item_type: Option<String>,
@@ -182,11 +183,30 @@ impl MusicTwoRowItemNode {
             .and_then(|p| p.as_str())
             .map(|s| s.to_string());
 
+        let is_playlist = item_type.as_deref() == Some("MUSIC_PAGE_TYPE_PLAYLIST")
+            || id.as_deref().is_some_and(|id| {
+                matches!(id.get(..2), Some("VL" | "VM" | "RD"))
+            });
+        let author = is_playlist
+            .then(|| target.pointer("/subtitle/runs").and_then(Value::as_array))
+            .flatten()
+            .filter(|runs| runs.len() == 3)
+            .filter(|runs| {
+                runs.get(2)
+                    .and_then(|run| run.get("text"))
+                    .and_then(Value::as_str)
+                    .and_then(|text| text.split_whitespace().next())
+                    .is_some_and(|count| count.chars().all(|ch| ch.is_ascii_digit()))
+            })
+            .and_then(|runs| runs.first())
+            .and_then(AuthorNode::from_value);
+
         Some(Self {
             id,
             title,
             subtitle,
             track_count,
+            author,
             thumbnails,
             endpoint,
             item_type,
