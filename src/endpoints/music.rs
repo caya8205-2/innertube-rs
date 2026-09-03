@@ -1904,9 +1904,105 @@ fn find_renderer<'a>(value: &'a Value, renderer_name: &str) -> Option<&'a Value>
     }
 }
 
+fn parse_duration_text_ms(duration: &str) -> Option<u64> {
+    let mut total = 0u64;
+    let mut multiplier = 1u64;
+    for part in duration.split(':').rev() {
+        let value: u64 = part.parse().ok()?;
+        total = total.checked_add(value.checked_mul(multiplier)?)?;
+        multiplier = multiplier.checked_mul(60)?;
+    }
+    Some(total * 1000)
+}
+
+fn uploaded_column_runs(target: &Value, column_index: usize) -> Option<&Vec<Value>> {
+    target
+        .get("flexColumns")?
+        .as_array()?
+        .get(column_index)?
+        .pointer("/musicResponsiveListItemFlexColumnRenderer/text/runs")?
+        .as_array()
+}
+
+fn parse_uploaded_music_track(item: &Value) -> Option<MusicTrackItem> {
+    let target = item.get("musicResponsiveListItemRenderer")?;
+    let video_id = target
+        .pointer("/menu/menuRenderer/items/0/menuServiceItemRenderer/serviceEndpoint/queueAddEndpoint/queueTarget/videoId")
+        .and_then(Value::as_str)?
+        .to_string();
+    let title = uploaded_column_runs(target, 0)?
+        .first()?
+        .get("text")?
+        .as_str()?
+        .to_string();
+
+    let artists = uploaded_column_runs(target, 1)
+        .into_iter()
+        .flatten()
+        .filter_map(|run| {
+            let name = run.get("text").and_then(Value::as_str)?;
+            if name.is_empty() || matches!(name, " • " | " & " | ", ") {
+                return None;
+            }
+            Some(MusicArtistRef {
+                name: name.to_string(),
+                browse_id: run
+                    .pointer("/navigationEndpoint/browseEndpoint/browseId")
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string),
+            })
+        })
+        .collect();
+
+    let album = uploaded_column_runs(target, 2).and_then(|runs| {
+        runs.iter().find_map(|run| {
+            let title = run.get("text").and_then(Value::as_str)?;
+            if title.is_empty() || matches!(title, " • " | " & " | ", ") {
+                return None;
+            }
+            Some(MusicAlbumRef {
+                title: title.to_string(),
+                browse_id: run
+                    .pointer("/navigationEndpoint/browseEndpoint/browseId")
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string),
+            })
+        })
+    });
+
+    let duration = target
+        .pointer("/fixedColumns/0/musicResponsiveListItemFixedColumnRenderer/text/runs/0/text")
+        .or_else(|| {
+            target.pointer("/fixedColumns/0/musicResponsiveListItemFixedColumnRenderer/text/simpleText")
+        })
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+    let duration_ms = duration.as_deref().and_then(parse_duration_text_ms);
+    let thumbnails = ThumbnailListNode::from_value(
+        target
+            .pointer("/thumbnail/musicThumbnailRenderer")
+            .unwrap_or(target),
+    );
+    let is_explicit = target
+        .pointer("/badges/0/musicInlineBadgeRenderer/icon/iconType")
+        .and_then(Value::as_str)
+        == Some("MUSIC_EXPLICIT_BADGE");
+
+    Some(MusicTrackItem {
+        video_id,
+        title,
+        artists,
+        album,
+        duration,
+        duration_ms,
+        thumbnail: thumbnails.best_url().map(ToString::to_string),
+        is_explicit,
+    })
+}
+
 fn music_library_continuation_token(kind: MusicLibraryKind, raw: &Value) -> Option<String> {
     let (continuation_name, renderer_name) = match kind {
-        MusicLibraryKind::Songs | MusicLibraryKind::Artists => {
+        MusicLibraryKind::Songs | MusicLibraryKind::Artists | MusicLibraryKind::Uploads => {
             ("musicShelfContinuation", "musicShelfRenderer")
         }
         MusicLibraryKind::Albums | MusicLibraryKind::Playlists => {
@@ -1978,6 +2074,17 @@ pub fn parse_music_library_response(
                     YTNode::MusicCard(card) => music_card_to_playlist(card),
                     _ => None,
                 })
+                .collect();
+        }
+        MusicLibraryKind::Uploads => {
+            page.songs = raw
+                .pointer("/continuationContents/musicShelfContinuation")
+                .or_else(|| find_renderer(raw, "musicShelfRenderer"))
+                .and_then(|shelf| shelf.get("contents"))
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(parse_uploaded_music_track)
                 .collect();
         }
     }
