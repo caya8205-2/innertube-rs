@@ -214,14 +214,28 @@ pub struct MusicArtistPage {
     pub similar_artists: Vec<MusicArtistItem>,
 }
 
+/// One ordered item from a mixed YouTube Music Home shelf.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", content = "item", rename_all = "camelCase")]
+pub enum MusicHomeItem {
+    Track(MusicTrackItem),
+    Album(MusicAlbumItem),
+    Artist(MusicArtistItem),
+    Playlist(MusicPlaylistItem),
+}
+
 /// A dynamic shelf on YouTube Music Home / Explore.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicShelf {
     pub title: String,
     pub subtitle: Option<String>,
+    /// Server-order mixed content retained for Home consumers.
+    pub items: Vec<MusicHomeItem>,
+    /// Convenience type buckets retained for existing callers.
     pub tracks: Vec<MusicTrackItem>,
     pub albums: Vec<MusicAlbumItem>,
+    pub artists: Vec<MusicArtistItem>,
     pub playlists: Vec<MusicPlaylistItem>,
 }
 
