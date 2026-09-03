@@ -7,6 +7,23 @@ use crate::models::video::{GetVideoInfoOptions, PlayerResponse};
 use crate::utils::decipher::PlayerDecipherer;
 use serde_json::json;
 
+fn should_try_player_fallback(
+    player_response: &PlayerResponse,
+    options: Option<&GetVideoInfoOptions>,
+) -> bool {
+    let explicit_client = options.and_then(|option| option.client.as_deref()).is_some();
+    !explicit_client
+        && (player_response.playability_status.status != "OK"
+            || player_response.streaming_data.as_ref().is_none_or(|sd| {
+                sd.adaptive_formats.is_empty()
+                    || sd.adaptive_formats.iter().all(|format| {
+                        format.url.is_none()
+                            && format.signature_cipher.is_none()
+                            && format.cipher.is_none()
+                    })
+            }))
+}
+
 /// Fetch player metadata and streaming formats for a video from `/youtubei/v1/player` with optional client and PO-token options.
 pub async fn fetch_player_response_with_options(
     session: &Session,
@@ -62,15 +79,10 @@ pub async fn fetch_player_response_with_options(
 
     let mut player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
-    // Check if playability status is not OK or adaptive formats have no URLs/ciphers. If so, fallback to ANDROID -> ANDROID_VR -> iOS -> MWEB
-    let needs_fallback = player_response.playability_status.status != "OK"
-        || player_response.streaming_data.as_ref().is_none_or(|sd| {
-            sd.adaptive_formats.is_empty()
-                || sd
-                    .adaptive_formats
-                    .iter()
-                    .all(|f| f.url.is_none() && f.signature_cipher.is_none() && f.cipher.is_none())
-        });
+    // Match YouTube.js client overrides: an explicit client is authoritative and must not
+    // silently fall through to unrelated player clients. The fallback chain is only for the
+    // default generic player path.
+    let needs_fallback = should_try_player_fallback(&player_response, options);
 
     if needs_fallback {
         // 1. Fetch standard ANDROID client for reliable progressive formats (itag 18)
@@ -408,6 +420,7 @@ pub async fn fetch_shorts_video_info(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::clients;
     use crate::models::format::StreamingFormat;
     use crate::models::video::{PlayabilityStatus, StreamingData};
 
@@ -483,6 +496,27 @@ mod tests {
             captions: None,
             playback_tracking: None,
         }
+    }
+
+    #[test]
+    fn explicit_music_client_does_not_fall_back_to_generic_player_clients() {
+        let mut response = make_test_player_response();
+        let streaming = response
+            .streaming_data
+            .as_mut()
+            .expect("fixture should contain streaming data");
+        for format in &mut streaming.adaptive_formats {
+            format.url = None;
+            format.signature_cipher = None;
+            format.cipher = None;
+        }
+
+        let music_options = GetVideoInfoOptions {
+            client: Some(clients::YTMUSIC_NAME.to_string()),
+            ..Default::default()
+        };
+        assert!(!should_try_player_fallback(&response, Some(&music_options)));
+        assert!(should_try_player_fallback(&response, None));
     }
 
     #[test]

@@ -34,6 +34,8 @@ pub mod clients {
 
     pub const WEB_REMIX_NAME: &str = "WEB_REMIX";
     pub const WEB_REMIX_VERSION: &str = "1.20250219.01.00";
+    /// Public alias accepted by `Session::post_innertube_client` for YouTube Music.
+    pub const YTMUSIC_NAME: &str = "YTMUSIC";
 
     pub const ANDROID_VR_NAME: &str = "ANDROID_VR";
     pub const ANDROID_VR_VERSION: &str = "1.65.10";
