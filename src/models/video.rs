@@ -61,6 +61,22 @@ pub struct PlayerResponse {
     pub video_details: Option<VideoDetails>,
     pub streaming_data: Option<StreamingData>,
     pub captions: Option<serde_json::Value>,
+    pub playback_tracking: Option<PlaybackTracking>,
+}
+
+/// Playback tracking base URLs (legacy `IPlaybackTracking`).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaybackTracking {
+    pub videostats_watchtime_url: Option<TrackingUrl>,
+    pub videostats_playback_url: Option<TrackingUrl>,
+}
+
+/// A `baseUrl`-carrying tracking URL entry.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackingUrl {
+    pub base_url: Option<String>,
 }
 
 /// Options for fetching video player data.
@@ -141,6 +157,236 @@ impl VideoInfo {
             None,
         )
     }
+
+    /// Report playback to the watch history stats endpoint (legacy
+    /// `MediaInfo.addToWatchHistory`).
+    pub async fn add_to_watch_history(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<reqwest::Response> {
+        let url = self
+            .player_response
+            .playback_tracking
+            .as_ref()
+            .and_then(|pt| pt.videostats_playback_url.as_ref())
+            .and_then(|u| u.base_url.as_ref())
+            .ok_or_else(|| {
+                crate::error::InnertubeError::Other("Playback tracking not available".to_string())
+            })?
+            .replace("https://s.", "https://www.");
+
+        crate::core::actions::Actions::stats(
+            session,
+            &url,
+            crate::constants::clients::WEB_NAME,
+            crate::constants::clients::WEB_VERSION,
+            &[
+                ("cpn", self.cpn.clone()),
+                ("fmt", "251".to_string()),
+                ("rtn", "0".to_string()),
+                ("rt", "0".to_string()),
+            ],
+        )
+        .await
+    }
+
+    /// Update watch time on the stats endpoint (legacy
+    /// `MediaInfo.updateWatchTime`; st/et/cmt fixed to 3 decimals, final=1).
+    pub async fn update_watch_time(
+        &self,
+        session: &crate::core::session::Session,
+        start_time: f64,
+    ) -> crate::error::Result<reqwest::Response> {
+        let url = self
+            .player_response
+            .playback_tracking
+            .as_ref()
+            .and_then(|pt| pt.videostats_watchtime_url.as_ref())
+            .and_then(|u| u.base_url.as_ref())
+            .ok_or_else(|| {
+                crate::error::InnertubeError::Other("Playback tracking not available".to_string())
+            })?
+            .replace("https://s.", "https://www.");
+
+        let ts = format!("{start_time:.3}");
+        crate::core::actions::Actions::stats(
+            session,
+            &url,
+            crate::constants::clients::WEB_NAME,
+            crate::constants::clients::WEB_VERSION,
+            &[
+                ("cpn", self.cpn.clone()),
+                ("st", ts.clone()),
+                ("et", ts.clone()),
+                ("cmt", ts),
+                ("final", "1".to_string()),
+            ],
+        )
+        .await
+    }
+
+    /// Download this video (legacy `FormatUtils.download` defaults: 360p,
+    /// video+audio, mp4; 10MB `range=` query chunks for ranged/adaptive).
+    pub async fn download(
+        &self,
+        session: &crate::core::session::Session,
+        decipherer: &PlayerDecipherer,
+        options: &crate::models::format::DownloadOptions,
+    ) -> crate::error::Result<bytes::Bytes> {
+        crate::utils::format::download(
+            session,
+            options,
+            Some(&self.player_response.playability_status),
+            self.player_response.streaming_data.as_ref(),
+            decipherer,
+            self.po_token.as_deref(),
+            Some(&self.cpn),
+        )
+        .await
+    }
+
+    /// Generate a DASH MPD manifest for this video (legacy `MediaInfo.toDash`).
+    /// Throws for live content, matching legacy.
+    ///
+    /// ponytail: storyboard image sets are omitted (player response
+    /// storyboards are not modeled yet).
+    pub async fn to_dash(
+        &self,
+        decipherer: &PlayerDecipherer,
+        options: crate::utils::streaming_info::StreamingInfoOptions,
+    ) -> crate::error::Result<String> {
+        if self
+            .player_response
+            .video_details
+            .as_ref()
+            .and_then(|v| v.is_live_content)
+            .unwrap_or(false)
+        {
+            return Err(crate::error::InnertubeError::Other(
+                "Cannot generate DASH manifest for live content".to_string(),
+            ));
+        }
+
+        let streaming_data = self
+            .player_response
+            .streaming_data
+            .as_ref()
+            .ok_or_else(|| {
+                crate::error::InnertubeError::NotFound(
+                    "Streaming data not available".to_string(),
+                )
+            })?;
+
+        let caption_tracks = self
+            .player_response
+            .captions
+            .as_ref()
+            .map(|c| {
+                crate::endpoints::transcript::extract_caption_tracks_from_player(
+                    &serde_json::json!({ "captions": c }),
+                )
+            })
+            .transpose()?
+            .unwrap_or_default();
+
+        let info = crate::utils::streaming_info::get_streaming_info(
+            streaming_data,
+            false,
+            None,
+            crate::utils::streaming_info::StreamingInfoParams {
+                decipherer: Some(decipherer),
+                cpn: Some(&self.cpn),
+                po_token: self.po_token.as_deref(),
+                caption_tracks: if caption_tracks.is_empty() {
+                    None
+                } else {
+                    Some(&caption_tracks)
+                },
+                options,
+                ..Default::default()
+            },
+        )
+        .await?;
+
+        Ok(crate::utils::dash::render_dash_manifest(&info))
+    }
+
+    /// Retrieve the video transcript via the searchable-transcript
+    /// engagement panel continuation (legacy `MediaInfo.getTranscript`).
+    pub async fn get_transcript(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<crate::models::transcript::Transcript> {
+        use crate::error::InnertubeError;
+
+        let watch_next = self.watch_next.as_ref().ok_or_else(|| {
+            InnertubeError::Other("Cannot get transcript from basic video info.".to_string())
+        })?;
+        let token = watch_next
+            .transcript_continuation_token
+            .as_deref()
+            .ok_or_else(|| {
+                InnertubeError::Other(
+                    "Transcript continuation not found.".to_string(),
+                )
+            })?;
+
+        let resp = session
+            .post_innertube("/next", serde_json::json!({ "continuation": token }))
+            .await?;
+        let raw: serde_json::Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let segments = parse_transcript_segments(&raw);
+        Ok(crate::models::transcript::Transcript {
+            video_id: self.id().unwrap_or_default().to_string(),
+            language: String::new(),
+            segments,
+        })
+    }
+}
+
+/// Parse `transcriptSegmentRenderer` entries from a transcript continuation
+/// response.
+fn parse_transcript_segments(raw: &serde_json::Value) -> Vec<crate::models::transcript::TranscriptSegment> {
+    fn walk(v: &serde_json::Value, out: &mut Vec<crate::models::transcript::TranscriptSegment>) {
+        if let Some(seg) = v.get("transcriptSegmentRenderer") {
+            let start_ms = seg
+                .get("startMs")
+                .and_then(|s| s.as_str())
+                .and_then(|s| s.parse::<u64>().ok())
+                .unwrap_or(0);
+            let end_ms = seg
+                .get("endMs")
+                .and_then(|s| s.as_str())
+                .and_then(|s| s.parse::<u64>().ok())
+                .unwrap_or(0);
+            let text = seg
+                .pointer("/snippet/runs")
+                .and_then(|r| r.as_array())
+                .map(|runs| {
+                    runs.iter()
+                        .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                        .collect::<String>()
+                })
+                .unwrap_or_default();
+            out.push(crate::models::transcript::TranscriptSegment {
+                start_ms,
+                duration_ms: end_ms.saturating_sub(start_ms),
+                end_ms,
+                text,
+            });
+            return;
+        }
+        match v {
+            serde_json::Value::Object(map) => map.values().for_each(|x| walk(x, out)),
+            serde_json::Value::Array(items) => items.iter().for_each(|x| walk(x, out)),
+            _ => {}
+        }
+    }
+
+    let mut segments = Vec::new();
+    walk(raw, &mut segments);
+    segments
 }
 
 /// YouTube Kids video info (parallel `/player` + `/next` on the YTKIDS
@@ -217,12 +463,14 @@ mod tests {
                     audio_channels: Some(2),
                     content_length: None,
                     average_bitrate: None,
+                    ..Default::default()
                 }],
                 adaptive_formats: vec![],
                 dash_manifest_url: None,
                 hls_manifest_url: None,
             }),
             captions: None,
+            playback_tracking: None,
         };
 
         let watch_next = WatchNextResults {

@@ -9,6 +9,8 @@ pub struct TranscriptTrack {
     pub kind: Option<String>,
     pub base_url: String,
     pub is_translatable: bool,
+    /// Legacy `vssId` (used for DASH text set uids).
+    pub vss_id: Option<String>,
 }
 
 /// A timed segment of a transcript.

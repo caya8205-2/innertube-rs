@@ -51,4 +51,7 @@ pub struct WatchNextResults {
     pub related_videos: Vec<RelatedVideo>,
     pub playlist_items: Vec<PlaylistPanelItem>,
     pub continuation_token: Option<String>,
+    /// Continuation token of the searchable-transcript engagement panel
+    /// (legacy `MediaInfo.getTranscript` path).
+    pub transcript_continuation_token: Option<String>,
 }

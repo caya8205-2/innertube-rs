@@ -482,6 +482,39 @@ pub const LOGIN_REQUIRED_BROWSE_IDS: [&str; 11] = [
     "SPtime_watched",
 ];
 
+impl Actions {
+    /// Playback tracking stats call (legacy `Actions.stats`): GET with
+    /// `ver=2`, `c`, `cbrver`, `cver` plus caller params.
+    pub async fn stats(
+        session: &Session,
+        url: &str,
+        client_name: &str,
+        client_version: &str,
+        params: &[(&str, String)],
+    ) -> Result<reqwest::Response> {
+        let mut parsed = url::Url::parse(url)
+            .map_err(|e| InnertubeError::Format(format!("Invalid stats URL: {e}")))?;
+        {
+            let mut qp = parsed.query_pairs_mut();
+            qp.append_pair("ver", "2");
+            qp.append_pair("c", &client_name.to_lowercase());
+            qp.append_pair("cbrver", client_version);
+            qp.append_pair("cver", client_version);
+            for (k, v) in params {
+                qp.append_pair(k, v);
+            }
+        }
+
+        let resp = session
+            .http_client
+            .get(parsed.as_str())
+            .send()
+            .await
+            .map_err(InnertubeError::Network)?;
+        Ok(resp)
+    }
+}
+
 /// Prepared request body for `Actions::execute`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExecuteBody {

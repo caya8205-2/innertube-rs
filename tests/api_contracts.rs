@@ -572,6 +572,7 @@ fn test_api_contract_21_streaming_format_options() {
         po_token: None,
         format: Some("mp4".to_string()),
         codec: Some("opus".to_string()),
+        language: None,
     };
 
     assert_eq!(opt.itag, Some(140));

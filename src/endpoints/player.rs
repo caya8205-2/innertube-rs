@@ -299,7 +299,8 @@ pub fn select_format<'a>(
     Ok(candidates[0])
 }
 
-/// Filter formats according to rich FormatOptions.
+/// Filter formats according to rich FormatOptions (legacy
+/// `FormatUtils.chooseFormat` semantics).
 pub fn select_format_with_options<'a>(
     player_response: &'a PlayerResponse,
     options: &FormatOptions,
@@ -308,62 +309,7 @@ pub fn select_format_with_options<'a>(
         InnertubeError::NotFound("No streamingData found in player response".into())
     })?;
 
-    let mut candidates: Vec<&'a StreamingFormat> = Vec::new();
-    candidates.extend(&streaming_data.formats);
-    candidates.extend(&streaming_data.adaptive_formats);
-
-    if let Some(itag) = options.itag {
-        if let Some(matched) = candidates.into_iter().find(|f| f.itag == itag) {
-            return Ok(matched);
-        } else {
-            return Err(InnertubeError::NotFound(format!(
-                "No format with itag {} was found",
-                itag
-            )));
-        }
-    }
-
-    if let Some(format_type) = options.format_type {
-        candidates.retain(|f| match format_type {
-            FormatType::AudioOnly => f.is_audio_only(),
-            FormatType::VideoOnly => f.is_video_only(),
-            FormatType::AudioVideo => f.is_audio_video(),
-            FormatType::Any => true,
-        });
-    }
-
-    if let Some(ref container) = options.format {
-        if container != "any" {
-            candidates.retain(|f| f.mime_type.contains(container));
-        }
-    }
-
-    if let Some(ref codec) = options.codec {
-        candidates.retain(|f| f.mime_type.contains(codec));
-    }
-
-    if let Some(ref q) = options.quality {
-        let q_lower = q.to_lowercase();
-        if q_lower == "best" || q_lower == "highest" {
-            candidates.sort_by_key(|a| std::cmp::Reverse(a.bitrate));
-        } else if q_lower == "lowest" || q_lower == "bestefficiency" {
-            candidates.sort_by_key(|a| a.bitrate);
-        } else if let Some(exact_match) = candidates.iter().find(|f| {
-            f.quality_label
-                .as_ref()
-                .is_some_and(|ql| ql.to_lowercase().contains(&q_lower))
-        }) {
-            return Ok(exact_match);
-        }
-    }
-
-    if candidates.is_empty() {
-        return Err(InnertubeError::NotFound(
-            "No streaming format matching the specified options was found".into(),
-        ));
-    }
-
-    Ok(candidates[0])
+    crate::utils::format::choose_format(options, streaming_data)
 }
 
 /// Resolve final playable stream URL by applying decipher transformations if needed.
@@ -491,6 +437,7 @@ mod tests {
                     audio_channels: Some(2),
                     content_length: None,
                     average_bitrate: None,
+                    ..Default::default()
                 }],
                 adaptive_formats: vec![
                     StreamingFormat {
@@ -509,6 +456,7 @@ mod tests {
                         audio_channels: None,
                         content_length: None,
                         average_bitrate: None,
+                        ..Default::default()
                     },
                     StreamingFormat {
                         itag: 140,
@@ -526,12 +474,14 @@ mod tests {
                         audio_channels: Some(2),
                         content_length: None,
                         average_bitrate: None,
+                        ..Default::default()
                     },
                 ],
                 dash_manifest_url: None,
                 hls_manifest_url: None,
             }),
             captions: None,
+            playback_tracking: None,
         }
     }
 
@@ -562,11 +512,32 @@ mod tests {
     #[test]
     fn test_select_format_with_options_quality_1080p() {
         let resp = make_test_player_response();
+        // Legacy chooseFormat requires audio by default (type undefined);
+        // a video-only request must opt out via format_type.
         let opts = FormatOptions {
             quality: Some("1080p".to_string()),
+            format_type: Some(FormatType::VideoOnly),
+            format: Some("any".to_string()),
             ..Default::default()
         };
         let selected = select_format_with_options(&resp, &opts).expect("should find 1080p format");
         assert_eq!(selected.itag, 137);
+    }
+
+    #[test]
+    fn test_choose_format_defaults_require_audio_and_mp4() {
+        let resp = make_test_player_response();
+        // No options: requires audio AND video AND mp4 -> only itag 18.
+        let selected =
+            select_format_with_options(&resp, &FormatOptions::default()).expect("default format");
+        assert_eq!(selected.itag, 18);
+
+        // Exact quality label, no contains-matching (legacy).
+        let opts = FormatOptions {
+            quality: Some("360".to_string()),
+            format: Some("any".to_string()),
+            ..Default::default()
+        };
+        assert!(select_format_with_options(&resp, &opts).is_err());
     }
 }

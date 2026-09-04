@@ -45,6 +45,10 @@ pub fn extract_caption_tracks_from_player(player_json: &Value) -> Result<Vec<Tra
             kind,
             base_url,
             is_translatable,
+            vss_id: item
+                .get("vssId")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
         });
     }
 

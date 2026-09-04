@@ -30,6 +30,7 @@ regex = "1"
 rquickjs = { version = "0.9", features = ["parallel"] }
 url = "2"
 sha1 = "0.10"
+bytes = "1"
 
 [build-dependencies]
 prost-build = "0.13"

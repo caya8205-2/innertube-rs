@@ -45,6 +45,9 @@ pub fn parse_watch_next_response(video_id: &str, raw: &Value) -> Result<WatchNex
         ..Default::default()
     };
 
+    // Transcript engagement panel continuation (legacy MediaInfo.getTranscript).
+    results.transcript_continuation_token = extract_transcript_continuation(raw);
+
     let contents = match raw.get("contents") {
         Some(c) => c,
         None => return Ok(results),
@@ -170,6 +173,31 @@ fn parse_autoplay(val: &Value) -> Option<AutoplayVideo> {
         author,
         thumbnails,
     })
+}
+
+/// Locate the `engagement-panel-searchable-transcript` panel's continuation
+/// token.
+fn extract_transcript_continuation(raw: &Value) -> Option<String> {
+    fn walk(v: &Value) -> Option<String> {
+        if let Some(panel) = v.get("engagementPanelRenderer") {
+            let id_matches = panel
+                .get("panelIdentifier")
+                .and_then(Value::as_str)
+                == Some("engagement-panel-searchable-transcript");
+            if id_matches {
+                return panel
+                    .pointer("/content/continuationItemRenderer/continuationEndpoint/continuationCommand/token")
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string);
+            }
+        }
+        match v {
+            Value::Object(map) => map.values().find_map(walk),
+            Value::Array(items) => items.iter().find_map(walk),
+            _ => None,
+        }
+    }
+    walk(raw)
 }
 
 fn parse_playlist_panel_video_renderer(pvr: &Value) -> Option<PlaylistPanelItem> {
