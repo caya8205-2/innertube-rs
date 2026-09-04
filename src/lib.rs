@@ -96,6 +96,13 @@ pub mod proto {
     pub mod misc {
         include!(concat!(env!("OUT_DIR"), "/misc.rs"));
     }
+    pub mod youtube {
+        pub mod api {
+            pub mod pfiinnertube {
+                include!(concat!(env!("OUT_DIR"), "/youtube.api.pfiinnertube.rs"));
+            }
+        }
+    }
 }
 
 pub mod constants;

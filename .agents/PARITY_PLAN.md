@@ -185,15 +185,30 @@ Legacy: `core/mixins/{Feed,FilterableFeed,TabbedFeed}.ts`.
   row that cannot be evidenced instead of marking it.
 - Final: `cargo test --all-targets`, clippy clean, live suite recorded.
 
-## Current checkpoint — 2026-09-04 (Batch 4 done, uncommitted)
+## Current checkpoint — 2026-09-04 (Batch 5 done, uncommitted)
 
-HEAD `aee5fa9` (Batch 3 commit) + uncommitted Batch 4 changes.
-`cargo test --all-targets`: 144 non-network tests pass (71 lib incl. 6 new
-decipher/URL tests + 25 api_contracts + 24 contract_fixtures + 16
-client_contexts + 8 authenticated; 4 auth mutations + 10 live ignored
-opt-in). `cargo clippy --all-targets -- -D warnings`: 0 warnings.
+HEAD `30eac75` (Batch 4 + QA fix commit) + uncommitted Batch 5 changes.
+`cargo test --all-targets`: 148 non-network tests pass (75 lib incl. 4 new
+proto tests + 25 api_contracts + 24 contract_fixtures + 16 client_contexts
++ 8 authenticated; 4 auth mutations + 10 live ignored opt-in).
+`cargo clippy --all-targets -- -D warnings`: 0 warnings.
 
-Batch 4 delivered (player & decipher parity):
+Batch 5 delivered (protobuf surface completion):
+- build.rs compiles all 16 `protos/youtube/api/pfiinnertube/*.proto`
+  (single `protos` include root; new `proto::youtube::api::pfiinnertube`
+  module) — unblocks Studio (Batch 8) and protobuf-typed requests.
+- New encoders: `encode_comment_action_params` (PeformCommentActionParams
+  incl. translate params, unk_num drop rule, target_language requirement)
+  and `encode_next_params` (NextParams, URL-safe chain).
+- Golden wire-vector test for the translate params (hand-assembled byte
+  sequence incl. field numbers/tags) plus roundtrip/chain tests.
+
+Not ported (documented): ShortsParam/ClipParams/LiveMessageParams/
+ChannelAnalytics/SoundInfoParams remain compiled but encoder-less — legacy
+`Innertube` public API does not encode them at runtime (Shorts uses a fixed
+`CAUwAg%3D%3D` param). Add encoders when a caller needs them.
+
+Batch 4 delivered (committed `40865bc`, QA fix `30eac75`):
 - `signature_timestamp` stays `u32` with legacy `parseInt(sts) || 0`
   semantics: extraction failure sends `0` in playbackContext (QA-corrected;
   an earlier `Option<u32>` omit-on-failure deviation was reverted).
@@ -269,8 +284,8 @@ Batch 1 delivered (committed `b02340f`):
 Known deviations (documented): `utcOffsetMinutes` pinned to 0/UTC (no tz
 dep); config-fetch failure swallowed silently (no log facade).
 
-State: Batches 1–3 committed and QA-passed; Batch 4 complete pending QA.
-Next action: Batch 5 (protobuf surface completion).
+State: Batches 1–4 committed and QA-passed; Batch 5 complete pending QA.
+Next action: Batch 6 (manager surface completion).
 
 ## Handoff instructions
 

@@ -12,10 +12,10 @@ use crate::models::search::{
 use crate::proto::misc::{
     community_post_comments_param, community_post_comments_param_container, community_post_params,
     create_comment_params, get_comments_section_params, hashtag, notification_preferences,
-    reel_sequence, search_filter, CommunityPostCommentsParam,
+    peform_comment_action_params, reel_sequence, search_filter, CommunityPostCommentsParam,
     CommunityPostCommentsParamContainer, CommunityPostParams, CreateCommentParams,
-    GetCommentsSectionParams, Hashtag, NotificationPreferences, ReelSequence, SearchFilter,
-    VisitorData,
+    GetCommentsSectionParams, Hashtag, NextParams, NotificationPreferences,
+    PeformCommentActionParams, ReelSequence, SearchFilter, VisitorData,
 };
 
 /// Encode random visitor ID & timestamp into VisitorData protobuf,
@@ -313,6 +313,83 @@ pub fn encode_hashtag_params(hashtag: &str) -> Result<String> {
 }
 
 /// Generate random alphanumeric string of given length.
+/// Arguments for [`encode_comment_action_params`] (legacy
+/// `CommentActionParamsArgs`).
+#[derive(Debug, Clone, Default)]
+pub struct CommentActionParamsArgs {
+    pub comment_id: Option<String>,
+    pub video_id: Option<String>,
+    pub text: Option<String>,
+    pub target_language: Option<String>,
+}
+
+/// Encode `PeformCommentActionParams` for `/comment/perform_comment_action`,
+/// mirroring legacy `ProtoUtils.encodeCommentActionParams`: STANDARD base64,
+/// URI-encoded. When `text` is present, `target_language` is required and the
+/// translate params are attached; `unk_num` is dropped when a `comment_id` is
+/// given.
+pub fn encode_comment_action_params(
+    action_type: i32,
+    args: &CommentActionParamsArgs,
+) -> Result<String> {
+    let translate_comment_params = if let Some(ref text) = args.text {
+        let target_language = args.target_language.clone().ok_or_else(|| {
+            InnertubeError::Other("target_language must be a string".to_string())
+        })?;
+        Some(peform_comment_action_params::TranslateCommentParams {
+            params: Some(peform_comment_action_params::translate_comment_params::Params {
+                comment: Some(
+                    peform_comment_action_params::translate_comment_params::params::Comment {
+                        text: text.clone(),
+                    },
+                ),
+            }),
+            comment_id: args.comment_id.clone().unwrap_or_else(|| " ".to_string()),
+            target_language,
+        })
+    } else {
+        None
+    };
+
+    let data = PeformCommentActionParams {
+        r#type: action_type,
+        comment_id: args.comment_id.clone().unwrap_or_else(|| " ".to_string()),
+        video_id: args.video_id.clone().unwrap_or_else(|| " ".to_string()),
+        unk_num: if args.comment_id.is_some() && args.text.is_some() {
+            None
+        } else {
+            Some(2)
+        },
+        channel_id: Some(" ".to_string()),
+        translate_comment_params,
+    };
+
+    let mut buf = Vec::with_capacity(data.encoded_len());
+    data.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode comment-action params: {err}"))
+    })?;
+
+    let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
+/// Encode `NextParams` for `/next` playlist navigation, mirroring legacy
+/// `ProtoUtils.encodeNextParams`: URL-safe base64, URI-encoded.
+pub fn encode_next_params(video_ids: &[&str], playlist_title: Option<&str>) -> Result<String> {
+    let params = NextParams {
+        video_id: video_ids.iter().map(ToString::to_string).collect(),
+        playlist_title: playlist_title.map(ToString::to_string),
+    };
+
+    let mut buf = Vec::with_capacity(params.encoded_len());
+    params.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode next params: {err}"))
+    })?;
+
+    let base64 = STANDARD.encode(buf).replace('+', "-").replace('/', "_");
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
+}
+
 pub fn generate_random_string(length: usize) -> String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
     let mut rng = rand::rng();
@@ -327,6 +404,97 @@ pub fn generate_random_string(length: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn uri_unescape(encoded: &str) -> Vec<u8> {
+        // Decode %XX sequences (form_urlencoded byte_serialize output).
+        let bytes = encoded.as_bytes();
+        let mut out = Vec::with_capacity(bytes.len());
+        let mut i = 0;
+        while i < bytes.len() {
+            if bytes[i] == b'%' && i + 3 <= bytes.len() {
+                let hex = std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap();
+                out.push(u8::from_str_radix(hex, 16).unwrap());
+                i += 3;
+            } else {
+                out.push(bytes[i]);
+                i += 1;
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn comment_action_params_translate_matches_golden_wire_bytes() {
+        let args = CommentActionParamsArgs {
+            comment_id: Some("cid".to_string()),
+            video_id: Some("vid".to_string()),
+            text: Some("hello".to_string()),
+            target_language: Some("id".to_string()),
+        };
+        let encoded = encode_comment_action_params(22, &args).unwrap();
+
+        let bytes = STANDARD.decode(uri_unescape(&encoded)).unwrap();
+
+        // Hand-assembled golden vector (field order is deterministic):
+        //   type=22 (f1), comment_id="cid" (f3), video_id="vid" (f5),
+        //   channel_id=" " (f23), unk_num dropped (comment_id+text present),
+        //   translate_comment_params (f31) { comment_id=f2, params=f3
+        //     { comment=f1 { text=f1 "hello" } }, target_language=f4 "id" }
+        let expected: &[u8] = &[
+            0x08, 0x16, // f1 type = 22
+            0x1A, 0x03, b'c', b'i', b'd', // f3 comment_id
+            0x2A, 0x03, b'v', b'i', b'd', // f5 video_id
+            0xBA, 0x01, 0x01, b' ', // f23 channel_id
+            0xFA, 0x01, 0x14, // f31 translate_comment_params (len 20)
+            0x12, 0x03, b'c', b'i', b'd', //   f2 comment_id
+            0x1A, 0x09, //   f3 params (len 9)
+            0x0A, 0x07, //     f1 comment (len 7)
+            0x0A, 0x05, b'h', b'e', b'l', b'l', b'o', //       f1 text
+            0x22, 0x02, b'i', b'd', //   f4 target_language
+        ];
+        assert_eq!(bytes, expected);
+    }
+
+    #[test]
+    fn comment_action_params_without_text_keeps_unk_num() {
+        let args = CommentActionParamsArgs {
+            comment_id: Some("cid".to_string()),
+            video_id: Some("vid".to_string()),
+            text: None,
+            target_language: None,
+        };
+        let encoded = encode_comment_action_params(4, &args).unwrap();
+        let bytes = STANDARD.decode(uri_unescape(&encoded)).unwrap();
+        let decoded = PeformCommentActionParams::decode(&bytes[..]).unwrap();
+
+        assert_eq!(decoded.r#type, 4);
+        assert_eq!(decoded.unk_num, Some(2));
+        assert!(decoded.translate_comment_params.is_none());
+        assert_eq!(decoded.channel_id.as_deref(), Some(" "));
+    }
+
+    #[test]
+    fn comment_action_params_translate_requires_target_language() {
+        let args = CommentActionParamsArgs {
+            text: Some("hello".to_string()),
+            ..Default::default()
+        };
+        assert!(encode_comment_action_params(22, &args).is_err());
+    }
+
+    #[test]
+    fn next_params_url_safe_chain_and_roundtrip() {
+        let encoded = encode_next_params(&["aa", "bb"], Some("Mix")).unwrap();
+        assert!(!encoded.contains('+'));
+        assert!(!encoded.contains('/'));
+
+        let unescaped = String::from_utf8(uri_unescape(&encoded)).unwrap();
+        let bytes = URL_SAFE.decode(unescaped.as_bytes()).unwrap();
+        let decoded = NextParams::decode(&bytes[..]).unwrap();
+
+        assert_eq!(decoded.video_id, vec!["aa".to_string(), "bb".to_string()]);
+        assert_eq!(decoded.playlist_title.as_deref(), Some("Mix"));
+    }
 
     #[test]
     fn test_visitor_data_roundtrip() {
