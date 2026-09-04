@@ -185,15 +185,37 @@ Legacy: `core/mixins/{Feed,FilterableFeed,TabbedFeed}.ts`.
   row that cannot be evidenced instead of marking it.
 - Final: `cargo test --all-targets`, clippy clean, live suite recorded.
 
-## Current checkpoint — 2026-09-04 (Batch 2 done, uncommitted)
+## Current checkpoint — 2026-09-04 (Batch 3 done, uncommitted)
 
-HEAD `b02340f` (Batch 1 commit) + uncommitted Batch 2 changes.
-`cargo test --all-targets`: 126 non-network tests pass (53 lib incl. 8 new
-execute-munging tests + 25 api_contracts + 24 contract_fixtures + 16
+HEAD `4d3afd0` (Batch 2 commit) + uncommitted Batch 3 changes.
+`cargo test --all-targets`: 138 non-network tests pass (65 lib incl. 12 new
+auth/OAuth tests + 25 api_contracts + 24 contract_fixtures + 16
 client_contexts + 8 authenticated; 4 auth mutations + 10 live ignored
 opt-in). `cargo clippy --all-targets -- -D warnings`: 0 warnings.
 
-Batch 2 delivered (`Actions::execute` request-munging parity):
+Batch 3 delivered (auth layering & OAuth2 parity):
+- `utils/auth.rs`: `generate_sid_auth` (SAPISIDHASH sha1, golden-vector
+  tested) and whole-name `get_cookie`.
+- `Session::apply_auth_headers` wired into all POST paths: OAuth bearer
+  with auto-refresh on expiry, then cookie SAPISIDHASH precedence,
+  `X-Goog-Authuser` (account_index), `X-Goog-PageId` (onBehalfOfUser);
+  skipped for WEB_KIDS and anonymous sessions.
+- `Session` holds OAuth2 state (tokens + client identity behind RwLock,
+  manual Clone); `is_authenticated` accepts cookie OR tokens;
+  `sign_in_with_tokens` (validate + refresh-if-expired) and `sign_out`
+  (revoke + clear) ported with legacy error messages.
+- OAuth2: legacy poll semantics (pending/slow_down continue at given
+  interval; access_denied/expired_token/unknown fatal with exact messages),
+  `validate_tokens`, `should_refresh_token`, `revoke_credentials`;
+  `InnertubeError::OAuth2` variant; `OAuth2Tokens.scope`.
+- New dependency: `sha1` (SAPISIDHASH; no stdlib SHA-1 in Rust).
+
+Deviations (documented in code): token `expiry_date` stored as unix epoch
+seconds instead of ISO 8601 (no date-formatting dep); no OAuth credential
+disk cache (no cache layer yet); token-refresh failures propagate as
+request errors.
+
+Batch 2 delivered (committed `4d3afd0`):
 - `prepare_execute` pure fn: `action`→`actions[]`, `boolValue`→
   `newValue.boolValue`, `token`→`continuation`; strips control keys
   (`skip_auth_check`, `override_endpoint`, `parse`, `request`,
@@ -229,8 +251,8 @@ Batch 1 delivered (committed `b02340f`):
 Known deviations (documented): `utcOffsetMinutes` pinned to 0/UTC (no tz
 dep); config-fetch failure swallowed silently (no log facade).
 
-State: Batch 1 committed and QA-passed; Batch 2 complete pending QA.
-Next action: Batch 3 (auth layering & OAuth2).
+State: Batches 1–2 committed and QA-passed; Batch 3 complete pending QA.
+Next action: Batch 4 (player & decipher parity).
 
 ## Handoff instructions
 

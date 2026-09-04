@@ -26,6 +26,9 @@ pub enum InnertubeError {
     #[error("Authentication is required: {0}")]
     AuthenticationRequired(String),
 
+    #[error("OAuth2 error: {0}")]
+    OAuth2(String),
+
     #[error("Format error: {0}")]
     Format(String),
 

@@ -14,8 +14,11 @@ pub struct OAuth2ClientID {
 pub struct OAuth2Tokens {
     pub access_token: String,
     pub refresh_token: String,
+    /// Unix epoch seconds (legacy stores an ISO 8601 string; see
+    /// `core::oauth::tokens_expiry_epoch`).
     pub expiry_date: String,
     pub token_type: Option<String>,
+    pub scope: Option<String>,
 }
 
 /// Device and user verification code response (`DeviceAndUserCode.ts`).

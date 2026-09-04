@@ -39,7 +39,7 @@ pub struct SessionOptions {
 }
 
 /// InnerTube Session holding context state, API key, and HTTP client.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Session {
     pub context: InnerTubeContext,
     pub api_key: String,
@@ -49,6 +49,8 @@ pub struct Session {
     pub cookie: Option<String>,
     pub po_token: Option<String>,
     pub http_client: reqwest::Client,
+    pub oauth_tokens: std::sync::RwLock<Option<crate::models::oauth::OAuth2Tokens>>,
+    pub oauth_client: std::sync::RwLock<Option<crate::models::oauth::OAuth2ClientID>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,6 +58,23 @@ struct SwSessionData {
     api_key: String,
     api_version: String,
     context: InnerTubeContext,
+}
+
+impl Clone for Session {
+    fn clone(&self) -> Self {
+        Self {
+            context: self.context.clone(),
+            api_key: self.api_key.clone(),
+            api_version: self.api_version.clone(),
+            account_index: self.account_index,
+            config_data: self.config_data.clone(),
+            cookie: self.cookie.clone(),
+            po_token: self.po_token.clone(),
+            http_client: self.http_client.clone(),
+            oauth_tokens: std::sync::RwLock::new(self.oauth_tokens.read().ok().and_then(|t| t.clone())),
+            oauth_client: std::sync::RwLock::new(self.oauth_client.read().ok().and_then(|c| c.clone())),
+        }
+    }
 }
 
 impl Session {
@@ -116,6 +135,8 @@ impl Session {
             cookie: options.cookie,
             po_token: options.po_token,
             http_client,
+            oauth_tokens: std::sync::RwLock::new(None),
+            oauth_client: std::sync::RwLock::new(None),
         };
 
         if retrieve_config {
@@ -559,14 +580,178 @@ impl Session {
         headers
     }
 
-    /// Whether this session has caller-supplied account credentials.
+    /// Whether this session has caller-supplied account credentials
+    /// (cookie or OAuth2 tokens).
     ///
     /// This only establishes that credentials were configured; YouTube remains
     /// authoritative about whether they are valid for a particular request.
     pub fn is_authenticated(&self) -> bool {
-        self.cookie
+        let has_cookie = self
+            .cookie
             .as_deref()
-            .is_some_and(|cookie| !cookie.trim().is_empty())
+            .is_some_and(|cookie| !cookie.trim().is_empty());
+        let has_tokens = self
+            .oauth_tokens
+            .read()
+            .map(|t| t.is_some())
+            .unwrap_or(false);
+        has_cookie || has_tokens
+    }
+
+    /// Sign in with caller-supplied OAuth2 tokens, mirroring legacy
+    /// `Session.signIn(credentials)`: validates the tokens and refreshes the
+    /// access token when expired.
+    pub async fn sign_in_with_tokens(
+        &self,
+        tokens: crate::models::oauth::OAuth2Tokens,
+    ) -> Result<()> {
+        if !crate::core::oauth::OAuth2::validate_tokens(&tokens) {
+            return Err(InnertubeError::OAuth2("Invalid tokens provided.".to_string()));
+        }
+
+        let tokens = if crate::core::oauth::OAuth2::should_refresh_token(&tokens) {
+            let client = self.ensure_oauth_client().await?;
+            crate::core::oauth::OAuth2::refresh_access_token(
+                &self.http_client,
+                &client,
+                &tokens.refresh_token,
+            )
+            .await?
+        } else {
+            tokens
+        };
+
+        *self
+            .oauth_tokens
+            .write()
+            .map_err(|e| InnertubeError::Other(format!("oauth token lock poisoned: {e}")))? =
+            Some(tokens);
+
+        Ok(())
+    }
+
+    /// Sign out, mirroring legacy `Session.signOut`: revokes OAuth2 tokens
+    /// when present and clears the session's OAuth state.
+    pub async fn sign_out(&self) -> Result<()> {
+        if !self.is_authenticated() {
+            return Err(InnertubeError::OAuth2(
+                "You must be signed in to perform this operation.".to_string(),
+            ));
+        }
+
+        let tokens = self
+            .oauth_tokens
+            .read()
+            .map_err(|e| InnertubeError::Other(format!("oauth token lock poisoned: {e}")))?
+            .clone();
+
+        if let Some(tokens) = tokens {
+            crate::core::oauth::OAuth2::revoke_credentials(&self.http_client, &tokens).await?;
+            *self
+                .oauth_tokens
+                .write()
+                .map_err(|e| InnertubeError::Other(format!("oauth token lock poisoned: {e}")))? =
+                None;
+        }
+
+        Ok(())
+    }
+
+    /// Stored OAuth2 tokens, if any.
+    pub fn oauth_tokens(&self) -> Option<crate::models::oauth::OAuth2Tokens> {
+        self.oauth_tokens.read().ok().and_then(|t| t.clone())
+    }
+
+    /// Return the stored OAuth2 client identity, scraping YouTube TV when
+    /// absent (legacy lazily fetches it in `refreshAccessToken`).
+    async fn ensure_oauth_client(&self) -> Result<crate::models::oauth::OAuth2ClientID> {
+        if let Some(client) = self
+            .oauth_client
+            .read()
+            .map_err(|e| InnertubeError::Other(format!("oauth client lock poisoned: {e}")))?
+            .clone()
+        {
+            return Ok(client);
+        }
+
+        let client = crate::core::oauth::OAuth2::get_client_id(&self.http_client).await?;
+        *self
+            .oauth_client
+            .write()
+            .map_err(|e| InnertubeError::Other(format!("oauth client lock poisoned: {e}")))? =
+            Some(client.clone());
+        Ok(client)
+    }
+
+    /// Apply authentication headers to an InnerTube request, mirroring the
+    /// auth block of legacy `HTTPClient.fetch`: OAuth bearer (auto-refreshing
+    /// expired tokens), then cookie SAPISIDHASH (which takes precedence),
+    /// `X-Goog-Authuser`, and `X-Goog-PageId`. Skipped for YouTube Kids
+    /// requests and anonymous sessions.
+    pub async fn apply_auth_headers(
+        &self,
+        headers: &mut HeaderMap,
+        is_web_kids: bool,
+    ) -> Result<()> {
+        if !self.is_authenticated() || is_web_kids {
+            return Ok(());
+        }
+
+        let tokens = self
+            .oauth_tokens
+            .read()
+            .map_err(|e| InnertubeError::Other(format!("oauth token lock poisoned: {e}")))?
+            .clone();
+
+        if let Some(tokens) = tokens {
+            let tokens = if crate::core::oauth::OAuth2::should_refresh_token(&tokens) {
+                let client = self.ensure_oauth_client().await?;
+                let refreshed = crate::core::oauth::OAuth2::refresh_access_token(
+                    &self.http_client,
+                    &client,
+                    &tokens.refresh_token,
+                )
+                .await?;
+                *self
+                    .oauth_tokens
+                    .write()
+                    .map_err(|e| {
+                        InnertubeError::Other(format!("oauth token lock poisoned: {e}"))
+                    })? = Some(refreshed.clone());
+                refreshed
+            } else {
+                tokens
+            };
+
+            if let Ok(val) = HeaderValue::from_str(&format!("Bearer {}", tokens.access_token)) {
+                headers.insert(reqwest::header::AUTHORIZATION, val);
+            }
+        }
+
+        if let Some(ref cookie) = self.cookie {
+            if let Some(sapisid) = crate::utils::auth::get_cookie(cookie, "SAPISID") {
+                if let Ok(val) =
+                    HeaderValue::from_str(&crate::utils::auth::generate_sid_auth(sapisid))
+                {
+                    headers.insert(reqwest::header::AUTHORIZATION, val);
+                }
+                if let Ok(val) = HeaderValue::from_str(&self.account_index.to_string()) {
+                    headers.insert("X-Goog-Authuser", val);
+                }
+                if let Some(page_id) = self
+                    .context
+                    .user
+                    .as_ref()
+                    .and_then(|u| u.on_behalf_of_user.as_deref())
+                {
+                    if let Ok(val) = HeaderValue::from_str(page_id) {
+                        headers.insert("X-Goog-PageId", val);
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Reject account mutations before they can be sent anonymously.
@@ -615,7 +800,9 @@ impl Session {
             }
         }
 
-        let headers = self.build_innertube_headers();
+        let mut headers = self.build_innertube_headers();
+        let is_web_kids = self.context.client.client_name == clients::WEB_KIDS_NAME;
+        self.apply_auth_headers(&mut headers, is_web_kids).await?;
 
         let res = self
             .http_client
@@ -848,6 +1035,7 @@ impl Session {
         );
         headers.insert("X-GOOG-API-FORMAT-VERSION", HeaderValue::from_static("2"));
         headers.remove("X-Youtube-Client-Version");
+        self.apply_auth_headers(&mut headers, false).await?;
 
         let res = self
             .http_client
@@ -893,6 +1081,8 @@ impl Session {
             headers.insert("X-Youtube-Client-Version", val);
         }
         Self::apply_client_header_overrides(&mut headers, &adjusted_context.client.client_name);
+        let is_web_kids = adjusted_context.client.client_name == clients::WEB_KIDS_NAME;
+        self.apply_auth_headers(&mut headers, is_web_kids).await?;
 
         let res = self
             .http_client
@@ -922,6 +1112,8 @@ mod tests {
             cookie: cookie.map(ToString::to_string),
             po_token: None,
             http_client: reqwest::Client::new(),
+            oauth_tokens: std::sync::RwLock::new(None),
+            oauth_client: std::sync::RwLock::new(None),
         }
     }
 
@@ -940,5 +1132,177 @@ mod tests {
         let session = session_with_cookie(Some("SID=test"));
         assert!(session.is_authenticated());
         assert!(session.ensure_authenticated().is_ok());
+    }
+
+    #[tokio::test]
+    async fn sapisid_cookie_produces_sapisidhash_auth_headers() {
+        let session = session_with_cookie(Some("SID=abc; SAPISID=test-sapisid-value; HSID=zzz"));
+        let mut headers = HeaderMap::new();
+        session.apply_auth_headers(&mut headers, false).await.unwrap();
+
+        let auth = headers
+            .get(reqwest::header::AUTHORIZATION)
+            .expect("Authorization header")
+            .to_str()
+            .unwrap()
+            .to_string();
+        assert!(auth.starts_with("SAPISIDHASH "), "{auth}");
+        let digest_part = auth.split('_').nth(1).expect("hash suffix");
+        assert_eq!(digest_part.len(), 40, "sha1 hex digest expected");
+        assert_eq!(
+            headers.get("X-Goog-Authuser").unwrap().to_str().unwrap(),
+            "0"
+        );
+        assert!(headers.get("X-Goog-PageId").is_none());
+    }
+
+    #[tokio::test]
+    async fn on_behalf_of_user_sets_goog_page_id() {
+        let mut session = session_with_cookie(Some("SAPISID=test-sapisid-value"));
+        session
+            .context
+            .user
+            .as_mut()
+            .unwrap()
+            .on_behalf_of_user = Some("123456789".to_string());
+        let mut headers = HeaderMap::new();
+        session.apply_auth_headers(&mut headers, false).await.unwrap();
+        assert_eq!(
+            headers.get("X-Goog-PageId").unwrap().to_str().unwrap(),
+            "123456789"
+        );
+    }
+
+    #[tokio::test]
+    async fn web_kids_requests_skip_auth_headers() {
+        let session = session_with_cookie(Some("SAPISID=test-sapisid-value"));
+        let mut headers = HeaderMap::new();
+        session.apply_auth_headers(&mut headers, true).await.unwrap();
+        assert!(headers.get(reqwest::header::AUTHORIZATION).is_none());
+        assert!(headers.get("X-Goog-Authuser").is_none());
+    }
+
+    #[tokio::test]
+    async fn anonymous_sessions_get_no_auth_headers() {
+        let session = session_with_cookie(None);
+        let mut headers = HeaderMap::new();
+        session.apply_auth_headers(&mut headers, false).await.unwrap();
+        assert!(headers.get(reqwest::header::AUTHORIZATION).is_none());
+    }
+
+    #[tokio::test]
+    async fn valid_oauth_tokens_set_bearer_and_mark_authenticated() {
+        let session = session_with_cookie(None);
+        assert!(!session.is_authenticated());
+
+        let tokens = crate::models::oauth::OAuth2Tokens {
+            access_token: "ya29.test".to_string(),
+            refresh_token: "refresh-test".to_string(),
+            expiry_date: (std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs()
+                + 3600)
+            .to_string(),
+            token_type: Some("Bearer".to_string()),
+            scope: None,
+        };
+
+        session.sign_in_with_tokens(tokens).await.unwrap();
+        assert!(session.is_authenticated());
+
+        let mut headers = HeaderMap::new();
+        session.apply_auth_headers(&mut headers, false).await.unwrap();
+        assert_eq!(
+            headers
+                .get(reqwest::header::AUTHORIZATION)
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "Bearer ya29.test"
+        );
+    }
+
+    #[tokio::test]
+    async fn invalid_tokens_are_rejected_on_sign_in() {
+        let session = session_with_cookie(None);
+        let tokens = crate::models::oauth::OAuth2Tokens {
+            access_token: String::new(),
+            refresh_token: String::new(),
+            expiry_date: String::new(),
+            token_type: None,
+            scope: None,
+        };
+        assert!(matches!(
+            session.sign_in_with_tokens(tokens).await,
+            Err(InnertubeError::OAuth2(_))
+        ));
+        assert!(!session.is_authenticated());
+    }
+
+    #[tokio::test]
+    async fn sign_out_requires_authentication() {
+        let session = session_with_cookie(None);
+        assert!(matches!(
+            session.sign_out().await,
+            Err(InnertubeError::OAuth2(_))
+        ));
+    }
+
+    #[test]
+    fn oauth_poll_error_mapping_matches_legacy() {
+        assert!(crate::core::oauth::map_poll_error("authorization_pending").is_none());
+        assert!(crate::core::oauth::map_poll_error("slow_down").is_none());
+        assert_eq!(
+            crate::core::oauth::map_poll_error("access_denied")
+                .unwrap()
+                .to_string(),
+            "OAuth2 error: Access was denied."
+        );
+        assert_eq!(
+            crate::core::oauth::map_poll_error("expired_token")
+                .unwrap()
+                .to_string(),
+            "OAuth2 error: The device code has expired."
+        );
+        assert_eq!(
+            crate::core::oauth::map_poll_error("something_new")
+                .unwrap()
+                .to_string(),
+            "OAuth2 error: Server returned an unexpected error."
+        );
+    }
+
+    #[test]
+    fn should_refresh_token_compares_expiry() {
+        use crate::core::oauth::OAuth2;
+        use crate::models::oauth::OAuth2Tokens;
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        let valid = OAuth2Tokens {
+            access_token: "a".to_string(),
+            refresh_token: "r".to_string(),
+            expiry_date: (now + 3600).to_string(),
+            token_type: None,
+            scope: None,
+        };
+        assert!(!OAuth2::should_refresh_token(&valid));
+        assert!(OAuth2::validate_tokens(&valid));
+
+        let expired = OAuth2Tokens {
+            expiry_date: (now - 10).to_string(),
+            ..valid.clone()
+        };
+        assert!(OAuth2::should_refresh_token(&expired));
+
+        let invalid = OAuth2Tokens {
+            refresh_token: String::new(),
+            ..valid
+        };
+        assert!(!OAuth2::validate_tokens(&invalid));
     }
 }

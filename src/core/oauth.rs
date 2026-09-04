@@ -109,14 +109,18 @@ impl OAuth2 {
         })
     }
 
-    /// Poll Google OAuth2 token endpoint until user approves or code expires.
+    /// Poll Google OAuth2 token endpoint until the user approves or the
+    /// device code expires, mirroring legacy `pollForAccessToken` semantics:
+    /// `authorization_pending`/`slow_down` keep polling at the given
+    /// interval; `access_denied`, `expired_token`, and unknown errors are
+    /// fatal.
     pub async fn poll_for_access_token(
         http_client: &reqwest::Client,
         client: &OAuth2ClientID,
         device_code: &str,
         interval_secs: u64,
     ) -> Result<OAuth2Tokens> {
-        let poll_interval = Duration::from_secs(interval_secs.max(5));
+        let poll_interval = Duration::from_secs(interval_secs);
 
         loop {
             tokio::time::sleep(poll_interval).await;
@@ -136,18 +140,14 @@ impl OAuth2 {
             let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
             if let Some(err) = raw.get("error").and_then(Value::as_str) {
-                if err == "authorization_pending" {
-                    continue;
-                } else if err == "slow_down" {
-                    tokio::time::sleep(Duration::from_secs(5)).await;
-                    continue;
-                } else {
-                    return Err(InnertubeError::Other(format!("OAuth2 authorization failed: {}", err)));
+                if let Some(fatal) = map_poll_error(err) {
+                    return Err(fatal);
                 }
+                continue;
             }
 
             let access_token = raw.get("access_token").and_then(Value::as_str)
-                .ok_or_else(|| InnertubeError::Other("access_token missing in response".to_string()))?
+                .ok_or_else(|| InnertubeError::OAuth2("access_token missing in response".to_string()))?
                 .to_string();
 
             let refresh_token = raw.get("refresh_token").and_then(Value::as_str)
@@ -164,6 +164,7 @@ impl OAuth2 {
                 refresh_token,
                 expiry_date,
                 token_type,
+                scope: raw.get("scope").and_then(Value::as_str).map(|s| s.to_string()),
             });
         }
     }
@@ -186,14 +187,23 @@ impl OAuth2 {
             .send().await
             .map_err(InnertubeError::Network)?;
 
+        if !resp.status().is_success() {
+            return Err(InnertubeError::OAuth2(format!(
+                "Failed to refresh access token: {}",
+                resp.status()
+            )));
+        }
+
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
-        if let Some(err) = raw.get("error").and_then(Value::as_str) {
-            return Err(InnertubeError::Other(format!("OAuth2 token refresh failed: {}", err)));
+        if let Some(err) = raw.get("error").or_else(|| raw.get("error_code")) {
+            return Err(InnertubeError::OAuth2(format!(
+                "Authorization server returned an error: {err}"
+            )));
         }
 
         let access_token = raw.get("access_token").and_then(Value::as_str)
-            .ok_or_else(|| InnertubeError::Other("access_token missing".to_string()))?
+            .ok_or_else(|| InnertubeError::OAuth2("access_token missing".to_string()))?
             .to_string();
 
         let expires_in = raw.get("expires_in").and_then(Value::as_u64).unwrap_or(3600);
@@ -205,8 +215,75 @@ impl OAuth2 {
             refresh_token: refresh_token.to_string(),
             expiry_date,
             token_type,
+            scope: raw.get("scope").and_then(Value::as_str).map(|s| s.to_string()),
         })
     }
+
+    /// Revoke the access token (`POST /o/oauth2/revoke?token=...`).
+    pub async fn revoke_credentials(
+        http_client: &reqwest::Client,
+        tokens: &OAuth2Tokens,
+    ) -> Result<()> {
+        if tokens.access_token.is_empty() {
+            return Err(InnertubeError::OAuth2("Access token not found".to_string()));
+        }
+
+        let url = format!(
+            "{YOUTUBE_BASE_URL}/o/oauth2/revoke?token={}",
+            tokens.access_token
+        );
+        http_client
+            .post(&url)
+            .send()
+            .await
+            .map_err(InnertubeError::Network)?;
+
+        Ok(())
+    }
+
+    /// Legacy `validateTokens`: access token, refresh token, and expiry must
+    /// all be present.
+    pub fn validate_tokens(tokens: &OAuth2Tokens) -> bool {
+        !tokens.access_token.is_empty()
+            && !tokens.refresh_token.is_empty()
+            && !tokens.expiry_date.is_empty()
+    }
+
+    /// Legacy `shouldRefreshToken`: true when the expiry instant has passed.
+    pub fn should_refresh_token(tokens: &OAuth2Tokens) -> bool {
+        tokens_expiry_epoch(tokens).is_some_and(|expiry| now_unix_seconds() > expiry)
+    }
+}
+
+/// Map a device-flow polling error to a fatal error, or `None` to keep
+/// polling (legacy switch in `pollForAccessToken`).
+pub fn map_poll_error(error: &str) -> Option<InnertubeError> {
+    match error {
+        "authorization_pending" | "slow_down" => None,
+        "access_denied" => Some(InnertubeError::OAuth2("Access was denied.".to_string())),
+        "expired_token" => Some(InnertubeError::OAuth2(
+            "The device code has expired.".to_string(),
+        )),
+        _ => Some(InnertubeError::OAuth2(
+            "Server returned an unexpected error.".to_string(),
+        )),
+    }
+}
+
+/// Parse the expiry instant of stored tokens.
+///
+/// ponytail: legacy stores `expiry_date` as an ISO 8601 string; we store
+/// unix epoch seconds (no date-formatting dependency). The comparison
+/// semantics are identical. Switch to ISO if a date crate lands.
+pub fn tokens_expiry_epoch(tokens: &OAuth2Tokens) -> Option<u64> {
+    tokens.expiry_date.parse::<u64>().ok()
+}
+
+fn now_unix_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
 }
 
 fn generate_uuid_v4() -> String {
