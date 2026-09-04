@@ -89,6 +89,10 @@ pub struct VideoInfo {
     pub watch_next: Option<WatchNextResults>,
     /// Client Playback Nonce (CPN) generated for this playback session.
     pub cpn: String,
+    /// Proof-of-origin token forwarded to stream URLs as `pot` (legacy
+    /// `Player.po_token`), unless the URL is a SABR stream.
+    #[serde(default)]
+    pub po_token: Option<String>,
 }
 
 impl VideoInfo {
@@ -130,7 +134,12 @@ impl VideoInfo {
         decipherer: &PlayerDecipherer,
     ) -> crate::error::Result<String> {
         let format = self.select_format(filter)?;
-        crate::endpoints::player::resolve_stream_url(format, decipherer)
+        crate::endpoints::player::resolve_stream_url_full(
+            format,
+            decipherer,
+            self.po_token.as_deref(),
+            None,
+        )
     }
 }
 
@@ -216,6 +225,7 @@ mod tests {
             player_response,
             watch_next: Some(watch_next),
             cpn: "abcdef1234567890".to_string(),
+            po_token: None,
         };
 
         assert_eq!(video_info.id(), Some("dQw4w9WgXcQ"));

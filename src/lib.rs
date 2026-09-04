@@ -429,7 +429,7 @@ use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{
     fetch_player_response, fetch_player_response_with_options, fetch_shorts_video_info,
-    resolve_stream_url, select_format, select_format_with_options,
+    select_format, select_format_with_options,
 };
 use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
 use crate::endpoints::post::{get_post, get_post_comments};
@@ -473,7 +473,7 @@ impl Innertube {
         fetch_player_response(
             &self.session,
             video_id,
-            Some(self.player.decipherer.signature_timestamp),
+            self.player.decipherer.signature_timestamp,
         )
         .await
     }
@@ -487,7 +487,7 @@ impl Innertube {
         video_id: &str,
         options: Option<&GetVideoInfoOptions>,
     ) -> Result<VideoInfo> {
-        let sig_ts = Some(self.player.decipherer.signature_timestamp);
+        let sig_ts = self.player.decipherer.signature_timestamp;
         let player_future = fetch_player_response_with_options(&self.session, video_id, sig_ts, options);
         let next_future = get_watch_next(&self.session, video_id, None, None, None);
 
@@ -500,6 +500,7 @@ impl Innertube {
             player_response,
             watch_next,
             cpn,
+            po_token: self.session.po_token.clone(),
         })
     }
 
@@ -512,7 +513,7 @@ impl Innertube {
         let player_response = fetch_player_response_with_options(
             &self.session,
             video_id,
-            Some(self.player.decipherer.signature_timestamp),
+            self.player.decipherer.signature_timestamp,
             options,
         )
         .await?;
@@ -521,6 +522,7 @@ impl Innertube {
             player_response,
             watch_next: None,
             cpn,
+            po_token: self.session.po_token.clone(),
         })
     }
 
@@ -540,7 +542,12 @@ impl Innertube {
     pub async fn get_stream_url(&self, video_id: &str, filter: &FormatFilter) -> Result<String> {
         let player_res = self.get_video_info(video_id).await?;
         let format = select_format(&player_res, filter)?;
-        resolve_stream_url(format, &self.player.decipherer)
+        crate::endpoints::player::resolve_stream_url_full(
+            format,
+            &self.player.decipherer,
+            self.session.po_token.as_deref(),
+            None,
+        )
     }
 
     /// Retrieve the selected stream format with its deciphered, playable URL.
@@ -551,7 +558,12 @@ impl Innertube {
     ) -> Result<StreamingFormat> {
         let player_res = self.get_video_info(video_id).await?;
         let mut format = select_format(&player_res, filter)?.clone();
-        format.url = Some(resolve_stream_url(&format, &self.player.decipherer)?);
+        format.url = Some(crate::endpoints::player::resolve_stream_url_full(
+            &format,
+            &self.player.decipherer,
+            self.session.po_token.as_deref(),
+            None,
+        )?);
         format.signature_cipher = None;
         format.cipher = None;
         Ok(format)
@@ -566,12 +578,17 @@ impl Innertube {
         let player_res = fetch_player_response_with_options(
             &self.session,
             video_id,
-            Some(self.player.decipherer.signature_timestamp),
+            self.player.decipherer.signature_timestamp,
             None,
         )
         .await?;
         let mut format = select_format_with_options(&player_res, options)?.clone();
-        format.url = Some(resolve_stream_url(&format, &self.player.decipherer)?);
+        format.url = Some(crate::endpoints::player::resolve_stream_url_full(
+            &format,
+            &self.player.decipherer,
+            self.session.po_token.as_deref(),
+            None,
+        )?);
         format.signature_cipher = None;
         format.cipher = None;
         Ok(format)

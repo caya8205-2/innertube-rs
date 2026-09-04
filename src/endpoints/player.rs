@@ -371,14 +371,23 @@ pub fn resolve_stream_url(
     format: &StreamingFormat,
     decipherer: &PlayerDecipherer,
 ) -> Result<String> {
+    resolve_stream_url_full(format, decipherer, None, None)
+}
+
+/// Resolve a playable stream URL with the full legacy `Player.decipher`
+/// pipeline: signature + n-token transforms (deduplicated per response via
+/// `nsig_cache`), `pot` PO-token append (skipped for SABR), and `cver`
+/// rewrite based on the URL's `c` client param.
+pub fn resolve_stream_url_full(
+    format: &StreamingFormat,
+    decipherer: &PlayerDecipherer,
+    po_token: Option<&str>,
+    nsig_cache: Option<&mut crate::utils::decipher::NsigCache>,
+) -> Result<String> {
     if let Some((raw_url, sp, s)) = format.get_raw_cipher_url() {
-        decipherer.apply_to_url(&raw_url, sp.as_deref(), s.as_deref())
+        decipherer.decipher_stream_url(&raw_url, sp.as_deref(), s.as_deref(), po_token, nsig_cache)
     } else if let Some(ref url) = format.url {
-        if url.contains("c=MWEB") || url.contains("c=WEB") {
-            decipherer.apply_to_url(url, None, None)
-        } else {
-            Ok(url.clone())
-        }
+        decipherer.decipher_stream_url(url, None, None, po_token, nsig_cache)
     } else {
         Err(InnertubeError::Format(
             "Format does not contain a valid URL or signature cipher".into(),

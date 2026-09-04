@@ -185,15 +185,33 @@ Legacy: `core/mixins/{Feed,FilterableFeed,TabbedFeed}.ts`.
   row that cannot be evidenced instead of marking it.
 - Final: `cargo test --all-targets`, clippy clean, live suite recorded.
 
-## Current checkpoint — 2026-09-04 (Batch 3 done, uncommitted)
+## Current checkpoint — 2026-09-04 (Batch 4 done, uncommitted)
 
-HEAD `4d3afd0` (Batch 2 commit) + uncommitted Batch 3 changes.
-`cargo test --all-targets`: 138 non-network tests pass (65 lib incl. 12 new
-auth/OAuth tests + 25 api_contracts + 24 contract_fixtures + 16
+HEAD `aee5fa9` (Batch 3 commit) + uncommitted Batch 4 changes.
+`cargo test --all-targets`: 144 non-network tests pass (71 lib incl. 6 new
+decipher/URL tests + 25 api_contracts + 24 contract_fixtures + 16
 client_contexts + 8 authenticated; 4 auth mutations + 10 live ignored
 opt-in). `cargo clippy --all-targets -- -D warnings`: 0 warnings.
 
-Batch 3 delivered (auth layering & OAuth2 parity):
+Batch 4 delivered (player & decipher parity):
+- `signature_timestamp` is now `Option<u32>` — extraction failure yields
+  `None` (field omitted from playbackContext) instead of silently
+  defaulting to 0.
+- Full legacy `Player.decipher` URL pipeline in
+  `PlayerDecipherer::decipher_stream_url`: per-response n-token cache
+  (`NsigCache`), `enhanced_except_` sentinel results used but never cached,
+  signature applied to `sp` param or `signature` (was wrongly `sig`),
+  `pot` appended unless `sabr=1`, `cver` rewritten per `c` client param for
+  all 8 legacy-mapped clients.
+- `finalize_stream_url` pure URL-rewrite fn (offline-testable);
+  `resolve_stream_url_full` threads po_token + cache; `VideoInfo` carries
+  `po_token`; n-transform now applies to any URL with an `n` param
+  (previously only `c=WEB`/`c=MWEB`).
+
+Deviations: no player-script disk cache (no cache layer yet); nsig
+  extraction remains regex-based, not the legacy AST analyzer.
+
+Batch 3 delivered (committed `aee5fa9`):
 - `utils/auth.rs`: `generate_sid_auth` (SAPISIDHASH sha1, golden-vector
   tested) and whole-name `get_cookie`.
 - `Session::apply_auth_headers` wired into all POST paths: OAuth bearer
@@ -251,8 +269,8 @@ Batch 1 delivered (committed `b02340f`):
 Known deviations (documented): `utcOffsetMinutes` pinned to 0/UTC (no tz
 dep); config-fetch failure swallowed silently (no log facade).
 
-State: Batches 1–2 committed and QA-passed; Batch 3 complete pending QA.
-Next action: Batch 4 (player & decipher parity).
+State: Batches 1–3 committed and QA-passed; Batch 4 complete pending QA.
+Next action: Batch 5 (protobuf surface completion).
 
 ## Handoff instructions
 

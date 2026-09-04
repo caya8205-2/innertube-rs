@@ -54,10 +54,11 @@ fn test_api_contract_01_get_info_composition() {
     assert_eq!(player_response.video_details.as_ref().unwrap().video_id, "dQw4w9WgXcQ");
 
     let video_info = VideoInfo {
-        player_response,
-        watch_next: None,
-        cpn: "CPN_RANDOM_12345".to_string(),
-    };
+    player_response,
+    watch_next: None,
+    cpn: "CPN_RANDOM_12345".to_string(),
+    po_token: None,
+};
 
     assert_eq!(video_info.cpn.len(), 16);
     assert_eq!(video_info.title(), Some("Never Gonna Give You Up"));
