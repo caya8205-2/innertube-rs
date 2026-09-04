@@ -31,3 +31,6 @@ web/dist/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Internal agent documentation
+.agents/
