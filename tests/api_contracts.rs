@@ -658,3 +658,206 @@ fn test_api_contract_25_attestation_challenge_contract() {
     assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_SIGNIN");
     assert_eq!(payload["ids"][0]["key"], "val");
 }
+
+#[test]
+fn test_api_contract_26_music_playlist_details_metadata() {
+    let followed = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicResponsiveHeaderRenderer": {
+                                        "title": { "runs": [{ "text": "Fixture Playlist" }] },
+                                        "description": {
+                                            "musicDescriptionShelfRenderer": {
+                                                "description": { "runs": [
+                                                    { "text": "First line. " },
+                                                    { "text": "Second line." }
+                                                ] }
+                                            }
+                                        },
+                                        "facepile": {
+                                            "avatarStackViewModel": {
+                                                "text": { "content": "Fixture Curator" },
+                                                "rendererContext": {
+                                                    "commandContext": {
+                                                        "onTap": {
+                                                            "innertubeCommand": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_curator" }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "subtitle": { "runs": [
+                                            { "text": "Playlist" },
+                                            { "text": " • " },
+                                            { "text": "2026" }
+                                        ] },
+                                        "secondSubtitle": { "runs": [
+                                            { "text": "1.2K views" },
+                                            { "text": " • " },
+                                            { "text": "321 songs" },
+                                            { "text": " • " },
+                                            { "text": "18 hours" }
+                                        ] },
+                                        "thumbnail": {
+                                            "musicThumbnailRenderer": {
+                                                "thumbnail": {
+                                                    "thumbnails": [
+                                                        { "url": "https://example.test/playlist-small.jpg", "width": 120, "height": 120 },
+                                                        { "url": "https://example.test/playlist-large.jpg", "width": 544, "height": 544 }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }],
+                "secondaryContents": {
+                    "sectionListRenderer": {
+                        "contents": [{
+                            "musicPlaylistShelfRenderer": {
+                                "contents": [{
+                                    "musicResponsiveListItemRenderer": {
+                                        "playlistItemData": { "videoId": "fixture-playlist-track" },
+                                        "flexColumns": [
+                                            {
+                                                "musicResponsiveListItemFlexColumnRenderer": {
+                                                    "text": { "runs": [{ "text": "Fixture Track" }] }
+                                                }
+                                            },
+                                            {
+                                                "musicResponsiveListItemFlexColumnRenderer": {
+                                                    "text": { "runs": [
+                                                        {
+                                                            "text": "Fixture Artist",
+                                                            "navigationEndpoint": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                            }
+                                                        },
+                                                        { "text": " • " },
+                                                        {
+                                                            "text": "Fixture Album",
+                                                            "navigationEndpoint": {
+                                                                "browseEndpoint": { "browseId": "MPREb_fixture_album" }
+                                                            }
+                                                        },
+                                                        { "text": " • " },
+                                                        { "text": "4:02" }
+                                                    ] }
+                                                }
+                                            }
+                                        ],
+                                        "fixedColumns": [{
+                                            "musicResponsiveListItemFixedColumnRenderer": {
+                                                "text": { "runs": [{ "text": "4:02" }] }
+                                            }
+                                        }]
+                                    }
+                                }]
+                            }
+                        }]
+                    }
+                }
+            }
+        }
+    });
+
+    let playlist = endpoints::music::parse_music_playlist_details_response(
+        "VLfixture-followed",
+        &followed,
+    )
+    .expect("followed Music playlist fixture should parse");
+    assert_eq!(playlist.id, "fixture-followed");
+    assert_eq!(playlist.title, "Fixture Playlist");
+    assert_eq!(playlist.description.as_deref(), Some("First line. Second line."));
+    assert_eq!(playlist.author.as_ref().map(|author| author.name.as_str()), Some("Fixture Curator"));
+    assert_eq!(
+        playlist.author.as_ref().and_then(|author| author.browse_id.as_deref()),
+        Some("UC_fixture_curator")
+    );
+    assert_eq!(playlist.track_count, Some(321));
+    assert_eq!(playlist.duration.as_deref(), Some("18 hours"));
+    assert_eq!(playlist.year.as_deref(), Some("2026"));
+    assert_eq!(playlist.privacy.as_deref(), Some("PUBLIC"));
+    assert!(!playlist.owned);
+    assert!(!playlist.is_collaborative);
+    assert_eq!(playlist.thumbnail.as_deref(), Some("https://example.test/playlist-large.jpg"));
+    assert_eq!(playlist.tracks.len(), 1);
+    assert_eq!(playlist.tracks[0].video_id, "fixture-playlist-track");
+    assert_eq!(playlist.tracks[0].duration_ms, Some(242_000));
+
+    let owned = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicEditablePlaylistDetailHeaderRenderer": {
+                                        "playlistId": "fixture-owned",
+                                        "editHeader": {
+                                            "musicPlaylistEditHeaderRenderer": { "privacy": "PRIVATE" }
+                                        },
+                                        "header": {
+                                            "musicResponsiveHeaderRenderer": {
+                                                "title": { "runs": [{ "text": "Owned Fixture" }] },
+                                                "facepile": {
+                                                    "avatarStackViewModel": {
+                                                        "text": { "content": "Fixture Owner" },
+                                                        "rendererContext": {
+                                                            "commandContext": {
+                                                                "onTap": {
+                                                                    "innertubeCommand": {
+                                                                        "browseEndpoint": { "browseId": "UC_fixture_owner" }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "subtitle": { "runs": [
+                                                    { "text": "Playlist" },
+                                                    { "text": " • " },
+                                                    { "text": "Fixture Owner" },
+                                                    { "text": " • " },
+                                                    { "text": "2025" }
+                                                ] },
+                                                "secondSubtitle": { "runs": [
+                                                    { "text": "62 songs" },
+                                                    { "text": " • " },
+                                                    { "text": "3 hours" }
+                                                ] }
+                                            }
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let playlist = endpoints::music::parse_music_playlist_details_response("fixture-owned", &owned)
+        .expect("owned Music playlist fixture should parse");
+    assert_eq!(playlist.id, "fixture-owned");
+    assert_eq!(playlist.title, "Owned Fixture");
+    assert!(playlist.owned);
+    assert_eq!(playlist.privacy.as_deref(), Some("PRIVATE"));
+    assert_eq!(playlist.track_count, Some(62));
+    assert_eq!(playlist.duration.as_deref(), Some("3 hours"));
+    assert_eq!(playlist.year.as_deref(), Some("2025"));
+    assert_eq!(playlist.author.as_ref().map(|author| author.name.as_str()), Some("Fixture Owner"));
+    assert!(playlist.tracks.is_empty());
+}

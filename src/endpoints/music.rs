@@ -4,8 +4,9 @@ use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
     MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
-    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
+use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
 
@@ -67,6 +68,22 @@ pub async fn get_music_album(session: &Session, browse_id: &str) -> Result<Music
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_album_response(browse_id, &raw)
+}
+
+/// Fetch YouTube Music playlist details and the native initial track window.
+pub async fn get_music_playlist_details(
+    session: &Session,
+    playlist_id: &str,
+) -> Result<MusicPlaylistView> {
+    let clean_id = normalize_music_playlist_id(playlist_id);
+    let payload = json!({
+        "browseId": format!("VL{clean_id}"),
+    });
+
+    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    parse_music_playlist_details_response(clean_id, &raw)
 }
 
 /// Fetch YouTube Music dedicated Artist Page by channel/artist ID (e.g. `UC...`).
@@ -225,6 +242,188 @@ pub fn parse_music_lyrics_response(raw: &Value) -> Result<MusicLyrics> {
     }
 
     Err(InnertubeError::Other("Lyrics text shelf not found in response".to_string()))
+}
+
+fn normalize_music_playlist_id(playlist_id: &str) -> &str {
+    let trimmed = playlist_id.trim();
+    trimmed.strip_prefix("VL").unwrap_or(trimmed)
+}
+
+fn find_music_renderer<'a>(value: &'a Value, renderer_name: &str) -> Option<&'a Value> {
+    match value {
+        Value::Object(map) => {
+            if let Some(renderer) = map.get(renderer_name) {
+                return Some(renderer);
+            }
+            map.values()
+                .find_map(|child| find_music_renderer(child, renderer_name))
+        }
+        Value::Array(items) => items
+            .iter()
+            .find_map(|child| find_music_renderer(child, renderer_name)),
+        _ => None,
+    }
+}
+
+fn contains_music_marker(value: &Value, marker: &str) -> bool {
+    match value {
+        Value::String(text) => text == marker,
+        Value::Object(map) => map
+            .values()
+            .any(|child| contains_music_marker(child, marker)),
+        Value::Array(items) => items
+            .iter()
+            .any(|child| contains_music_marker(child, marker)),
+        _ => false,
+    }
+}
+
+fn music_playlist_header(raw: &Value) -> Option<(&Value, bool, Option<String>)> {
+    let header_container = raw
+        .pointer("/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents/0")
+        .or_else(|| raw.get("header"))?;
+
+    if let Some(editable) = header_container.get("musicEditablePlaylistDetailHeaderRenderer") {
+        let header = editable.pointer("/header/musicResponsiveHeaderRenderer")?;
+        let privacy = editable
+            .pointer("/editHeader/musicPlaylistEditHeaderRenderer/privacy")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+        return Some((header, true, privacy));
+    }
+
+    let header = header_container
+        .get("musicResponsiveHeaderRenderer")
+        .or_else(|| header_container.get("musicDetailHeaderRenderer"))?;
+    Some((header, false, Some("PUBLIC".to_string())))
+}
+
+fn music_playlist_text_runs(value: &Value) -> String {
+    value
+        .get("runs")
+        .and_then(Value::as_array)
+        .map(|runs| {
+            runs.iter()
+                .filter_map(|run| run.get("text").and_then(Value::as_str))
+                .collect::<String>()
+        })
+        .or_else(|| value.get("simpleText").and_then(Value::as_str).map(ToString::to_string))
+        .unwrap_or_default()
+}
+
+fn music_playlist_year(header: &Value) -> Option<String> {
+    header
+        .pointer("/subtitle/runs")
+        .and_then(Value::as_array)
+        .and_then(|runs| {
+            runs.iter().find_map(|run| {
+                let text = run.get("text").and_then(Value::as_str)?.trim();
+                (text.len() == 4 && text.chars().all(|ch| ch.is_ascii_digit()))
+                    .then(|| text.to_string())
+            })
+        })
+}
+
+fn music_playlist_count_and_duration(header: &Value) -> (Option<u32>, Option<String>) {
+    let Some(runs) = header
+        .pointer("/secondSubtitle/runs")
+        .and_then(Value::as_array)
+    else {
+        return (None, None);
+    };
+
+    let count_index = if runs.len() > 3 { 2 } else { 0 };
+    let track_count = runs
+        .get(count_index)
+        .and_then(|run| run.get("text"))
+        .and_then(Value::as_str)
+        .and_then(|text| {
+            let digits: String = text.chars().filter(|ch| ch.is_ascii_digit()).collect();
+            (!digits.is_empty()).then_some(digits)
+        })
+        .and_then(|digits| digits.parse::<u32>().ok());
+    let duration = runs
+        .get(count_index + 2)
+        .and_then(|run| run.get("text"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+
+    (track_count, duration)
+}
+
+fn music_playlist_author(header: &Value) -> Option<MusicArtistRef> {
+    let facepile = header.pointer("/facepile/avatarStackViewModel")?;
+    let name = facepile
+        .pointer("/text/content")
+        .and_then(Value::as_str)?
+        .to_string();
+    let browse_id = facepile
+        .pointer("/rendererContext/commandContext/onTap/innertubeCommand/browseEndpoint/browseId")
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+    Some(MusicArtistRef { name, browse_id })
+}
+
+/// Parse current YouTube Music playlist-detail responses.
+pub fn parse_music_playlist_details_response(
+    playlist_id: &str,
+    raw: &Value,
+) -> Result<MusicPlaylistView> {
+    let clean_id = normalize_music_playlist_id(playlist_id);
+    let (header, owned, privacy) = music_playlist_header(raw).ok_or_else(|| {
+        InnertubeError::Other("YouTube Music playlist header was not found in response".to_string())
+    })?;
+    let (track_count, duration) = music_playlist_count_and_duration(header);
+
+    let description = header
+        .pointer("/description/musicDescriptionShelfRenderer")
+        .and_then(MusicDescriptionShelfNode::from_value)
+        .map(|shelf| shelf.description)
+        .or_else(|| {
+            header
+                .get("description")
+                .map(music_playlist_text_runs)
+                .filter(|text| !text.is_empty())
+        });
+    let thumbnail = header
+        .pointer("/thumbnail/musicThumbnailRenderer/thumbnail")
+        .or_else(|| header.get("thumbnail"))
+        .and_then(|value| {
+            ThumbnailListNode::from_value(value)
+                .best_url()
+                .map(ToString::to_string)
+        });
+
+    let tracks = find_music_renderer(raw, "musicPlaylistShelfRenderer")
+        .map(Parser::parse_tree)
+        .map(|parsed| {
+            parsed
+                .find_music_items()
+                .into_iter()
+                .map(convert_music_node_to_track_item)
+                .filter(|track| !track.video_id.is_empty() && !track.title.is_empty())
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Ok(MusicPlaylistView {
+        id: clean_id.to_string(),
+        title: header
+            .get("title")
+            .map(music_playlist_text_runs)
+            .filter(|text| !text.is_empty())
+            .unwrap_or_else(|| "Untitled Playlist".to_string()),
+        description,
+        author: music_playlist_author(header),
+        track_count,
+        thumbnail,
+        tracks,
+        owned,
+        privacy,
+        duration,
+        year: music_playlist_year(header),
+        is_collaborative: contains_music_marker(header, "PAplaylist_collaborate"),
+    })
 }
 
 /// Parse YouTube Music album page response using modular AST nodes.

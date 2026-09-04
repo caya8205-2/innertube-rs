@@ -148,8 +148,8 @@ pub use models::live_chat::{
 pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem, MusicSearchFilter,
-    MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem, MusicPlaylistView,
+    MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
@@ -430,7 +430,7 @@ use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
-    search_music,
+    get_music_playlist_details, search_music,
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
@@ -854,6 +854,11 @@ impl Innertube {
     /// Fetch YouTube Music album details and tracklist by browse ID (e.g. `MPREb_...`).
     pub async fn get_music_album(&self, browse_id: &str) -> Result<MusicAlbumView> {
         get_music_album(&self.session, browse_id).await
+    }
+
+    /// Fetch YouTube Music playlist details and the native initial track window.
+    pub async fn get_music_playlist_details(&self, playlist_id: &str) -> Result<MusicPlaylistView> {
+        get_music_playlist_details(&self.session, playlist_id).await
     }
 
     /// Fetch YouTube Music explore and trending page data.
