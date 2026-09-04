@@ -9,6 +9,12 @@ use crate::models::channel::{
 use crate::parser::nodes::channel::ChannelHeaderNode;
 use crate::parser::{NodeListExt, Parser};
 
+/// Follow a `navigateAction` redirect on a browse response (legacy
+/// `Innertube.getChannel` / `Actions.execute` redirect handling).
+async fn follow_channel_redirect(session: &Session, raw: Value) -> Result<Value> {
+    crate::core::actions::follow_navigate_redirect(session, raw).await
+}
+
 /// Fetch channel profile and about details.
 pub async fn get_channel_about(session: &Session, channel_id: &str) -> Result<ChannelAbout> {
     let payload = json!({
@@ -17,6 +23,7 @@ pub async fn get_channel_about(session: &Session, channel_id: &str) -> Result<Ch
 
     let resp: reqwest::Response = session.post_innertube("/browse", payload).await?;
     let raw: Value = resp.json().await?;
+    let raw = follow_channel_redirect(session, raw).await?;
 
     parse_channel_about_response(channel_id, &raw)
 }
@@ -40,6 +47,11 @@ pub async fn get_channel_videos(
 
     let resp: reqwest::Response = session.post_innertube("/browse", payload).await?;
     let raw: Value = resp.json().await?;
+    let raw = if continuation_token.is_none() {
+        follow_channel_redirect(session, raw).await?
+    } else {
+        raw
+    };
 
     parse_channel_videos_response(channel_id, &raw)
 }
@@ -63,6 +75,11 @@ pub async fn get_channel_shorts(
 
     let resp: reqwest::Response = session.post_innertube("/browse", payload).await?;
     let raw: Value = resp.json().await?;
+    let raw = if continuation_token.is_none() {
+        follow_channel_redirect(session, raw).await?
+    } else {
+        raw
+    };
 
     parse_channel_shorts_response(channel_id, &raw)
 }
@@ -160,6 +177,11 @@ pub async fn get_channel_community(
 
     let resp: reqwest::Response = session.post_innertube("/browse", payload).await?;
     let raw: Value = resp.json().await?;
+    let raw = if continuation_token.is_none() {
+        follow_channel_redirect(session, raw).await?
+    } else {
+        raw
+    };
 
     parse_channel_community_response(&raw)
 }

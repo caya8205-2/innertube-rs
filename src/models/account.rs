@@ -18,6 +18,15 @@ pub struct HistoryFeed {
     pub continuation_token: Option<String>,
 }
 
+/// A shelf section of the library page (legacy `Library.sections`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct LibrarySection {
+    pub title: String,
+    pub icon_type: Option<String>,
+    pub videos: Vec<VideoNode>,
+}
+
 /// User library feed (`Library.ts`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -26,6 +35,8 @@ pub struct LibraryFeed {
     pub watch_later_videos: Vec<VideoNode>,
     pub liked_videos: Vec<VideoNode>,
     pub playlists_count: usize,
+    /// Shelf-grouped sections (legacy `Library.sections`).
+    pub sections: Vec<LibrarySection>,
 }
 
 /// Account notification item (`Notification.ts`).

@@ -18,6 +18,10 @@ pub struct VideoDetails {
     pub is_private: Option<bool>,
     pub is_unplugged_corpus: Option<bool>,
     pub is_live_content: Option<bool>,
+    /// `isLive` — actively broadcasting (premieres excluded from
+    /// `is_live_content` still count as live content).
+    #[serde(default)]
+    pub is_live: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -255,13 +259,10 @@ impl VideoInfo {
         decipherer: &PlayerDecipherer,
         options: crate::utils::streaming_info::StreamingInfoOptions,
     ) -> crate::error::Result<String> {
-        if self
-            .player_response
-            .video_details
-            .as_ref()
-            .and_then(|v| v.is_live_content)
-            .unwrap_or(false)
-        {
+        let details = self.player_response.video_details.as_ref();
+        let is_live = details
+            .is_some_and(|v| v.is_live.unwrap_or(false) || v.is_live_content.unwrap_or(false));
+        if is_live {
             return Err(crate::error::InnertubeError::Other(
                 "Cannot generate DASH manifest for live content".to_string(),
             ));
@@ -444,6 +445,7 @@ mod tests {
                 is_private: Some(false),
                 is_unplugged_corpus: None,
                 is_live_content: Some(false),
+                is_live: None,
             }),
             streaming_data: Some(StreamingData {
                 expires_in_seconds: Some("21540".to_string()),

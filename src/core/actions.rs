@@ -649,7 +649,7 @@ fn decode_serialized_data(value: Option<&Value>) -> Result<Vec<u8>> {
 ///
 /// ponytail: legacy recurses unbounded; we cap at 5 redirects to guarantee
 /// termination. Raise the cap if YouTube ever chains deeper.
-async fn follow_navigate_redirect(session: &Session, mut data: Value) -> Result<Value> {
+pub(crate) async fn follow_navigate_redirect(session: &Session, mut data: Value) -> Result<Value> {
     for _ in 0..5 {
         let endpoint_value = data
             .pointer("/on_response_received_actions/0/navigateAction/endpoint")

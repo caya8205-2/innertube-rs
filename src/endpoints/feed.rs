@@ -145,7 +145,7 @@ pub fn parse_home_feed_response(raw: &Value) -> Result<HomeFeed> {
 
     let parsed_tree = Parser::parse_tree(raw);
     let videos = parsed_tree.find_videos().into_iter().cloned().collect();
-    let continuation_token = parsed_tree.find_continuation_token();
+    let continuation_token = Parser::parse_body_tree(raw).find_continuation_token();
 
     Ok(HomeFeed {
         filter_chips,
@@ -162,7 +162,8 @@ pub fn parse_browse_feed_response(browse_id: &str, raw: &Value) -> Result<Browse
         videos: tree.find_videos().into_iter().cloned().collect(),
         channels: tree.find_channels().into_iter().cloned().collect(),
         playlists: tree.find_playlists().into_iter().cloned().collect(),
-        continuation_token: tree.find_continuation_token(),
+        posts: tree.find_backstage_posts().into_iter().cloned().collect(),
+        continuation_token: Parser::parse_body_tree(raw).find_continuation_token(),
     })
 }
 
@@ -178,6 +179,10 @@ pub fn parse_trending_response(raw: &Value) -> Result<TrendingFeed> {
                 let params = tr.pointer("/endpoint/browseEndpoint/params")
                     .and_then(|p| p.as_str())
                     .map(|s| s.to_string());
+                let url = tr
+                    .pointer("/endpoint/commandMetadata/webCommandMetadata/url")
+                    .and_then(|u| u.as_str())
+                    .map(|s| s.to_string());
 
                 if is_selected && !title.is_empty() {
                     current_tab = title.clone();
@@ -188,6 +193,7 @@ pub fn parse_trending_response(raw: &Value) -> Result<TrendingFeed> {
                         title,
                         params,
                         is_selected,
+                        url,
                     });
                 }
             }
@@ -229,7 +235,7 @@ pub fn parse_hashtag_response(tag: &str, raw: &Value) -> Result<HashtagFeed> {
 
     let parsed_tree = Parser::parse_tree(raw);
     let videos = parsed_tree.find_videos().into_iter().cloned().collect();
-    let continuation_token = parsed_tree.find_continuation_token();
+    let continuation_token = Parser::parse_body_tree(raw).find_continuation_token();
 
     Ok(HashtagFeed {
         hashtag: tag.to_string(),

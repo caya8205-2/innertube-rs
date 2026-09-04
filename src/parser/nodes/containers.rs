@@ -183,6 +183,8 @@ pub struct ChipCloudChipNode {
     pub text: String,
     pub is_selected: bool,
     pub continuation_token: Option<String>,
+    /// Legacy `endpoint` (browseEndpoint with params or continuation).
+    pub endpoint: Option<crate::parser::nodes::misc::navigation::NavigationEndpointNode>,
 }
 
 impl ChipCloudChipNode {
@@ -204,10 +206,15 @@ impl ChipCloudChipNode {
             .and_then(Value::as_str)
             .map(ToString::to_string);
 
+        let endpoint = target
+            .get("navigationEndpoint")
+            .and_then(crate::parser::nodes::misc::navigation::NavigationEndpointNode::from_value);
+
         Some(Self {
             text,
             is_selected,
             continuation_token,
+            endpoint,
         })
     }
 }

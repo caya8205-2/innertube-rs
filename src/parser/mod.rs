@@ -31,6 +31,20 @@ impl Parser {
         YTNode::parse(val)
     }
 
+    /// Parse the response body only (excluding the top-level `header`),
+    /// mirroring legacy `Feed.#getBodyContinuations` header-memo exclusion.
+    pub fn parse_body_tree(val: &Value) -> Vec<YTNode> {
+        if let Value::Object(map) = val {
+            let body: serde_json::Map<String, Value> = map
+                .iter()
+                .filter(|(k, _)| k.as_str() != "header")
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect();
+            return Self::parse_tree_reporting(&Value::Object(body));
+        }
+        Self::parse_tree_reporting(val)
+    }
+
     fn traverse_recursive(val: &Value, results: &mut Vec<YTNode>) {
         if val.is_null() {
             return;
@@ -93,6 +107,8 @@ pub trait NodeListExt {
     fn find_music_items(&self) -> Vec<&MusicResponsiveListItemNode>;
     fn find_comments(&self) -> Vec<&CommentThreadNode>;
     fn find_posts(&self) -> Vec<&PostNode>;
+    /// Community posts (`BackstagePost`), legacy `Feed.posts`.
+    fn find_backstage_posts(&self) -> Vec<&crate::parser::nodes::misc::music_shorts_misc::BackstagePostNode>;
     fn find_continuation_token(&self) -> Option<String>;
     fn find_shelves(&self) -> Vec<&ShelfNode>;
     fn find_tabs(&self) -> Vec<&TabNode>;
@@ -168,6 +184,17 @@ impl NodeListExt for [YTNode] {
         self.iter()
             .filter_map(|n| match n {
                 YTNode::Post(p) => Some(p),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn find_backstage_posts(
+        &self,
+    ) -> Vec<&crate::parser::nodes::misc::music_shorts_misc::BackstagePostNode> {
+        self.iter()
+            .filter_map(|n| match n {
+                YTNode::BackstagePost(p) => Some(p),
                 _ => None,
             })
             .collect()

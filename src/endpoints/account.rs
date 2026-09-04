@@ -7,6 +7,7 @@ use crate::models::account::{
 };
 use crate::parser::nodes::misc::text::TextNode;
 use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
+use crate::parser::nodes::video::VideoNode;
 use crate::parser::{NodeListExt, Parser};
 
 /// Fetch authenticated user watch history (`FEhistory`).
@@ -35,6 +36,9 @@ pub async fn get_history(session: &Session, continuation_token: Option<&str>) ->
 }
 
 /// Fetch authenticated user library (`FElibrary`).
+///
+/// Videos are grouped by their shelf (legacy `Library` sections keyed by
+/// shelf icon type) instead of positional splits.
 pub async fn get_library(session: &Session) -> Result<LibraryFeed> {
     let payload = json!({
         "browseId": "FElibrary",
@@ -43,16 +47,73 @@ pub async fn get_library(session: &Session) -> Result<LibraryFeed> {
     let resp = session.post_innertube("/browse", payload).await?;
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
-    let parsed_tree = Parser::parse_tree(&raw);
-    let videos: Vec<_> = parsed_tree.find_videos().into_iter().cloned().collect();
-    let playlists = parsed_tree.find_playlists();
+    let sections = parse_library_sections(&raw);
+
+    let by_icon = |needle: &str| -> Vec<VideoNode> {
+        sections
+            .iter()
+            .find(|s| {
+                s.icon_type
+                    .as_deref()
+                    .is_some_and(|i| i.contains(needle))
+                    || s.title.contains(needle)
+            })
+            .map(|s| s.videos.clone())
+            .unwrap_or_default()
+    };
 
     Ok(LibraryFeed {
-        history_videos: videos.iter().take(8).cloned().collect(),
-        watch_later_videos: videos.iter().skip(8).take(8).cloned().collect(),
-        liked_videos: videos.iter().skip(16).cloned().collect(),
-        playlists_count: playlists.len(),
+        history_videos: by_icon("HISTORY"),
+        watch_later_videos: by_icon("WATCH_LATER"),
+        liked_videos: by_icon("LIKE"),
+        playlists_count: Parser::parse_tree(&raw).find_playlists().len(),
+        sections,
     })
+}
+
+/// Parse library shelves preserving grouping (legacy `Library.sections`).
+fn parse_library_sections(raw: &Value) -> Vec<crate::models::account::LibrarySection> {
+    let mut sections = Vec::new();
+
+    fn walk(v: &Value, out: &mut Vec<crate::models::account::LibrarySection>) {
+        if let Some(shelf) = v.get("shelfRenderer") {
+            let title = TextNode::from_value(shelf.get("title").unwrap_or(&Value::Null))
+                .map(|t| t.text)
+                .unwrap_or_default();
+            let icon_type = shelf
+                .pointer("/icon/iconType")
+                .and_then(Value::as_str)
+                .map(ToString::to_string);
+            let items = shelf
+                .pointer("/content/horizontalListRenderer/items")
+                .or_else(|| shelf.pointer("/content/verticalListRenderer/items"))
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+
+            let mut videos = Vec::new();
+            for item in &items {
+                if let Some(video) = crate::parser::nodes::video::VideoNode::from_value(item) {
+                    videos.push(video);
+                }
+            }
+
+            out.push(crate::models::account::LibrarySection {
+                title,
+                icon_type,
+                videos,
+            });
+            return;
+        }
+        match v {
+            Value::Object(map) => map.values().for_each(|x| walk(x, out)),
+            Value::Array(items) => items.iter().for_each(|x| walk(x, out)),
+            _ => {}
+        }
+    }
+
+    walk(raw, &mut sections);
+    sections
 }
 
 /// Fetch account notifications (`POST /notification/get_notification_menu`).
@@ -96,9 +157,13 @@ pub async fn get_notifications(session: &Session) -> Result<AccountNotifications
         }
     }
 
+    let continuation_token = raw
+        .pointer("/actions/0/openPopupAction/popup/multiPageMenuRenderer/sections/0/multiPageMenuNotificationSectionRenderer/items")
+        .and_then(|items| Parser::parse_tree(items).find_continuation_token());
+
     Ok(AccountNotificationsResponse {
         notifications,
-        continuation_token: None,
+        continuation_token,
     })
 }
 
