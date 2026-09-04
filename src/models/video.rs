@@ -143,6 +143,16 @@ impl VideoInfo {
     }
 }
 
+/// YouTube Kids video info (parallel `/player` + `/next` on the YTKIDS
+/// client, legacy `Kids.getInfo`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KidsVideoInfo {
+    pub player_response: PlayerResponse,
+    pub watch_next: Option<serde_json::Value>,
+    pub cpn: String,
+}
+
 /// High-level Shorts video metadata and reel sequence navigation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

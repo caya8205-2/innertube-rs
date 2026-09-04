@@ -52,4 +52,46 @@ impl<'a> MusicManager<'a> {
     pub async fn get_explore(&self) -> Result<MusicExplore> {
         get_music_explore(self.session).await
     }
+
+    /// Fetch a YouTube Music playlist (legacy `Music.getPlaylist`).
+    pub async fn get_playlist(
+        &self,
+        playlist_id: &str,
+    ) -> Result<crate::models::playlist::PlaylistView> {
+        crate::endpoints::music::get_music_playlist(self.session, playlist_id).await
+    }
+
+    /// Fetch the YouTube Music library landing page (legacy `Music.getLibrary`).
+    pub async fn get_library(&self) -> Result<Vec<crate::parser::YTNode>> {
+        crate::endpoints::music::get_music_library(self.session).await
+    }
+
+    /// Fetch the listening-review recap (legacy `Music.getRecap`).
+    pub async fn get_recap(&self) -> Result<Vec<crate::parser::YTNode>> {
+        crate::endpoints::music::get_music_recap(self.session).await
+    }
+
+    /// Fetch the watch-next queue panel, following automix (legacy
+    /// `Music.getUpNext`).
+    pub async fn get_up_next(
+        &self,
+        video_id: &str,
+        automix: bool,
+    ) -> Result<crate::parser::nodes::playlist::PlaylistPanelNode> {
+        crate::endpoints::music::get_music_up_next(self.session, video_id, automix).await
+    }
+
+    /// Fetch related tracks (legacy `Music.getRelated`).
+    pub async fn get_related(&self, video_id: &str) -> Result<Vec<crate::parser::YTNode>> {
+        crate::endpoints::music::get_music_related(self.session, video_id).await
+    }
+
+    /// Fetch YouTube Music search suggestions (legacy
+    /// `Music.getSearchSuggestions`).
+    pub async fn get_search_suggestions(
+        &self,
+        input: &str,
+    ) -> Result<crate::models::suggestions::SearchSuggestionsResult> {
+        crate::endpoints::suggestions::get_search_suggestions(self.session, input, true).await
+    }
 }

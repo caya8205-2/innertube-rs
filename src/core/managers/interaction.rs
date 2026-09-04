@@ -52,6 +52,18 @@ impl<'a> InteractionManager<'a> {
         Actions::set_notification_preferences(self.session, channel_id, pref_type).await
     }
 
+    /// Translate text via YouTube's comment translation feature (legacy
+    /// `InteractionManager.translate`).
+    pub async fn translate(
+        &self,
+        text: &str,
+        target_language: &str,
+        video_id: Option<&str>,
+        comment_id: Option<&str>,
+    ) -> Result<crate::models::actions::TranslateResult> {
+        Actions::translate(self.session, text, target_language, video_id, comment_id).await
+    }
+
     /// Dispatch raw API call matching `Actions.execute`.
     pub async fn execute(&self, endpoint: &str, payload: serde_json::Value) -> Result<crate::core::actions::ApiResponse> {
         Actions::execute(self.session, endpoint, payload).await

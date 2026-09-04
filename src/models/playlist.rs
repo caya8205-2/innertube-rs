@@ -22,6 +22,8 @@ pub struct PlaylistVideoItem {
     pub index: Option<u32>,
     /// Whether the video is playable (not private or deleted).
     pub is_playable: bool,
+    /// Set-video ID used by playlist edit mutations (`setVideoId`).
+    pub set_video_id: Option<String>,
 }
 
 /// Full YouTube playlist details view.
@@ -50,6 +52,9 @@ pub struct PlaylistView {
     pub videos: Vec<PlaylistVideoItem>,
     /// Pagination token for fetching next page of videos.
     pub continuation_token: Option<String>,
+    /// Whether the signed-in user can edit this playlist
+    /// (`playlistVideoListRenderer.isEditable`).
+    pub is_editable: bool,
 }
 
 impl PlaylistView {

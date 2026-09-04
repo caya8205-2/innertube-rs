@@ -429,8 +429,10 @@ fn test_api_contract_15_playlist_and_continuation_contract() {
             thumbnail: None,
             index: Some(1),
             is_playable: true,
+            set_video_id: Some("set_vid_1".to_string()),
         }],
         continuation_token: Some("token_playlist_next".to_string()),
+        is_editable: true,
     };
 
     assert!(playlist.has_continuation());

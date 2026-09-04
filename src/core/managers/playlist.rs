@@ -1,7 +1,7 @@
 use crate::core::actions::Actions;
 use crate::core::session::Session;
 use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
-use crate::error::Result;
+use crate::error::{InnertubeError, Result};
 use crate::models::actions::{ActionResult, CreatePlaylistResult};
 use crate::models::playlist::{PlaylistContinuation, PlaylistView};
 
@@ -40,9 +40,133 @@ impl<'a> PlaylistManager<'a> {
         Actions::add_to_playlist(self.session, playlist_id, video_ids).await
     }
 
-    /// Remove videos from a playlist.
+    /// Remove videos from a playlist by their set video IDs.
     pub async fn remove_videos(&self, playlist_id: &str, set_video_ids: &[&str]) -> Result<ActionResult> {
         Actions::remove_from_playlist(self.session, playlist_id, set_video_ids).await
+    }
+
+    /// Remove videos from a playlist by video IDs, resolving each
+    /// `setVideoId` by paginating the playlist (legacy
+    /// `PlaylistManager.removeVideos`). With `use_set_video_ids`, the given
+    /// IDs are matched against set video IDs directly.
+    pub async fn remove_videos_by_id(
+        &self,
+        playlist_id: &str,
+        video_ids: &[&str],
+        use_set_video_ids: bool,
+    ) -> Result<ActionResult> {
+        self.session.ensure_authenticated()?;
+
+        let playlist = self.get(playlist_id).await?;
+        if !playlist.is_editable {
+            return Err(InnertubeError::Other(format!(
+                "This playlist cannot be edited. ({playlist_id})"
+            )));
+        }
+
+        let mut set_ids: Vec<String> = Vec::new();
+        let mut page_videos = playlist.videos.clone();
+        let mut continuation = playlist.continuation_token.clone();
+
+        loop {
+            for video in &page_videos {
+                let key_matches = if use_set_video_ids {
+                    video.set_video_id.as_deref()
+                } else {
+                    Some(video.id.as_str())
+                };
+                if key_matches.is_some_and(|k| video_ids.contains(&k)) {
+                    if let Some(ref set_id) = video.set_video_id {
+                        if !set_ids.contains(set_id) {
+                            set_ids.push(set_id.clone());
+                        }
+                    }
+                }
+            }
+
+            if set_ids.len() >= video_ids.len() {
+                break;
+            }
+
+            match continuation.take() {
+                Some(token) => {
+                    let page = self.get_continuation(&token).await?;
+                    page_videos = page.videos;
+                    continuation = page.continuation_token;
+                }
+                None => break,
+            }
+        }
+
+        if set_ids.is_empty() {
+            return Err(InnertubeError::Other(format!(
+                "Given video ids were not found in this playlist. ({video_ids:?})"
+            )));
+        }
+
+        let set_id_refs: Vec<&str> = set_ids.iter().map(String::as_str).collect();
+        Actions::remove_from_playlist(self.session, playlist_id, &set_id_refs).await
+    }
+
+    /// Move a video within a playlist by video IDs, resolving both
+    /// `setVideoId`s by paginating the playlist (legacy
+    /// `PlaylistManager.moveVideo`).
+    pub async fn move_video_by_id(
+        &self,
+        playlist_id: &str,
+        moved_video_id: &str,
+        predecessor_video_id: &str,
+    ) -> Result<ActionResult> {
+        self.session.ensure_authenticated()?;
+
+        let playlist = self.get(playlist_id).await?;
+        if !playlist.is_editable {
+            return Err(InnertubeError::Other(format!(
+                "This playlist cannot be edited. ({playlist_id})"
+            )));
+        }
+
+        let mut moved_set_id: Option<String> = None;
+        let mut predecessor_set_id: Option<String> = None;
+        let mut page_videos = playlist.videos.clone();
+        let mut continuation = playlist.continuation_token.clone();
+
+        loop {
+            for video in &page_videos {
+                if video.id == moved_video_id && moved_set_id.is_none() {
+                    moved_set_id = video.set_video_id.clone();
+                }
+                if video.id == predecessor_video_id && predecessor_set_id.is_none() {
+                    predecessor_set_id = video.set_video_id.clone();
+                }
+            }
+
+            if moved_set_id.is_some() && predecessor_set_id.is_some() {
+                break;
+            }
+
+            match continuation.take() {
+                Some(token) => {
+                    let page = self.get_continuation(&token).await?;
+                    page_videos = page.videos;
+                    continuation = page.continuation_token;
+                }
+                None => break,
+            }
+        }
+
+        let moved = moved_set_id.ok_or_else(|| {
+            InnertubeError::Other(format!(
+                "Video {moved_video_id} was not found in this playlist."
+            ))
+        })?;
+        let predecessor = predecessor_set_id.ok_or_else(|| {
+            InnertubeError::Other(format!(
+                "Video {predecessor_video_id} was not found in this playlist."
+            ))
+        })?;
+
+        Actions::move_playlist_video(self.session, playlist_id, &moved, &predecessor).await
     }
 
     /// Move a video within a playlist.

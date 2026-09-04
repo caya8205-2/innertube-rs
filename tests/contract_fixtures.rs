@@ -493,6 +493,7 @@ fn test_fixture_feed_mixin_continuations() {
         thumbnail: None,
         videos: vec![],
         continuation_token: Some("token_playlist".to_string()),
+        is_editable: false,
     };
     assert!(playlist_view.has_continuation());
 

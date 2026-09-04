@@ -32,6 +32,8 @@ pub struct PlaylistVideoNode {
     pub thumbnails: ThumbnailListNode,
     pub index: Option<u32>,
     pub is_playable: bool,
+    /// Set-video ID used by playlist edit mutations (`setVideoId`).
+    pub set_video_id: Option<String>,
 }
 
 impl PlaylistNode {
@@ -170,6 +172,7 @@ impl PlaylistVideoNode {
                 thumbnails,
                 index: None,
                 is_playable: true,
+                set_video_id: None,
             });
         }
 
@@ -206,6 +209,11 @@ impl PlaylistVideoNode {
 
         let is_playable = target.get("isPlayable").and_then(|p| p.as_bool()).unwrap_or(true);
 
+        let set_video_id = target
+            .get("setVideoId")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
         Some(Self {
             id,
             title,
@@ -215,6 +223,7 @@ impl PlaylistVideoNode {
             thumbnails,
             index,
             is_playable,
+            set_video_id,
         })
     }
 }

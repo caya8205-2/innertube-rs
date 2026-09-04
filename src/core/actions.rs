@@ -9,12 +9,12 @@ use crate::utils::proto::encode_create_comment_params;
 pub struct Actions;
 
 impl Actions {
-    /// Like a YouTube video (`POST /like/like`).
+    /// Like a YouTube video (`POST /like/like`, TV client per legacy).
     pub async fn like(session: &Session, video_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
         let payload = rating_payload(video_id);
 
-        let resp = session.post_innertube("/like/like", payload).await?;
+        let resp = session.post_innertube_client("TV", "/like/like", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
         let success = raw.get("error").is_none();
@@ -25,12 +25,12 @@ impl Actions {
         })
     }
 
-    /// Dislike a YouTube video (`POST /like/dislike`).
+    /// Dislike a YouTube video (`POST /like/dislike`, TV client per legacy).
     pub async fn dislike(session: &Session, video_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
         let payload = rating_payload(video_id);
 
-        let resp = session.post_innertube("/like/dislike", payload).await?;
+        let resp = session.post_innertube_client("TV", "/like/dislike", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
         let success = raw.get("error").is_none();
@@ -41,12 +41,12 @@ impl Actions {
         })
     }
 
-    /// Remove like or dislike rating from a video (`POST /like/removelike`).
+    /// Remove like or dislike rating from a video (`POST /like/removelike`, TV client per legacy).
     pub async fn remove_rating(session: &Session, video_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
         let payload = rating_payload(video_id);
 
-        let resp = session.post_innertube("/like/removelike", payload).await?;
+        let resp = session.post_innertube_client("TV", "/like/removelike", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
         let success = raw.get("error").is_none();
@@ -60,9 +60,7 @@ impl Actions {
     /// Subscribe to one or more YouTube channels (`POST /subscription/subscribe`).
     pub async fn subscribe(session: &Session, channel_ids: &[&str]) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "channelIds": channel_ids
-        });
+        let payload = subscription_payload(channel_ids, true);
 
         let resp = session
             .post_innertube("/subscription/subscribe", payload)
@@ -80,9 +78,7 @@ impl Actions {
     /// Unsubscribe from one or more YouTube channels (`POST /subscription/unsubscribe`).
     pub async fn unsubscribe(session: &Session, channel_ids: &[&str]) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "channelIds": channel_ids
-        });
+        let payload = subscription_payload(channel_ids, false);
 
         let resp = session
             .post_innertube("/subscription/unsubscribe", payload)
@@ -132,9 +128,8 @@ impl Actions {
     /// Delete a YouTube playlist (`POST /playlist/delete`).
     pub async fn delete_playlist(session: &Session, playlist_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "playlistId": playlist_id
-        });
+        // Legacy deletePlaylistServiceEndpoint uses `sourcePlaylistId`.
+        let payload = delete_playlist_payload(playlist_id);
 
         let resp = session.post_innertube("/playlist/delete", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
@@ -245,13 +240,7 @@ impl Actions {
         name: &str,
     ) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = json!({
-            "playlistId": playlist_id,
-            "actions": [{
-                "action": "ACTION_SET_PLAYLIST_NAME",
-                "playlistName": name
-            }]
-        });
+        let payload = set_playlist_name_payload(playlist_id, name);
 
         let resp = session
             .post_innertube("/browse/edit_playlist", payload)
@@ -359,6 +348,45 @@ impl Actions {
             success,
             status: Some("REMOVED_FROM_LIBRARY".to_string()),
             action_id: None,
+        })
+    }
+
+    /// Translate text using YouTube's comment translation feature
+    /// (`POST /comment/perform_comment_action`, action type 22).
+    pub async fn translate(
+        session: &Session,
+        text: &str,
+        target_language: &str,
+        video_id: Option<&str>,
+        comment_id: Option<&str>,
+    ) -> Result<crate::models::actions::TranslateResult> {
+        let action = crate::utils::proto::encode_comment_action_params(
+            22,
+            &crate::utils::proto::CommentActionParamsArgs {
+                comment_id: comment_id.map(ToString::to_string),
+                video_id: video_id.map(ToString::to_string),
+                text: Some(text.to_string()),
+                target_language: Some(target_language.to_string()),
+            },
+        )?;
+
+        let payload = json!({ "action": action });
+        let resp = session
+            .post_innertube("/comment/perform_comment_action", payload)
+            .await?;
+        let status_code = resp.status().as_u16();
+        let data: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        let translated_content = data
+            .pointer("/frameworkUpdates/entityBatchUpdate/mutations/0/payload/commentEntityPayload/translatedContent/content")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        Ok(crate::models::actions::TranslateResult {
+            success: resp_success(&data, status_code),
+            status_code,
+            translated_content,
+            data,
         })
     }
 
@@ -623,6 +651,10 @@ pub struct ApiResponse {
     pub data: Value,
 }
 
+fn resp_success(data: &Value, status_code: u16) -> bool {
+    (200..300).contains(&status_code) && data.get("error").is_none()
+}
+
 fn remove_playlist_actions(set_video_ids: &[&str]) -> Vec<Value> {
     set_video_ids
         .iter()
@@ -637,6 +669,31 @@ fn remove_playlist_actions(set_video_ids: &[&str]) -> Vec<Value> {
 
 fn rating_payload(video_id: &str) -> Value {
     json!({ "target": video_id })
+}
+
+/// Legacy subscribe/unsubscribe params (`EgIIAhgA` / `CgIIAhgA`).
+fn subscription_payload(channel_ids: &[&str], subscribe: bool) -> Value {
+    json!({
+        "channelIds": channel_ids,
+        "params": if subscribe { "EgIIAhgA" } else { "CgIIAhgA" }
+    })
+}
+
+/// Legacy `deletePlaylistServiceEndpoint` payload (`sourcePlaylistId`).
+fn delete_playlist_payload(playlist_id: &str) -> Value {
+    json!({ "sourcePlaylistId": playlist_id })
+}
+
+/// Legacy quirk: setName uses the snake_case `playlist_id` key (unlike
+/// setDescription which uses `playlistId`).
+fn set_playlist_name_payload(playlist_id: &str, name: &str) -> Value {
+    json!({
+        "playlist_id": playlist_id,
+        "actions": [{
+            "action": "ACTION_SET_PLAYLIST_NAME",
+            "playlistName": name
+        }]
+    })
 }
 
 #[cfg(test)]
@@ -657,6 +714,32 @@ mod tests {
     #[test]
     fn rating_target_matches_legacy_like_endpoint_request() {
         assert_eq!(rating_payload("dQw4w9WgXcQ"), json!({ "target": "dQw4w9WgXcQ" }));
+    }
+
+    #[test]
+    fn subscription_payloads_carry_legacy_params() {
+        let sub = subscription_payload(&["UC_test"], true);
+        assert_eq!(sub["channelIds"], json!(["UC_test"]));
+        assert_eq!(sub["params"], json!("EgIIAhgA"));
+
+        let unsub = subscription_payload(&["UC_test"], false);
+        assert_eq!(unsub["params"], json!("CgIIAhgA"));
+    }
+
+    #[test]
+    fn delete_playlist_uses_source_playlist_id() {
+        let payload = delete_playlist_payload("PL_test");
+        assert_eq!(payload, json!({ "sourcePlaylistId": "PL_test" }));
+        assert!(payload.get("playlistId").is_none());
+    }
+
+    #[test]
+    fn set_playlist_name_uses_legacy_snake_case_quirk() {
+        let payload = set_playlist_name_payload("PL_test", "New Title");
+        assert_eq!(payload["playlist_id"], json!("PL_test"));
+        assert!(payload.get("playlistId").is_none());
+        assert_eq!(payload["actions"][0]["action"], json!("ACTION_SET_PLAYLIST_NAME"));
+        assert_eq!(payload["actions"][0]["playlistName"], json!("New Title"));
     }
 
     #[test]

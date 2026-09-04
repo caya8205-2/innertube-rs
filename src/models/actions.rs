@@ -25,6 +25,16 @@ pub struct CreateCommentResult {
     pub comment_id: Option<String>,
 }
 
+/// Result of a comment-translation action (legacy `InteractionManager.translate`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TranslateResult {
+    pub success: bool,
+    pub status_code: u16,
+    pub translated_content: Option<String>,
+    pub data: serde_json::Value,
+}
+
 /// Channel notification preference option.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

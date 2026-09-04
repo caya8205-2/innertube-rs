@@ -106,6 +106,180 @@ pub async fn get_music_explore(session: &Session) -> Result<MusicExplore> {
     parse_music_explore_response(&raw)
 }
 
+/// Fetch a YouTube Music playlist (`VL`-normalized, YTMUSIC client), reusing
+/// the standard playlist parser.
+pub async fn get_music_playlist(
+    session: &Session,
+    playlist_id: &str,
+) -> Result<crate::models::playlist::PlaylistView> {
+    let clean_id = if playlist_id.starts_with("VL") {
+        playlist_id.to_string()
+    } else {
+        format!("VL{playlist_id}")
+    };
+
+    let resp = session
+        .post_innertube_client("YTMUSIC", "/browse", json!({ "browseId": clean_id }))
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    crate::endpoints::playlist::parse_playlist_browse_response(&clean_id, &raw)
+}
+
+/// Fetch the YouTube Music library landing page (`FEmusic_library_landing`).
+///
+/// ponytail: legacy returns a typed `ytmusic.Library` wrapper; we return the
+/// parsed node tree until typed page wrappers land.
+pub async fn get_music_library(session: &Session) -> Result<Vec<YTNode>> {
+    let resp = session
+        .post_innertube_client(
+            "YTMUSIC",
+            "/browse",
+            json!({ "browseId": "FEmusic_library_landing" }),
+        )
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    Ok(Parser::parse_tree(&raw))
+}
+
+/// Fetch the YouTube Music recap / listening review (`FEmusic_listening_review`).
+/// Requires authentication (login-gated browseId).
+pub async fn get_music_recap(session: &Session) -> Result<Vec<YTNode>> {
+    let resp = session
+        .post_innertube_client(
+            "YTMUSIC",
+            "/browse",
+            json!({ "browseId": "FEmusic_listening_review" }),
+        )
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    Ok(Parser::parse_tree(&raw))
+}
+
+/// Fetch the watch-next queue panel for a track, following the automix
+/// endpoint when the panel has no playlist id (legacy `Music.getUpNext`).
+pub async fn get_music_up_next(
+    session: &Session,
+    video_id: &str,
+    automix: bool,
+) -> Result<crate::parser::nodes::playlist::PlaylistPanelNode> {
+    let resp = session
+        .post_innertube_client("YTMUSIC", "/next", json!({ "videoId": video_id }))
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    let panel_value = find_playlist_panel(&raw).ok_or_else(|| {
+        InnertubeError::Other(format!(
+            "Music queue was empty, the given id is probably invalid. ({video_id})"
+        ))
+    })?;
+
+    let panel = crate::parser::nodes::playlist::PlaylistPanelNode::from_value(panel_value)
+        .ok_or_else(|| InnertubeError::Other("Could not find target tab.".to_string()))?;
+
+    if panel.playlist_id.is_some() || !automix {
+        return Ok(panel);
+    }
+
+    // Automix: follow the automix preview video's playlist endpoint.
+    let automix_endpoint = find_automix_endpoint(&raw).ok_or_else(|| {
+        InnertubeError::Other("Automix item not found".to_string())
+    })?;
+
+    let node = crate::parser::nodes::misc::navigation::NavigationEndpointNode::from_value(
+        automix_endpoint,
+    )
+    .ok_or_else(|| InnertubeError::Format("Automix endpoint is not navigable".to_string()))?;
+    let path = node.api_path.clone().ok_or_else(|| {
+        InnertubeError::NotFound("Automix endpoint has no InnerTube API path".to_string())
+    })?;
+
+    let mut payload = node.payload.clone();
+    if let Some(obj) = payload.as_object_mut() {
+        obj.insert("videoId".to_string(), json!(video_id));
+    }
+
+    let resp = session.post_innertube_client("YTMUSIC", &path, payload).await?;
+    let page: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+    let panel_value = find_playlist_panel(&page).ok_or_else(|| {
+        InnertubeError::Other("Could not fetch automix".to_string())
+    })?;
+
+    crate::parser::nodes::playlist::PlaylistPanelNode::from_value(panel_value)
+        .ok_or_else(|| InnertubeError::Other("Could not fetch automix".to_string()))
+}
+
+/// Fetch the "related tracks" tab of a track (legacy `Music.getRelated`).
+pub async fn get_music_related(session: &Session, video_id: &str) -> Result<Vec<YTNode>> {
+    let browse_id =
+        find_music_tab_browse_id(&raw_next(session, video_id).await?, "MUSIC_PAGE_TYPE_TRACK_RELATED")
+            .ok_or_else(|| InnertubeError::Other("Could not find target tab.".to_string()))?;
+
+    let resp = session
+        .post_innertube_client("YTMUSIC", "/browse", json!({ "browseId": browse_id }))
+        .await?;
+    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+    Ok(Parser::parse_tree(&raw))
+}
+
+async fn raw_next(session: &Session, video_id: &str) -> Result<Value> {
+    let resp = session
+        .post_innertube_client("YTMUSIC", "/next", json!({ "videoId": video_id }))
+        .await?;
+    resp.json().await.map_err(InnertubeError::Network)
+}
+
+/// Find a watch-next tab's browse id by its music page type.
+fn find_music_tab_browse_id(raw: &Value, page_type: &str) -> Option<String> {
+    fn walk(v: &Value, page_type: &str) -> Option<String> {
+        if v.get("tabRenderer").is_some() {
+            let tr = &v["tabRenderer"];
+            let pt = tr
+                .pointer("/endpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
+                .and_then(Value::as_str);
+            if pt == Some(page_type) {
+                return tr
+                    .pointer("/endpoint/browseEndpoint/browseId")
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string);
+            }
+        }
+        match v {
+            Value::Object(map) => map.values().find_map(|x| walk(x, page_type)),
+            Value::Array(items) => items.iter().find_map(|x| walk(x, page_type)),
+            _ => None,
+        }
+    }
+    walk(raw, page_type)
+}
+
+/// Locate a `playlistPanelRenderer` anywhere in the response.
+fn find_playlist_panel(raw: &Value) -> Option<&Value> {
+    if raw.get("playlistPanelRenderer").is_some() {
+        return Some(raw);
+    }
+    match raw {
+        Value::Object(map) => map.values().find_map(find_playlist_panel),
+        Value::Array(items) => items.iter().find_map(find_playlist_panel),
+        _ => None,
+    }
+}
+
+/// Locate the automix preview video's playlist endpoint.
+fn find_automix_endpoint(raw: &Value) -> Option<&Value> {
+    if let Some(ap) = raw.get("automixPreviewVideoRenderer") {
+        return ap
+            .pointer("/playlistVideo/endpoint")
+            .or_else(|| ap.pointer("/content/playlistVideo/endpoint"));
+    }
+    match raw {
+        Value::Object(map) => map.values().find_map(find_automix_endpoint),
+        Value::Array(items) => items.iter().find_map(find_automix_endpoint),
+        _ => None,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Response Parsers
 // ---------------------------------------------------------------------------

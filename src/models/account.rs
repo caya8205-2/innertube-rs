@@ -1,4 +1,13 @@
 use serde::{Deserialize, Serialize};
+
+/// A channel belonging to the signed-in account (legacy `AccountItem`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountChannelItem {
+    pub account_name: String,
+    pub account_photo: Option<String>,
+    pub is_selected: bool,
+}
 use crate::parser::nodes::video::VideoNode;
 
 /// User watch history feed (`History.ts`).

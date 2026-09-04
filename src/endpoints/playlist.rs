@@ -57,6 +57,7 @@ pub fn parse_playlist_browse_response(playlist_id: &str, raw: &Value) -> Result<
         thumbnail: header_node.as_ref().and_then(|h| h.thumbnails.best_url().map(|s| s.to_string())),
         videos: Vec::new(),
         continuation_token: parsed_tree.find_continuation_token(),
+        is_editable: find_playlist_video_list_editable(raw),
     };
 
     for node in &parsed_tree {
@@ -72,6 +73,7 @@ pub fn parse_playlist_browse_response(playlist_id: &str, raw: &Value) -> Result<
                     thumbnail: pv.thumbnails.best_url().map(|s| s.to_string()),
                     index: pv.index,
                     is_playable: pv.is_playable,
+                    set_video_id: pv.set_video_id.clone(),
                 });
             }
             YTNode::Video(v) => {
@@ -85,6 +87,7 @@ pub fn parse_playlist_browse_response(playlist_id: &str, raw: &Value) -> Result<
                     thumbnail: v.thumbnails.best_url().map(|s| s.to_string()),
                     index: None,
                     is_playable: true,
+                    set_video_id: None,
                 });
             }
             _ => {}
@@ -92,6 +95,20 @@ pub fn parse_playlist_browse_response(playlist_id: &str, raw: &Value) -> Result<
     }
 
     Ok(view)
+}
+
+/// Recursively locate `playlistVideoListRenderer.isEditable`.
+fn find_playlist_video_list_editable(raw: &Value) -> bool {
+    if let Some(list) = raw.get("playlistVideoListRenderer") {
+        if let Some(editable) = list.get("isEditable").and_then(Value::as_bool) {
+            return editable;
+        }
+    }
+    match raw {
+        Value::Object(map) => map.values().any(find_playlist_video_list_editable),
+        Value::Array(items) => items.iter().any(find_playlist_video_list_editable),
+        _ => false,
+    }
 }
 
 /// Parse continuation response into `PlaylistContinuation` using modular AST nodes.
@@ -112,6 +129,7 @@ pub fn parse_playlist_continuation_response(raw: &Value) -> Result<PlaylistConti
                     thumbnail: pv.thumbnails.best_url().map(|s| s.to_string()),
                     index: pv.index,
                     is_playable: pv.is_playable,
+                    set_video_id: pv.set_video_id.clone(),
                 });
             }
             YTNode::Video(v) => {
@@ -125,6 +143,7 @@ pub fn parse_playlist_continuation_response(raw: &Value) -> Result<PlaylistConti
                     thumbnail: v.thumbnails.best_url().map(|s| s.to_string()),
                     index: None,
                     is_playable: true,
+                    set_video_id: None,
                 });
             }
             _ => {}
@@ -159,10 +178,12 @@ mod tests {
                                         "itemSectionRenderer": {
                                             "contents": [{
                                                 "playlistVideoListRenderer": {
+                                                    "isEditable": true,
                                                     "contents": [
                                                         {
                                                             "playlistVideoRenderer": {
                                                                 "videoId": "vid123",
+                                                                "setVideoId": "set_vid123",
                                                                 "title": { "runs": [{ "text": "Track 1" }] },
                                                                 "shortBylineText": { "runs": [{ "text": "Artist 1" }] },
                                                                 "lengthText": { "simpleText": "3:45" },
@@ -200,6 +221,8 @@ mod tests {
         assert_eq!(pl.videos[0].title, "Track 1");
         assert_eq!(pl.videos[0].duration.as_deref(), Some("3:45"));
         assert_eq!(pl.videos[0].duration_ms, Some(225_000));
+        assert_eq!(pl.videos[0].set_video_id.as_deref(), Some("set_vid123"));
+        assert!(pl.is_editable);
         assert_eq!(pl.continuation_token.as_deref(), Some("token_next_page_123"));
     }
 }
