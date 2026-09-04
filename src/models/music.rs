@@ -142,10 +142,18 @@ pub struct MusicExplore {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicArtistPage {
+    /// Canonical browse ID used to fetch the artist page.
     pub id: String,
+    /// Subscription channel ID returned by the artist header, when present.
+    pub channel_id: Option<String>,
     pub name: String,
     pub description: Option<String>,
+    pub views: Option<String>,
     pub subscribers: Option<String>,
+    pub monthly_listeners: Option<String>,
+    pub subscribed: bool,
+    pub shuffle_id: Option<String>,
+    pub radio_id: Option<String>,
     pub thumbnail: Option<String>,
     pub top_songs: Vec<MusicTrackItem>,
     pub albums: Vec<MusicAlbumItem>,
