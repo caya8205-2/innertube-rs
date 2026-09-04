@@ -20,6 +20,7 @@ pub struct MusicResponsiveListItemNode {
     pub endpoint: Option<NavigationEndpointNode>,
     pub item_type: Option<String>,
     pub is_explicit: bool,
+    pub like_status: Option<String>,
 }
 
 /// Represents a YouTube Music two-row grid card (`MusicTwoRowItem.ts`).
@@ -104,6 +105,20 @@ impl MusicResponsiveListItemNode {
         let is_explicit = target.pointer("/badges/0/musicInlineBadgeRenderer/icon/iconType")
             .and_then(|i| i.as_str()) == Some("MUSIC_EXPLICIT_BADGE");
 
+        let like_status = target
+            .pointer("/menu/menuRenderer/topLevelButtons")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .find_map(|button| {
+                button
+                    .get("likeButtonRenderer")
+                    .or_else(|| button.get("musicLikeButtonRenderer"))
+                    .and_then(|renderer| renderer.get("likeStatus"))
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string)
+            });
+
         Some(Self {
             id,
             title,
@@ -116,6 +131,7 @@ impl MusicResponsiveListItemNode {
             endpoint,
             item_type,
             is_explicit,
+            like_status,
         })
     }
 }

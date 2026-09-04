@@ -43,6 +43,26 @@ pub struct MusicAlbumRef {
     pub browse_id: Option<String>,
 }
 
+/// Rating state for a YouTube Music track.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MusicLikeStatus {
+    Like,
+    Dislike,
+    #[default]
+    Indifferent,
+}
+
+impl MusicLikeStatus {
+    pub(crate) fn from_api_status(status: Option<&str>) -> Self {
+        match status {
+            Some("LIKE") => Self::Like,
+            Some("DISLIKE") => Self::Dislike,
+            _ => Self::Indifferent,
+        }
+    }
+}
+
 /// A track item in YouTube Music (song or music video).
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -55,6 +75,7 @@ pub struct MusicTrackItem {
     pub duration_ms: Option<u64>,
     pub thumbnail: Option<String>,
     pub is_explicit: bool,
+    pub like_status: MusicLikeStatus,
 }
 
 /// An album card item in YouTube Music search / explore.
