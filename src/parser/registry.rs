@@ -104,6 +104,16 @@ pub enum YTNodeVariant {
     ContentPreviewImageView,
     ContinuationItem,
     ContinuationItemView,
+    // Continuation wrappers (legacy parser/continuations.ts, not in
+    // parser/classes so not part of REGISTRY_574).
+    SectionListContinuation,
+    ItemSectionContinuation,
+    GridContinuation,
+    MusicShelfContinuation,
+    MusicPlaylistShelfContinuation,
+    PlaylistPanelContinuation,
+    ReloadContinuationItemsCommand,
+    LiveChatContinuation,
     ConversationBar,
     CopyLink,
     CreatePlaylistDialog,

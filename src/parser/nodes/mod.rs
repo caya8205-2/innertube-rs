@@ -31,7 +31,12 @@ pub use containers::{
     ChipCloudChipNode, ChipCloudNode, FeedFilterChipBarNode, ItemSectionNode, RichGridNode,
     RichShelfNode, SectionListNode, ShelfNode, TabNode,
 };
-pub use continuation::ContinuationNode;
+    pub use continuation::{
+        ContinuationNode, GridContinuationNode, ItemSectionContinuationNode,
+        LiveChatContinuationNode, MusicPlaylistShelfContinuationNode, MusicShelfContinuationNode,
+        PlaylistPanelContinuationNode, ReloadContinuationItemsCommandNode,
+        SectionListContinuationNode,
+    };
 pub use grid::{
     CompactChannelNode, CompactMixNode, CompactPlaylistNode, CompactVideoNode, GridChannelNode,
     GridMixNode, GridMovieNode, GridPlaylistNode, GridShowNode, GridVideoNode, RichItemNode,
@@ -324,6 +329,14 @@ pub enum YTNode {
     BackstageImage(BackstageImageNode),
     PostMultiImage(PostMultiImageNode),
     Continuation(ContinuationNode),
+    SectionListContinuation(SectionListContinuationNode),
+    ItemSectionContinuation(ItemSectionContinuationNode),
+    GridContinuation(GridContinuationNode),
+    MusicShelfContinuation(MusicShelfContinuationNode),
+    MusicPlaylistShelfContinuation(MusicPlaylistShelfContinuationNode),
+    PlaylistPanelContinuation(PlaylistPanelContinuationNode),
+    ReloadContinuationItemsCommand(ReloadContinuationItemsCommandNode),
+    LiveChatContinuation(LiveChatContinuationNode),
     SectionList(SectionListNode),
     ItemSection(ItemSectionNode),
     RichGrid(RichGridNode),
@@ -952,6 +965,14 @@ impl YTNode {
             YTNode::BackstageImage(_) => YTNodeVariant::BackstageImage,
             YTNode::PostMultiImage(_) => YTNodeVariant::PostMultiImage,
             YTNode::Continuation(_) => YTNodeVariant::ContinuationItem,
+            YTNode::SectionListContinuation(_) => YTNodeVariant::SectionListContinuation,
+            YTNode::ItemSectionContinuation(_) => YTNodeVariant::ItemSectionContinuation,
+            YTNode::GridContinuation(_) => YTNodeVariant::GridContinuation,
+            YTNode::MusicShelfContinuation(_) => YTNodeVariant::MusicShelfContinuation,
+            YTNode::MusicPlaylistShelfContinuation(_) => YTNodeVariant::MusicPlaylistShelfContinuation,
+            YTNode::PlaylistPanelContinuation(_) => YTNodeVariant::PlaylistPanelContinuation,
+            YTNode::ReloadContinuationItemsCommand(_) => YTNodeVariant::ReloadContinuationItemsCommand,
+            YTNode::LiveChatContinuation(_) => YTNodeVariant::LiveChatContinuation,
             YTNode::SectionList(_) => YTNodeVariant::SectionList,
             YTNode::ItemSection(_) => YTNodeVariant::ItemSection,
             YTNode::RichGrid(_) => YTNodeVariant::RichGrid,
@@ -1522,6 +1543,48 @@ impl YTNode {
         {
             if let Some(c) = ContinuationNode::from_value(val) {
                 return Some(YTNode::Continuation(c));
+            }
+        }
+
+        // 1b. Continuation wrappers (legacy parser/continuations.ts)
+        if val.get("reloadContinuationItemsCommand").is_some() {
+            if let Some(n) = ReloadContinuationItemsCommandNode::from_value(val) {
+                return Some(YTNode::ReloadContinuationItemsCommand(n));
+            }
+        }
+        if val.get("playlistPanelContinuation").is_some() {
+            if let Some(n) = PlaylistPanelContinuationNode::from_value(val) {
+                return Some(YTNode::PlaylistPanelContinuation(n));
+            }
+        }
+        if val.get("liveChatContinuation").is_some() {
+            if let Some(n) = LiveChatContinuationNode::from_value(val) {
+                return Some(YTNode::LiveChatContinuation(n));
+            }
+        }
+        if val.get("sectionListContinuation").is_some() {
+            if let Some(n) = SectionListContinuationNode::from_value(val) {
+                return Some(YTNode::SectionListContinuation(n));
+            }
+        }
+        if val.get("itemSectionContinuation").is_some() {
+            if let Some(n) = ItemSectionContinuationNode::from_value(val) {
+                return Some(YTNode::ItemSectionContinuation(n));
+            }
+        }
+        if val.get("gridContinuation").is_some() {
+            if let Some(n) = GridContinuationNode::from_value(val) {
+                return Some(YTNode::GridContinuation(n));
+            }
+        }
+        if val.get("musicPlaylistShelfContinuation").is_some() {
+            if let Some(n) = MusicPlaylistShelfContinuationNode::from_value(val) {
+                return Some(YTNode::MusicPlaylistShelfContinuation(n));
+            }
+        }
+        if val.get("musicShelfContinuation").is_some() {
+            if let Some(n) = MusicShelfContinuationNode::from_value(val) {
+                return Some(YTNode::MusicShelfContinuation(n));
             }
         }
 

@@ -1,8 +1,10 @@
 pub mod nodes;
 pub mod registry;
+pub mod response;
 
 pub use nodes::*;
 pub use registry::*;
+pub use response::*;
 
 use serde_json::Value;
 
@@ -12,6 +14,13 @@ pub struct Parser;
 impl Parser {
     /// Recursively traverse a YouTube InnerTube JSON response and extract all known `YTNode` instances.
     pub fn parse_tree(val: &Value) -> Vec<YTNode> {
+        Self::parse_tree_reporting(val)
+    }
+
+    /// Like [`Parser::parse_tree`], additionally skipping legacy
+    /// `IGNORED_LIST` renderers and reporting unknown renderer keys to the
+    /// installed parser error handler.
+    pub fn parse_tree_reporting(val: &Value) -> Vec<YTNode> {
         let mut results = Vec::new();
         Self::traverse_recursive(val, &mut results);
         results
@@ -27,10 +36,35 @@ impl Parser {
             return;
         }
 
+        // Skip ignored renderers silently (legacy IGNORED_LIST).
+        if let Value::Object(map) = val {
+            if map.len() == 1 {
+                if let Some(key) = map.keys().next() {
+                    let class_name = response::sanitize_class_name(key);
+                    if response::IGNORED_LIST.contains(&class_name.as_str()) {
+                        return;
+                    }
+                }
+            }
+        }
+
         // Try parsing current node first
         if let Some(node) = YTNode::parse(val) {
             results.push(node);
             // Even if matched, certain nodes like SectionList / RichGrid might contain nested items
+        } else if let Value::Object(map) = val {
+            // Report unknown single-key renderer/view payloads.
+            if map.len() == 1 {
+                if let Some(key) = map.keys().next() {
+                    if key.ends_with("Renderer") || key.ends_with("Model") || key.ends_with("View") {
+                        response::report_parser_error(response::ParserError {
+                            error_type: "class_not_found".to_string(),
+                            class_name: response::sanitize_class_name(key),
+                            detail: None,
+                        });
+                    }
+                }
+            }
         }
 
         match val {
