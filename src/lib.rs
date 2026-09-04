@@ -1156,4 +1156,9 @@ impl Innertube {
     pub fn kids(&self) -> KidsManager<'_> {
         KidsManager::new(&self.session)
     }
+
+    /// Access YouTube Studio manager (`client.studio()`).
+    pub fn studio(&self) -> crate::core::managers::StudioManager<'_> {
+        crate::core::managers::StudioManager::new(&self.session)
+    }
 }

@@ -286,7 +286,7 @@ fn now_unix_seconds() -> u64 {
         .as_secs()
 }
 
-fn generate_uuid_v4() -> String {
+pub(crate) fn generate_uuid_v4() -> String {
     format!(
         "{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}",
         rand::random::<u32>(),
