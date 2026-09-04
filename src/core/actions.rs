@@ -391,15 +391,41 @@ impl Actions {
     }
 
     /// Generic action dispatcher matching `Actions.execute` (1:1 with YouTube.js).
+    ///
+    /// Supports legacy control keys in `args`: `parse`, `override_endpoint`,
+    /// `skip_auth_check`, `request`, `clientActions`, `settingItemIdForClient`
+    /// (stripped before sending), `action`, `boolValue`, `token` (munged),
+    /// `client` (routes context adjustment), and `protobuf` +
+    /// `serialized_data` (raw protobuf body).
     pub async fn execute(
         session: &Session,
         endpoint: &str,
-        payload: Value,
+        args: Value,
     ) -> Result<ApiResponse> {
-        let resp = session.post_innertube(endpoint, payload).await?;
+        let prepared = prepare_execute(&args, session.is_authenticated())?;
+        let target = prepared.endpoint_override.as_deref().unwrap_or(endpoint);
+
+        let resp = match &prepared.body {
+            ExecuteBody::Protobuf(bytes) => {
+                session.post_innertube_protobuf(target, bytes.clone()).await?
+            }
+            ExecuteBody::Json(body) => match &prepared.client {
+                Some(client) => {
+                    session
+                        .post_innertube_client(client, target, body.clone())
+                        .await?
+                }
+                None => session.post_innertube(target, body.clone()).await?,
+            },
+        };
+
         let status_code = resp.status().as_u16();
         let success = resp.status().is_success();
-        let data: Value = resp.json().await.map_err(InnertubeError::Network)?;
+        let mut data: Value = resp.json().await.map_err(InnertubeError::Network)?;
+
+        if prepared.parse {
+            data = follow_navigate_redirect(session, data).await?;
+        }
 
         Ok(ApiResponse {
             success,
@@ -407,6 +433,186 @@ impl Actions {
             data,
         })
     }
+}
+
+/// Browse IDs that require an authenticated session, mirroring
+/// `Actions.#needsLogin` in YouTube.js.
+pub const LOGIN_REQUIRED_BROWSE_IDS: [&str; 11] = [
+    "FElibrary",
+    "FEhistory",
+    "FEsubscriptions",
+    "FEchannels",
+    "FEplaylist_aggregation",
+    "FEmusic_listening_review",
+    "FEmusic_library_landing",
+    "SPaccount_overview",
+    "SPaccount_notifications",
+    "SPaccount_privacy",
+    "SPtime_watched",
+];
+
+/// Prepared request body for `Actions::execute`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExecuteBody {
+    Json(Value),
+    Protobuf(Vec<u8>),
+}
+
+/// Result of applying legacy `Actions.execute` argument munging.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PreparedExecute {
+    pub body: ExecuteBody,
+    pub endpoint_override: Option<String>,
+    pub parse: bool,
+    pub client: Option<String>,
+}
+
+/// Control keys stripped from the payload before sending (legacy `execute`).
+const EXECUTE_CONTROL_KEYS: [&str; 8] = [
+    "skip_auth_check",
+    "override_endpoint",
+    "parse",
+    "request",
+    "clientActions",
+    "settingItemIdForClient",
+    "protobuf",
+    "serialized_data",
+];
+
+/// Apply the argument-munging rules of legacy `Actions.execute` to `args`.
+/// Pure function; performs no I/O.
+pub fn prepare_execute(args: &Value, logged_in: bool) -> Result<PreparedExecute> {
+    let obj = args.as_object().cloned().unwrap_or_default();
+
+    let endpoint_override = obj
+        .get("override_endpoint")
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+    let parse = obj
+        .get("parse")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    let is_protobuf = obj
+        .get("protobuf")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+
+    if is_protobuf {
+        let bytes = decode_serialized_data(obj.get("serialized_data"))?;
+        return Ok(PreparedExecute {
+            body: ExecuteBody::Protobuf(bytes),
+            endpoint_override,
+            parse,
+            client: None,
+        });
+    }
+
+    let mut data = obj;
+
+    if let Some(browse_id) = data.get("browseId").and_then(Value::as_str) {
+        let skip_auth_check = data
+            .get("skip_auth_check")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        if !skip_auth_check && LOGIN_REQUIRED_BROWSE_IDS.contains(&browse_id) && !logged_in {
+            return Err(InnertubeError::AuthenticationRequired(
+                "You must be signed in to perform this operation.".to_string(),
+            ));
+        }
+    }
+
+    for key in EXECUTE_CONTROL_KEYS {
+        data.remove(key);
+    }
+
+    if let Some(action) = data.remove("action") {
+        data.insert("actions".to_string(), json!([action]));
+    }
+
+    if let Some(bool_value) = data.remove("boolValue") {
+        data.insert("newValue".to_string(), json!({ "boolValue": bool_value }));
+    }
+
+    if let Some(token) = data.remove("token") {
+        data.insert("continuation".to_string(), token);
+    }
+
+    let client = data
+        .get("client")
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+
+    if client.as_deref() == Some("YTMUSIC") {
+        data.insert("isAudioOnly".to_string(), json!(true));
+    }
+
+    Ok(PreparedExecute {
+        body: ExecuteBody::Json(Value::Object(data)),
+        endpoint_override,
+        parse,
+        client,
+    })
+}
+
+/// Decode `serialized_data` (byte array or base64 string) for protobuf calls.
+fn decode_serialized_data(value: Option<&Value>) -> Result<Vec<u8>> {
+    use base64::Engine;
+
+    match value {
+        Some(Value::Array(items)) => items
+            .iter()
+            .map(|v| {
+                v.as_u64()
+                    .and_then(|n| u8::try_from(n).ok())
+                    .ok_or_else(|| {
+                        InnertubeError::Format(
+                            "serialized_data array must contain bytes (0-255)".to_string(),
+                        )
+                    })
+            })
+            .collect(),
+        Some(Value::String(encoded)) => base64::engine::general_purpose::STANDARD
+            .decode(encoded)
+            .map_err(|e| InnertubeError::Format(format!("invalid serialized_data base64: {e}"))),
+        _ => Err(InnertubeError::Format(
+            "protobuf execute calls require serialized_data (byte array or base64)".to_string(),
+        )),
+    }
+}
+
+/// Follow `navigateAction` redirects in a parsed browse response, mirroring
+/// the redirect handling in legacy `Actions.execute`.
+///
+/// ponytail: legacy recurses unbounded; we cap at 5 redirects to guarantee
+/// termination. Raise the cap if YouTube ever chains deeper.
+async fn follow_navigate_redirect(session: &Session, mut data: Value) -> Result<Value> {
+    for _ in 0..5 {
+        let endpoint_value = data
+            .pointer("/on_response_received_actions/0/navigateAction/endpoint")
+            .cloned();
+        let Some(endpoint_value) = endpoint_value else {
+            return Ok(data);
+        };
+
+        let node = crate::parser::nodes::NavigationEndpointNode::from_value(&endpoint_value)
+            .ok_or_else(|| {
+                InnertubeError::Format(
+                    "navigateAction endpoint could not be parsed".to_string(),
+                )
+            })?;
+        let path = node.api_path.clone().ok_or_else(|| {
+            InnertubeError::NotFound(
+                "navigateAction endpoint has no InnerTube API path".to_string(),
+            )
+        })?;
+
+        let resp = session.post_innertube(&path, node.payload.clone()).await?;
+        data = resp.json().await.map_err(InnertubeError::Network)?;
+    }
+
+    Err(InnertubeError::Other(
+        "navigateAction redirect limit (5) exceeded".to_string(),
+    ))
 }
 
 /// An unparsed InnerTube API response matching `ApiResponse` in Actions.ts.
@@ -451,6 +657,129 @@ mod tests {
     #[test]
     fn rating_target_matches_legacy_like_endpoint_request() {
         assert_eq!(rating_payload("dQw4w9WgXcQ"), json!({ "target": "dQw4w9WgXcQ" }));
+    }
+
+    #[test]
+    fn execute_munges_action_bool_value_and_token() {
+        let args = json!({
+            "action": { "action": "ACTION_ADD_VIDEO", "addedVideoId": "vid" },
+            "boolValue": true,
+            "token": "cont-token"
+        });
+        let prepared = prepare_execute(&args, false).unwrap();
+        let ExecuteBody::Json(body) = prepared.body else {
+            panic!("expected JSON body");
+        };
+        assert_eq!(
+            body["actions"],
+            json!([{ "action": "ACTION_ADD_VIDEO", "addedVideoId": "vid" }])
+        );
+        assert_eq!(body["newValue"], json!({ "boolValue": true }));
+        assert_eq!(body["continuation"], json!("cont-token"));
+        assert!(body.get("action").is_none());
+        assert!(body.get("boolValue").is_none());
+        assert!(body.get("token").is_none());
+    }
+
+    #[test]
+    fn execute_strips_control_keys_and_extracts_flags() {
+        let args = json!({
+            "browseId": "FEwhat_to_watch",
+            "skip_auth_check": true,
+            "override_endpoint": "/custom",
+            "parse": true,
+            "request": { "x": 1 },
+            "clientActions": [],
+            "settingItemIdForClient": "abc"
+        });
+        let prepared = prepare_execute(&args, false).unwrap();
+        assert_eq!(prepared.endpoint_override.as_deref(), Some("/custom"));
+        assert!(prepared.parse);
+        let ExecuteBody::Json(body) = prepared.body else {
+            panic!("expected JSON body");
+        };
+        for key in [
+            "skip_auth_check",
+            "override_endpoint",
+            "parse",
+            "request",
+            "clientActions",
+            "settingItemIdForClient",
+        ] {
+            assert!(body.get(key).is_none(), "{key} must be stripped");
+        }
+        assert_eq!(body["browseId"], json!("FEwhat_to_watch"));
+    }
+
+    #[test]
+    fn execute_rejects_login_gated_browse_ids_anonymously() {
+        for id in LOGIN_REQUIRED_BROWSE_IDS {
+            let args = json!({ "browseId": id });
+            assert!(
+                matches!(
+                    prepare_execute(&args, false),
+                    Err(InnertubeError::AuthenticationRequired(_))
+                ),
+                "{id} must require login"
+            );
+        }
+    }
+
+    #[test]
+    fn execute_allows_gated_ids_with_auth_or_skip_flag() {
+        let args = json!({ "browseId": "FEhistory" });
+        assert!(prepare_execute(&args, true).is_ok());
+
+        let skipped = json!({ "browseId": "FEhistory", "skip_auth_check": true });
+        assert!(prepare_execute(&skipped, false).is_ok());
+
+        let public = json!({ "browseId": "FEwhat_to_watch" });
+        assert!(prepare_execute(&public, false).is_ok());
+    }
+
+    #[test]
+    fn execute_marks_ytmusic_payloads_audio_only() {
+        let args = json!({ "client": "YTMUSIC", "browseId": "FEmusic_home" });
+        let prepared = prepare_execute(&args, false).unwrap();
+        assert_eq!(prepared.client.as_deref(), Some("YTMUSIC"));
+        let ExecuteBody::Json(body) = prepared.body else {
+            panic!("expected JSON body");
+        };
+        assert_eq!(body["isAudioOnly"], json!(true));
+    }
+
+    #[test]
+    fn execute_protobuf_body_from_byte_array() {
+        let args = json!({
+            "protobuf": true,
+            "serialized_data": [1, 2, 3, 255],
+            "override_endpoint": "/video_manager/metadata_update"
+        });
+        let prepared = prepare_execute(&args, false).unwrap();
+        assert_eq!(prepared.body, ExecuteBody::Protobuf(vec![1, 2, 3, 255]));
+        assert_eq!(
+            prepared.endpoint_override.as_deref(),
+            Some("/video_manager/metadata_update")
+        );
+    }
+
+    #[test]
+    fn execute_protobuf_body_from_base64() {
+        let args = json!({
+            "protobuf": true,
+            "serialized_data": "AQID/w=="
+        });
+        let prepared = prepare_execute(&args, false).unwrap();
+        assert_eq!(prepared.body, ExecuteBody::Protobuf(vec![1, 2, 3, 255]));
+    }
+
+    #[test]
+    fn execute_protobuf_requires_serialized_data() {
+        let args = json!({ "protobuf": true });
+        assert!(prepare_execute(&args, false).is_err());
+
+        let bad = json!({ "protobuf": true, "serialized_data": [300] });
+        assert!(prepare_execute(&bad, false).is_err());
     }
 
     #[test]

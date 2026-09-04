@@ -185,14 +185,31 @@ Legacy: `core/mixins/{Feed,FilterableFeed,TabbedFeed}.ts`.
   row that cannot be evidenced instead of marking it.
 - Final: `cargo test --all-targets`, clippy clean, live suite recorded.
 
-## Current checkpoint — 2026-09-04 (Batch 1 done, uncommitted)
+## Current checkpoint — 2026-09-04 (Batch 2 done, uncommitted)
 
-HEAD `cde65a5` + uncommitted Batch 1 changes. `cargo test --all-targets`:
-118 non-network tests pass (45 lib + 25 api_contracts + 24 contract_fixtures
-+ 16 client_contexts NEW + 8 authenticated; 4 auth mutations + 10 live
-ignored opt-in). `cargo clippy --all-targets -- -D warnings`: 0 warnings.
+HEAD `b02340f` (Batch 1 commit) + uncommitted Batch 2 changes.
+`cargo test --all-targets`: 126 non-network tests pass (53 lib incl. 8 new
+execute-munging tests + 25 api_contracts + 24 contract_fixtures + 16
+client_contexts + 8 authenticated; 4 auth mutations + 10 live ignored
+opt-in). `cargo clippy --all-targets -- -D warnings`: 0 warnings.
 
-Batch 1 delivered:
+Batch 2 delivered (`Actions::execute` request-munging parity):
+- `prepare_execute` pure fn: `action`→`actions[]`, `boolValue`→
+  `newValue.boolValue`, `token`→`continuation`; strips control keys
+  (`skip_auth_check`, `override_endpoint`, `parse`, `request`,
+  `clientActions`, `settingItemIdForClient`, `protobuf`,
+  `serialized_data`); `isAudioOnly: true` for `client: YTMUSIC`;
+  `override_endpoint` target swap.
+- Login gate: 11 legacy browseIds (`LOGIN_REQUIRED_BROWSE_IDS`) reject
+  anonymous calls with `AuthenticationRequired` unless `skip_auth_check`.
+- Protobuf calls: `serialized_data` (byte array or base64) sent raw via
+  new `Session::post_innertube_protobuf` (`application/x-protobuf`,
+  Android UA, `X-GOOG-API-FORMAT-VERSION: 2`, no client-version header).
+- `parse: true` follows `navigateAction` redirects (bounded at 5; legacy
+  recurses unbounded).
+- Payload `client` key routes through `post_innertube_client` adjustment.
+
+Batch 1 delivered (committed `b02340f`):
 - Full per-client `Session::adjust_context` port (14 aliases from
   `SUPPORTED_CLIENTS`, exact legacy versions/UA/os/sdk, configInfo removal,
   EMBED screens + thirdParty embedUrls, kidsAppInfo).
@@ -212,8 +229,8 @@ Batch 1 delivered:
 Known deviations (documented): `utcOffsetMinutes` pinned to 0/UTC (no tz
 dep); config-fetch failure swallowed silently (no log facade).
 
-State: Batch 1 complete pending QA. Next action: Batch 2
-(`Actions::execute` request munging).
+State: Batch 1 committed and QA-passed; Batch 2 complete pending QA.
+Next action: Batch 3 (auth layering & OAuth2).
 
 ## Handoff instructions
 

@@ -823,6 +823,44 @@ impl Session {
         }
     }
 
+    /// POST a raw protobuf body to an InnerTube endpoint, mirroring the
+    /// `application/x-protobuf` branch of `HTTPClient.fetch` (assumed Android:
+    /// Android UA, `X-GOOG-API-FORMAT-VERSION: 2`, no client-version header).
+    pub async fn post_innertube_protobuf(
+        &self,
+        endpoint: &str,
+        body: Vec<u8>,
+    ) -> Result<reqwest::Response> {
+        let clean_endpoint = endpoint.trim_start_matches('/');
+        let url = format!(
+            "{INNERTUBE_API_BASE_URL}/{clean_endpoint}?prettyPrint=false&alt=json&key={}",
+            self.api_key
+        );
+
+        let mut headers = self.build_innertube_headers();
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_static("application/x-protobuf"),
+        );
+        headers.insert(
+            USER_AGENT,
+            HeaderValue::from_static(clients::ANDROID_USER_AGENT),
+        );
+        headers.insert("X-GOOG-API-FORMAT-VERSION", HeaderValue::from_static("2"));
+        headers.remove("X-Youtube-Client-Version");
+
+        let res = self
+            .http_client
+            .post(&url)
+            .headers(headers)
+            .body(body)
+            .send()
+            .await
+            .map_err(InnertubeError::Network)?;
+
+        Self::ensure_success(clean_endpoint, res).await
+    }
+
     /// POST request to an InnerTube endpoint using a specific client type
     /// (e.g. `YTMUSIC`, `ANDROID`, `YTKIDS`; see `SUPPORTED_CLIENTS`).
     pub async fn post_innertube_client(
