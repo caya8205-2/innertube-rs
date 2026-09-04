@@ -658,3 +658,56 @@ fn test_api_contract_25_attestation_challenge_contract() {
     assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_SIGNIN");
     assert_eq!(payload["ids"][0]["key"], "val");
 }
+
+#[test]
+fn test_api_contract_26_music_album_search_preserves_all_artists() {
+    let raw = json!({
+        "contents": [{
+            "musicResponsiveListItemRenderer": {
+                "flexColumns": [
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Collaborative Album" }] }
+                        }
+                    },
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [
+                                {
+                                    "text": "Artist One",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": { "browseId": "UC_artist_one" }
+                                    }
+                                },
+                                { "text": " • " },
+                                {
+                                    "text": "Artist Two",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": { "browseId": "UC_artist_two" }
+                                    }
+                                }
+                            ] }
+                        }
+                    }
+                ]
+            }
+        }]
+    });
+
+    let parsed = endpoints::music::parse_music_search_response(
+        "collaborative album",
+        Some(MusicSearchFilter::Albums),
+        &raw,
+    )
+    .expect("multi-artist album search fixture should parse");
+
+    assert_eq!(parsed.albums.len(), 1);
+    let album = &parsed.albums[0];
+    assert_eq!(album.title, "Collaborative Album");
+    assert_eq!(album.artist.as_deref(), Some("Artist One"));
+    assert_eq!(album.artists.len(), 2);
+    assert_eq!(album.artists[0].name, "Artist One");
+    assert_eq!(album.artists[0].browse_id.as_deref(), Some("UC_artist_one"));
+    assert_eq!(album.artists[1].name, "Artist Two");
+    assert_eq!(album.artists[1].browse_id.as_deref(), Some("UC_artist_two"));
+}
