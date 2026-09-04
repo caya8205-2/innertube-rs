@@ -75,14 +75,17 @@ impl<'a> KidsManager<'a> {
 
         let (player_resp, next_resp) = tokio::join!(player_future, next_future);
 
+        // Legacy Promise.all semantics: a failed /next rejects the call.
         let player_response: PlayerResponse = player_resp?
             .json()
             .await
             .map_err(InnertubeError::Network)?;
-        let watch_next: Option<Value> = match next_resp {
-            Ok(resp) => resp.json().await.ok(),
-            Err(_) => None,
-        };
+        let watch_next: Option<Value> = Some(
+            next_resp?
+                .json()
+                .await
+                .map_err(InnertubeError::Network)?,
+        );
 
         Ok(KidsVideoInfo {
             player_response,

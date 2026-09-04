@@ -370,12 +370,15 @@ impl Actions {
             },
         )?;
 
-        let payload = json!({ "action": action });
-        let resp = session
-            .post_innertube("/comment/perform_comment_action", payload)
-            .await?;
-        let status_code = resp.status().as_u16();
-        let data: Value = resp.json().await.map_err(InnertubeError::Network)?;
+        // Route through execute: legacy munges `action` into `actions: [...]`.
+        let response = Self::execute(
+            session,
+            "/comment/perform_comment_action",
+            json!({ "action": action }),
+        )
+        .await?;
+        let status_code = response.status_code;
+        let data = response.data;
 
         let translated_content = data
             .pointer("/frameworkUpdates/entityBatchUpdate/mutations/0/payload/commentEntityPayload/translatedContent/content")
