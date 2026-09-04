@@ -25,18 +25,20 @@ pub const IGNORED_LIST: [&str; 14] = [
     "GenAiFeedbackFormView",
 ];
 
-/// Legacy `sanitizeClassName`: strip `Renderer`/`Model` suffixes (and the
-/// `Radio` -> `Mix` alias).
+/// Legacy `sanitizeClassName`: capitalize the first character, strip every
+/// `Renderer`/`Model` occurrence, replace every `Radio` with `Mix`, trim.
 pub fn sanitize_class_name(input: &str) -> String {
-    let trimmed = input
-        .strip_suffix("Renderer")
-        .or_else(|| input.strip_suffix("Model"))
-        .unwrap_or(input);
-    if trimmed == "Radio" {
-        "Mix".to_string()
-    } else {
-        trimmed.to_string()
-    }
+    let mut chars = input.trim().chars();
+    let capitalized = match chars.next() {
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+        None => String::new(),
+    };
+    capitalized
+        .replace("Renderer", "")
+        .replace("Model", "")
+        .replace("Radio", "Mix")
+        .trim()
+        .to_string()
 }
 
 /// A recoverable parser error, mirroring legacy `setParserErrorHandler`
@@ -130,6 +132,14 @@ pub struct ParsedResponse {
     pub bg_challenge: Option<BotguardChallenge>,
     pub target_id: Option<String>,
     pub framework_updates: Option<Value>,
+    /// Single `content` item (legacy `parseItem(data.content)`).
+    pub content: Option<YTNode>,
+    pub challenge: Option<YTNode>,
+    pub live_chat_item_context_menu_supported_renderers: Vec<YTNode>,
+    pub cpn_info: Option<Value>,
+    /// Recursive nested player/watch-next responses (legacy behavior).
+    pub player_response: Option<Box<ParsedResponse>>,
+    pub watch_next_response: Option<Box<ParsedResponse>>,
 }
 
 impl ParsedResponse {
@@ -422,6 +432,18 @@ impl crate::parser::Parser {
         parsed.player_overlays = section("playerOverlays");
         parsed.endscreen = section("endscreen");
         parsed.storyboards = section("storyboards");
+
+        parsed.content = data.get("content").and_then(YTNode::parse);
+        parsed.challenge = data.get("challenge").and_then(YTNode::parse);
+        parsed.live_chat_item_context_menu_supported_renderers =
+            section("liveChatItemContextMenuSupportedRenderers");
+        parsed.cpn_info = data.get("cpnInfo").cloned();
+        parsed.player_response = data
+            .get("playerResponse")
+            .map(|pr| Box::new(Self::parse_response(pr)));
+        parsed.watch_next_response = data
+            .get("watchNextResponse")
+            .map(|wnr| Box::new(Self::parse_response(wnr)));
 
         parsed.overlay = data.get("overlay").and_then(YTNode::parse);
         parsed.microformat = data.get("microformat").and_then(YTNode::parse);

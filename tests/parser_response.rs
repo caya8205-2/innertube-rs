@@ -156,14 +156,19 @@ fn ignored_list_renderers_are_skipped_silently() {
 fn unknown_renderer_reports_to_error_handler() {
     static HITS: AtomicUsize = AtomicUsize::new(0);
     set_parser_error_handler(move |err| {
-        if err.error_type == "class_not_found" && err.class_name == "totallyUnknownWidget" {
+        if err.error_type == "class_not_found" && err.class_name == "TotallyUnknownWidget" {
             HITS.fetch_add(1, Ordering::SeqCst);
         }
     });
 
     let raw = json!({ "contents": [{ "totallyUnknownWidgetRenderer": { "x": 1 } }] });
     let _ = Parser::parse_tree(&raw);
-    assert_eq!(sanitize_class_name("totallyUnknownWidgetRenderer"), "totallyUnknownWidget");
+    // Legacy: capitalize first char, strip ALL Renderer/Model occurrences,
+    // replace ALL Radio with Mix.
+    assert_eq!(sanitize_class_name("totallyUnknownWidgetRenderer"), "TotallyUnknownWidget");
+    assert_eq!(sanitize_class_name("adSlotRenderer"), "AdSlot");
+    assert_eq!(sanitize_class_name("radioRenderer"), "Mix");
+    assert_eq!(sanitize_class_name("searchResultsModel"), "SearchResults");
     assert!(HITS.load(Ordering::SeqCst) >= 1);
 }
 
@@ -254,8 +259,70 @@ fn live_chat_continuation_reads_all_token_variants() {
                 _ => None,
             })
             .expect("live chat continuation");
-        assert_eq!(chat.continuation.as_deref(), Some(token), "{key}");
+        let cont = chat.continuation.as_ref().expect("typed continuation");
+        assert_eq!(cont.token, token, "{key}");
+        let expected_type = match key {
+            "timedContinuationData" => "timed",
+            "invalidationContinuationData" => "invalidation",
+            _ => "replay",
+        };
+        assert_eq!(cont.continuation_type, expected_type, "{key}");
     }
+}
+
+#[test]
+fn live_chat_actions_strip_click_tracking_params() {
+    let raw = json!({
+        "continuationContents": {
+            "liveChatContinuation": {
+                "actions": [
+                    {
+                        "clickTrackingParams": "tracking-blob",
+                        "addChatItemAction": { "item": {} }
+                    }
+                ],
+                "continuations": [{ "timedContinuationData": { "continuation": "tok" } }]
+            }
+        }
+    });
+    let parsed = Parser::parse_response(&raw);
+    let chat = parsed
+        .continuation_contents
+        .iter()
+        .find_map(|n| match n {
+            YTNode::LiveChatContinuation(c) => Some(c),
+            _ => None,
+        })
+        .expect("live chat continuation");
+    assert_eq!(chat.actions.len(), 1);
+    assert!(chat.actions[0].get("clickTrackingParams").is_none());
+    assert!(chat.actions[0].get("addChatItemAction").is_some());
+}
+
+#[test]
+fn reload_continuation_items_command_reads_continuation_items_key() {
+    let raw = json!({
+        "continuationContents": {
+            "reloadContinuationItemsCommand": {
+                "targetId": "comments-section",
+                "continuationItems": [
+                    { "commentThreadRenderer": { "comment": {} } }
+                ]
+            }
+        }
+    });
+    let parsed = Parser::parse_response(&raw);
+    let reload = parsed
+        .continuation_contents
+        .iter()
+        .find_map(|n| match n {
+            YTNode::ReloadContinuationItemsCommand(r) => Some(r),
+            _ => None,
+        })
+        .expect("reload continuation items command");
+    assert_eq!(reload.target_id.as_deref(), Some("comments-section"));
+    assert_eq!(reload.contents.len(), 1);
+    assert!(reload.contents[0].get("commentThreadRenderer").is_some());
 }
 
 #[test]

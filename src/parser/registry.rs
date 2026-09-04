@@ -114,6 +114,7 @@ pub enum YTNodeVariant {
     PlaylistPanelContinuation,
     ReloadContinuationItemsCommand,
     LiveChatContinuation,
+    ShowMiniplayerCommand,
     ConversationBar,
     CopyLink,
     CreatePlaylistDialog,

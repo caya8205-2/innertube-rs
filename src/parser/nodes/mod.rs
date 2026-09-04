@@ -34,7 +34,7 @@ pub use containers::{
     pub use continuation::{
         ContinuationNode, GridContinuationNode, ItemSectionContinuationNode,
         LiveChatContinuationNode, MusicPlaylistShelfContinuationNode, MusicShelfContinuationNode,
-        PlaylistPanelContinuationNode, ReloadContinuationItemsCommandNode,
+        PlaylistPanelContinuationNode, ReloadContinuationItemsCommandNode, ShowMiniplayerCommandNode,
         SectionListContinuationNode,
     };
 pub use grid::{
@@ -337,6 +337,7 @@ pub enum YTNode {
     PlaylistPanelContinuation(PlaylistPanelContinuationNode),
     ReloadContinuationItemsCommand(ReloadContinuationItemsCommandNode),
     LiveChatContinuation(LiveChatContinuationNode),
+    ShowMiniplayerCommand(ShowMiniplayerCommandNode),
     SectionList(SectionListNode),
     ItemSection(ItemSectionNode),
     RichGrid(RichGridNode),
@@ -973,6 +974,7 @@ impl YTNode {
             YTNode::PlaylistPanelContinuation(_) => YTNodeVariant::PlaylistPanelContinuation,
             YTNode::ReloadContinuationItemsCommand(_) => YTNodeVariant::ReloadContinuationItemsCommand,
             YTNode::LiveChatContinuation(_) => YTNodeVariant::LiveChatContinuation,
+            YTNode::ShowMiniplayerCommand(_) => YTNodeVariant::ShowMiniplayerCommand,
             YTNode::SectionList(_) => YTNodeVariant::SectionList,
             YTNode::ItemSection(_) => YTNodeVariant::ItemSection,
             YTNode::RichGrid(_) => YTNodeVariant::RichGrid,
@@ -1555,6 +1557,11 @@ impl YTNode {
         if val.get("playlistPanelContinuation").is_some() {
             if let Some(n) = PlaylistPanelContinuationNode::from_value(val) {
                 return Some(YTNode::PlaylistPanelContinuation(n));
+            }
+        }
+        if val.get("showMiniplayerCommand").is_some() {
+            if let Some(n) = ShowMiniplayerCommandNode::from_value(val) {
+                return Some(YTNode::ShowMiniplayerCommand(n));
             }
         }
         if val.get("liveChatContinuation").is_some() {
