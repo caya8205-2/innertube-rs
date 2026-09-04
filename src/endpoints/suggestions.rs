@@ -20,7 +20,7 @@ pub async fn get_search_suggestions_with_options(
         });
 
         let resp: reqwest::Response = session
-            .post_innertube_client("WEB_REMIX", "/music/get_search_suggestions", payload)
+            .post_innertube_client("YTMUSIC", "/music/get_search_suggestions", payload)
             .await?;
         let raw: Value = resp.json().await?;
 

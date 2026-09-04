@@ -1,5 +1,4 @@
-use crate::constants::clients;
-use crate::core::session::{Session, SessionOptions};
+use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::format::{
     FormatFilter, FormatOptions, FormatType, QualityPreference, StreamingFormat,
@@ -187,20 +186,15 @@ pub async fn fetch_player_response_with_options(
     Ok(player_response)
 }
 
-/// Fallback player fetch using MWEB (Mobile Web) client reusing the session HTTP client and cookie jar.
-async fn fetch_player_response_mweb(
+/// Fallback player fetch using a specific InnerTube client, routed through
+/// `Session::post_innertube_client` for context and header adjustment.
+async fn fetch_player_response_as_client(
     session: &Session,
+    client: &str,
     video_id: &str,
     signature_timestamp: Option<u32>,
 ) -> Result<PlayerResponse> {
-    let mut mweb_context = session.context.clone();
-    mweb_context.client.client_name = clients::MWEB_NAME.to_string();
-    mweb_context.client.client_version = clients::MWEB_VERSION.to_string();
-    mweb_context.client.platform = "MOBILE".to_string();
-    mweb_context.client.user_agent = clients::MWEB_USER_AGENT.to_string();
-
     let mut payload = json!({
-        "context": mweb_context,
         "videoId": video_id,
         "contentCheckOk": true,
         "racyCheckOk": true
@@ -214,25 +208,23 @@ async fn fetch_player_response_mweb(
         });
     }
 
-    let url = format!(
-        "{}/player?key={}",
-        crate::constants::INNERTUBE_API_BASE_URL,
-        session.api_key
-    );
-    let resp = session
-        .http_client
-        .post(&url)
-        .header("User-Agent", clients::MWEB_USER_AGENT)
-        .header("X-Youtube-Client-Name", "2")
-        .header("X-Youtube-Client-Version", clients::MWEB_VERSION)
-        .json(&payload)
-        .send()
-        .await
-        .map_err(InnertubeError::Network)?;
-    let resp = Session::ensure_success("player (MWEB fallback)", resp).await?;
+    if let Some(ref pot) = session.po_token {
+        payload["serviceIntegrityDimensions"] = json!({ "poToken": pot });
+    }
+
+    let resp = session.post_innertube_client(client, "/player", payload).await?;
     let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
 
     Ok(player_response)
+}
+
+/// Fallback player fetch using MWEB (Mobile Web) client.
+async fn fetch_player_response_mweb(
+    session: &Session,
+    video_id: &str,
+    signature_timestamp: Option<u32>,
+) -> Result<PlayerResponse> {
+    fetch_player_response_as_client(session, "MWEB", video_id, signature_timestamp).await
 }
 
 /// Fallback player fetch using standard ANDROID client to get progressive streams (itag 18).
@@ -240,51 +232,7 @@ async fn fetch_player_response_android(
     session: &Session,
     video_id: &str,
 ) -> Result<PlayerResponse> {
-    let mut android_context = session.context.clone();
-    android_context.client.client_name = clients::ANDROID_NAME.to_string();
-    android_context.client.client_version = clients::ANDROID_VERSION.to_string();
-    android_context.client.platform = "MOBILE".to_string();
-    android_context.client.user_agent = clients::ANDROID_USER_AGENT.to_string();
-    android_context.client.os_name = "Android".to_string();
-    android_context.client.os_version = "16".to_string();
-    android_context.client.android_sdk_version = Some(36);
-
-    let mut payload = json!({
-        "context": android_context,
-        "videoId": video_id,
-        "contentCheckOk": true,
-        "racyCheckOk": true
-    });
-
-    if let Some(ref pot) = session.po_token {
-        payload["serviceIntegrityDimensions"] = json!({ "poToken": pot });
-    }
-
-    let url = format!(
-        "{}/player?key={}",
-        crate::constants::INNERTUBE_API_BASE_URL,
-        session.api_key
-    );
-    let mut req = session
-        .http_client
-        .post(&url)
-        .header("User-Agent", clients::ANDROID_USER_AGENT)
-        .header("X-Youtube-Client-Name", "3")
-        .header("X-Youtube-Client-Version", clients::ANDROID_VERSION);
-
-    if let Some(ref c) = session.cookie {
-        req = req.header("Cookie", c);
-    }
-
-    let resp = req
-        .json(&payload)
-        .send()
-        .await
-        .map_err(InnertubeError::Network)?;
-    let resp = Session::ensure_success("player (ANDROID fallback)", resp).await?;
-    let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
-
-    Ok(player_response)
+    fetch_player_response_as_client(session, "ANDROID", video_id, None).await
 }
 
 /// Fallback player fetch using ANDROID_VR client to get direct, unthrottled stream URLs.
@@ -292,84 +240,12 @@ async fn fetch_player_response_android_vr(
     session: &Session,
     video_id: &str,
 ) -> Result<PlayerResponse> {
-    let mut vr_context = session.context.clone();
-    vr_context.client.client_name = clients::ANDROID_VR_NAME.to_string();
-    vr_context.client.client_version = clients::ANDROID_VR_VERSION.to_string();
-    vr_context.client.platform = "MOBILE".to_string();
-    vr_context.client.user_agent = clients::ANDROID_VR_USER_AGENT.to_string();
-    vr_context.client.device_make = Some("Oculus".to_string());
-    vr_context.client.device_model = Some("Quest 3".to_string());
-    vr_context.client.os_name = "Android".to_string();
-    vr_context.client.os_version = "12L".to_string();
-    vr_context.client.android_sdk_version = Some(32);
-
-    let mut payload = json!({
-        "context": vr_context,
-        "videoId": video_id,
-        "contentCheckOk": true,
-        "racyCheckOk": true
-    });
-
-    if let Some(ref pot) = session.po_token {
-        payload["serviceIntegrityDimensions"] = json!({ "poToken": pot });
-    }
-
-    let url = format!(
-        "{}/player?key={}",
-        crate::constants::INNERTUBE_API_BASE_URL,
-        session.api_key
-    );
-    let mut req = session
-        .http_client
-        .post(&url)
-        .header("User-Agent", clients::ANDROID_VR_USER_AGENT)
-        .header("X-Youtube-Client-Name", "28")
-        .header("X-Youtube-Client-Version", clients::ANDROID_VR_VERSION);
-
-    if let Some(ref c) = session.cookie {
-        req = req.header("Cookie", c);
-    }
-
-    let resp = req
-        .json(&payload)
-        .send()
-        .await
-        .map_err(InnertubeError::Network)?;
-    let resp = Session::ensure_success("player (ANDROID_VR fallback)", resp).await?;
-    let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
-
-    Ok(player_response)
+    fetch_player_response_as_client(session, "ANDROID_VR", video_id, None).await
 }
 
 /// Fallback player fetch using iOS client to get direct stream URLs for all adaptive formats.
 async fn fetch_player_response_ios(session: &Session, video_id: &str) -> Result<PlayerResponse> {
-    let ios_options = SessionOptions {
-        client_name: Some(clients::IOS_NAME.to_string()),
-        client_version: Some(clients::IOS_VERSION.to_string()),
-        device_category: Some("MOBILE".to_string()),
-        user_agent: Some(clients::IOS_USER_AGENT.to_string()),
-        po_token: session.po_token.clone(),
-        cookie: session.cookie.clone(),
-        generate_session_locally: Some(true),
-        ..Default::default()
-    };
-
-    let ios_session = Session::create(ios_options).await?;
-
-    let mut payload = json!({
-        "videoId": video_id,
-        "contentCheckOk": true,
-        "racyCheckOk": true
-    });
-
-    if let Some(ref pot) = session.po_token {
-        payload["serviceIntegrityDimensions"] = json!({ "poToken": pot });
-    }
-
-    let resp = ios_session.post_innertube("/player", payload).await?;
-    let player_response: PlayerResponse = resp.json().await.map_err(InnertubeError::Network)?;
-
-    Ok(player_response)
+    fetch_player_response_as_client(session, "IOS", video_id, None).await
 }
 
 /// Fetch player metadata and streaming formats for a video from `/youtubei/v1/player`.

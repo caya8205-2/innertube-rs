@@ -16,7 +16,7 @@ impl<'a> KidsManager<'a> {
     pub async fn get_home(&self) -> Result<Value> {
         let resp = self
             .session
-            .post_innertube_client("WEB_KIDS", "/browse", json!({ "browseId": "FEkids_home" }))
+            .post_innertube_client("YTKIDS", "/browse", json!({ "browseId": "FEkids_home" }))
             .await?;
         resp.json().await.map_err(InnertubeError::Network)
     }
@@ -30,7 +30,7 @@ impl<'a> KidsManager<'a> {
     pub async fn search(&self, query: &str) -> Result<Value> {
         let resp = self
             .session
-            .post_innertube_client("WEB_KIDS", "/search", json!({ "query": query }))
+            .post_innertube_client("YTKIDS", "/search", json!({ "query": query }))
             .await?;
         resp.json().await.map_err(InnertubeError::Network)
     }

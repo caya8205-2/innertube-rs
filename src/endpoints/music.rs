@@ -25,7 +25,7 @@ pub async fn search_music(
         }
     }
 
-    let resp = session.post_innertube_client("WEB_REMIX", "/search", payload).await?;
+    let resp = session.post_innertube_client("YTMUSIC", "/search", payload).await?;
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_search_response(query, filter, &raw)
@@ -39,7 +39,7 @@ pub async fn get_music_lyrics(session: &Session, video_id: &str) -> Result<Music
         "isAudioOnly": true
     });
 
-    let next_resp = session.post_innertube_client("WEB_REMIX", "/next", next_payload).await?;
+    let next_resp = session.post_innertube_client("YTMUSIC", "/next", next_payload).await?;
     let next_raw: Value = next_resp.json().await.map_err(InnertubeError::Network)?;
 
     let lyrics_browse_id = extract_lyrics_browse_id(&next_raw).ok_or_else(|| {
@@ -51,7 +51,7 @@ pub async fn get_music_lyrics(session: &Session, video_id: &str) -> Result<Music
         "browseId": lyrics_browse_id
     });
 
-    let browse_resp = session.post_innertube_client("WEB_REMIX", "/browse", browse_payload).await?;
+    let browse_resp = session.post_innertube_client("YTMUSIC", "/browse", browse_payload).await?;
     let browse_raw: Value = browse_resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_lyrics_response(&browse_raw)
@@ -63,7 +63,7 @@ pub async fn get_music_album(session: &Session, browse_id: &str) -> Result<Music
         "browseId": browse_id
     });
 
-    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let resp = session.post_innertube_client("YTMUSIC", "/browse", payload).await?;
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_album_response(browse_id, &raw)
@@ -76,7 +76,7 @@ pub async fn get_music_artist(session: &Session, artist_id: &str) -> Result<Musi
         "browseId": clean_id,
     });
 
-    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let resp = session.post_innertube_client("YTMUSIC", "/browse", payload).await?;
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_artist_response(clean_id, &raw)
@@ -88,7 +88,7 @@ pub async fn get_music_home(session: &Session) -> Result<MusicHomeFeed> {
         "browseId": "FEmusic_home",
     });
 
-    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let resp = session.post_innertube_client("YTMUSIC", "/browse", payload).await?;
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_home_response(&raw)
@@ -100,7 +100,7 @@ pub async fn get_music_explore(session: &Session) -> Result<MusicExplore> {
         "browseId": "FEmusic_explore"
     });
 
-    let resp = session.post_innertube_client("WEB_REMIX", "/browse", payload).await?;
+    let resp = session.post_innertube_client("YTMUSIC", "/browse", payload).await?;
     let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
     parse_music_explore_response(&raw)
