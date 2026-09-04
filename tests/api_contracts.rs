@@ -658,3 +658,92 @@ fn test_api_contract_25_attestation_challenge_contract() {
     assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_SIGNIN");
     assert_eq!(payload["ids"][0]["key"], "val");
 }
+
+#[test]
+fn test_api_contract_26_music_playlist_card_track_counts() {
+    let playlist_endpoint = |browse_id: &str| {
+        json!({
+            "browseEndpoint": {
+                "browseId": browse_id,
+                "browseEndpointContextSupportedConfigs": {
+                    "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_PLAYLIST"
+                    }
+                }
+            }
+        })
+    };
+    let raw = json!({
+        "contents": {
+            "singleColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicCarouselShelfRenderer": {
+                                        "header": {
+                                            "musicCarouselShelfBasicHeaderRenderer": {
+                                                "title": { "runs": [{ "text": "Fixture playlists" }] }
+                                            }
+                                        },
+                                        "contents": [
+                                            {
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Counted Playlist" }] },
+                                                    "subtitle": { "runs": [
+                                                        {
+                                                            "text": "Fixture Listener",
+                                                            "navigationEndpoint": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_listener" }
+                                                            }
+                                                        },
+                                                        { "text": " • " },
+                                                        { "text": "123 songs" }
+                                                    ] },
+                                                    "navigationEndpoint": playlist_endpoint("VLfixture-counted")
+                                                }
+                                            },
+                                            {
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Made For Playlist" }] },
+                                                    "subtitle": { "runs": [
+                                                        { "text": "Made for " },
+                                                        {
+                                                            "text": "Fixture Listener",
+                                                            "navigationEndpoint": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_listener" }
+                                                            }
+                                                        },
+                                                        { "text": " • " },
+                                                        { "text": "100 songs" }
+                                                    ] },
+                                                    "navigationEndpoint": playlist_endpoint("VLfixture-made-for")
+                                                }
+                                            },
+                                            {
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "System Playlist" }] },
+                                                    "subtitle": { "runs": [{ "text": "Auto playlist" }] },
+                                                    "navigationEndpoint": playlist_endpoint("VLfixture-system")
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("Music playlist-card count fixture should parse");
+    assert_eq!(feed.shelves.len(), 1);
+    assert_eq!(feed.shelves[0].playlists.len(), 3);
+    assert_eq!(feed.shelves[0].playlists[0].track_count, Some(123));
+    assert_eq!(feed.shelves[0].playlists[1].track_count, None);
+    assert_eq!(feed.shelves[0].playlists[2].track_count, None);
+}
