@@ -194,9 +194,9 @@ client_contexts + 8 authenticated; 4 auth mutations + 10 live ignored
 opt-in). `cargo clippy --all-targets -- -D warnings`: 0 warnings.
 
 Batch 4 delivered (player & decipher parity):
-- `signature_timestamp` is now `Option<u32>` — extraction failure yields
-  `None` (field omitted from playbackContext) instead of silently
-  defaulting to 0.
+- `signature_timestamp` stays `u32` with legacy `parseInt(sts) || 0`
+  semantics: extraction failure sends `0` in playbackContext (QA-corrected;
+  an earlier `Option<u32>` omit-on-failure deviation was reverted).
 - Full legacy `Player.decipher` URL pipeline in
   `PlayerDecipherer::decipher_stream_url`: per-response n-token cache
   (`NsigCache`), `enhanced_except_` sentinel results used but never cached,

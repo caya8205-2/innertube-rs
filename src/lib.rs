@@ -473,7 +473,7 @@ impl Innertube {
         fetch_player_response(
             &self.session,
             video_id,
-            self.player.decipherer.signature_timestamp,
+            Some(self.player.decipherer.signature_timestamp),
         )
         .await
     }
@@ -487,7 +487,7 @@ impl Innertube {
         video_id: &str,
         options: Option<&GetVideoInfoOptions>,
     ) -> Result<VideoInfo> {
-        let sig_ts = self.player.decipherer.signature_timestamp;
+        let sig_ts = Some(self.player.decipherer.signature_timestamp);
         let player_future = fetch_player_response_with_options(&self.session, video_id, sig_ts, options);
         let next_future = get_watch_next(&self.session, video_id, None, None, None);
 
@@ -513,7 +513,7 @@ impl Innertube {
         let player_response = fetch_player_response_with_options(
             &self.session,
             video_id,
-            self.player.decipherer.signature_timestamp,
+            Some(self.player.decipherer.signature_timestamp),
             options,
         )
         .await?;
@@ -578,7 +578,7 @@ impl Innertube {
         let player_res = fetch_player_response_with_options(
             &self.session,
             video_id,
-            self.player.decipherer.signature_timestamp,
+            Some(self.player.decipherer.signature_timestamp),
             None,
         )
         .await?;

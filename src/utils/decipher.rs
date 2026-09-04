@@ -1,4 +1,4 @@
-﻿use regex::Regex;
+use regex::Regex;
 use rquickjs::{Context, Function, Object, Runtime};
 use std::collections::HashMap;
 use crate::constants::clients;
@@ -23,9 +23,10 @@ pub struct PlayerDecipherer {
     _runtime: Runtime,
     context: Context,
     pub nsig_fn_name: String,
-    /// `signatureTimestamp` extracted from the player script. `None` when
-    /// extraction fails (legacy logs a warning and continues without it).
-    pub signature_timestamp: Option<u32>,
+    /// `signatureTimestamp` extracted from the player script. Legacy
+    /// `parseInt(sts) || 0`: extraction failure yields `0`, which is still
+    /// sent in `playbackContext`.
+    pub signature_timestamp: u32,
 }
 
 impl PlayerDecipherer {
@@ -34,10 +35,12 @@ impl PlayerDecipherer {
         let sts_re = Regex::new(r"signatureTimestamp\s*:\s*(\d+)")
             .map_err(|e| InnertubeError::Player(e.to_string()))?;
 
+        // Legacy `parseInt(sts) || 0`: failure defaults to 0 and is sent.
         let sts = sts_re
             .captures(player_js)
             .and_then(|c| c.get(1))
-            .and_then(|m| m.as_str().parse::<u32>().ok());
+            .and_then(|m| m.as_str().parse::<u32>().ok())
+            .unwrap_or(0);
 
         // 2. Extract nsig function name
         let fn_re = Regex::new(
@@ -458,11 +461,16 @@ mod tests {
     }
 
     #[test]
-    fn missing_signature_timestamp_maps_to_none() {
-        // Extraction failure must not silently default to 0 (legacy warns and
-        // continues without the field).
+    fn missing_signature_timestamp_defaults_to_zero() {
+        // Legacy `parseInt(sts) || 0`: extraction failure yields 0, still
+        // sent in playbackContext.
         let re = regex::Regex::new(r"signatureTimestamp\s*:\s*(\d+)").unwrap();
-        assert!(re.captures("var a=1;").is_none());
+        let sts = re
+            .captures("var a=1;")
+            .and_then(|c| c.get(1))
+            .and_then(|m| m.as_str().parse::<u32>().ok())
+            .unwrap_or(0);
+        assert_eq!(sts, 0);
         assert!(PlayerDecipherer::new("var a=1;").is_err());
     }
 }

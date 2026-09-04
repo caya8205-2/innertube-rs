@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Input Raw N-Token:       {}", raw_n);
     println!("Transformed N-Token:     {:?}", res.n);
     println!("Deciphered Signature:    {:?}", res.sig);
-    println!("Signature Timestamp:     {:?}", yt.player.decipherer.signature_timestamp);
+    println!("Signature Timestamp:     {}", yt.player.decipherer.signature_timestamp);
     println!("Extracted JS Function:   {}", yt.player.decipherer.nsig_fn_name);
 
     Ok(())
