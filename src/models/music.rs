@@ -120,10 +120,18 @@ pub struct MusicLyrics {
 pub struct MusicAlbumView {
     pub browse_id: String,
     pub title: String,
+    /// Convenience display artist retained for existing callers.
     pub artist: Option<String>,
+    pub artists: Vec<MusicArtistRef>,
+    pub album_type: Option<String>,
     pub year: Option<String>,
     pub description: Option<String>,
     pub thumbnail: Option<String>,
+    pub track_count: Option<u32>,
+    pub duration: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub audio_playlist_id: Option<String>,
+    pub is_explicit: bool,
     pub tracks: Vec<MusicTrackItem>,
 }
 

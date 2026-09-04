@@ -6,6 +6,7 @@ use crate::models::music::{
     MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
     MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
+use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
 
@@ -227,47 +228,191 @@ pub fn parse_music_lyrics_response(raw: &Value) -> Result<MusicLyrics> {
     Err(InnertubeError::Other("Lyrics text shelf not found in response".to_string()))
 }
 
-/// Parse YouTube Music album page response using modular AST nodes.
+fn music_album_header(raw: &Value) -> Option<&Value> {
+    raw.pointer("/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/sectionListRenderer/contents/0/musicResponsiveHeaderRenderer")
+        .or_else(|| raw.pointer("/header/musicDetailHeaderRenderer"))
+        .or_else(|| raw.pointer("/header/musicResponsiveHeaderRenderer"))
+        .or_else(|| raw.pointer("/header/musicVisualHeaderRenderer"))
+}
+
+fn music_text(value: &Value) -> Option<String> {
+    if let Some(text) = value.get("simpleText").and_then(Value::as_str) {
+        return Some(text.to_string());
+    }
+    let text = value
+        .get("runs")?
+        .as_array()?
+        .iter()
+        .filter_map(|run| run.get("text").and_then(Value::as_str))
+        .collect::<String>();
+    (!text.is_empty()).then_some(text)
+}
+
+fn music_album_artists(header: &Value) -> Vec<MusicArtistRef> {
+    let runs = header
+        .pointer("/straplineTextOne/runs")
+        .or_else(|| header.pointer("/subtitle/runs"))
+        .and_then(Value::as_array);
+    runs.into_iter()
+        .flatten()
+        .filter_map(|run| {
+            let browse_id = run
+                .pointer("/navigationEndpoint/browseEndpoint/browseId")
+                .and_then(Value::as_str)?;
+            if !browse_id.starts_with("UC")
+                && !browse_id.starts_with("FEmusic_library_privately_owned_artist")
+            {
+                return None;
+            }
+            let name = run.get("text").and_then(Value::as_str)?.trim();
+            (!name.is_empty()).then(|| MusicArtistRef {
+                name: name.to_string(),
+                browse_id: Some(browse_id.to_string()),
+            })
+        })
+        .collect()
+}
+
+fn music_album_audio_playlist_id(header: &Value) -> Option<String> {
+    if let Some(playlist_id) = header
+        .get("buttons")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .find_map(|button| {
+            button
+                .pointer("/musicPlayButtonRenderer/playNavigationEndpoint/watchEndpoint/playlistId")
+                .or_else(|| button.pointer("/musicPlayButtonRenderer/playNavigationEndpoint/watchPlaylistEndpoint/playlistId"))
+                .and_then(Value::as_str)
+        })
+    {
+        return Some(playlist_id.to_string());
+    }
+
+    header
+        .pointer("/menu/menuRenderer/topLevelButtons")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .find_map(|button| {
+            button
+                .pointer("/buttonRenderer/navigationEndpoint/watchEndpoint/playlistId")
+                .or_else(|| button.pointer("/buttonRenderer/navigationEndpoint/watchPlaylistEndpoint/playlistId"))
+                .and_then(Value::as_str)
+                .map(ToString::to_string)
+        })
+}
+
+fn music_album_thumbnail(header: &Value) -> Option<String> {
+    let value = header
+        .pointer("/thumbnail/musicThumbnailRenderer/thumbnail")
+        .or_else(|| header.pointer("/thumbnail/croppedSquareThumbnailRenderer/thumbnail"))
+        .or_else(|| header.get("thumbnail"))?;
+    ThumbnailListNode::from_value(value).best_url().map(ToString::to_string)
+}
+
+fn parse_music_count(text: &str) -> Option<u32> {
+    let digits: String = text.chars().filter(|ch| ch.is_ascii_digit()).collect();
+    if digits.is_empty() {
+        None
+    } else {
+        digits.parse().ok()
+    }
+}
+
+fn value_contains_string(value: &Value, needle: &str) -> bool {
+    match value {
+        Value::String(text) => text == needle,
+        Value::Array(items) => items.iter().any(|item| value_contains_string(item, needle)),
+        Value::Object(map) => map.values().any(|item| value_contains_string(item, needle)),
+        _ => false,
+    }
+}
+
+/// Parse YouTube Music album page response, including the current responsive-header layout.
 pub fn parse_music_album_response(browse_id: &str, raw: &Value) -> Result<MusicAlbumView> {
     let mut album_view = MusicAlbumView {
         browse_id: browse_id.to_string(),
         ..Default::default()
     };
 
-    // Header metadata extraction
-    if let Some(header) = raw.pointer("/header/musicDetailHeaderRenderer")
-        .or_else(|| raw.pointer("/header/musicResponsiveHeaderRenderer"))
-        .or_else(|| raw.pointer("/header/musicVisualHeaderRenderer"))
-    {
-        album_view.title = header.pointer("/title/runs/0/text")
-            .or_else(|| header.pointer("/title/simpleText"))
-            .and_then(|t| t.as_str())
-            .unwrap_or("Untitled Album")
-            .to_string();
+    if let Some(header) = music_album_header(raw) {
+        album_view.title = header
+            .get("title")
+            .and_then(music_text)
+            .unwrap_or_else(|| "Untitled Album".to_string());
 
-        if let Some(sub_runs) = header.pointer("/subtitle/runs").and_then(|r| r.as_array()) {
-            for run in sub_runs {
-                let text = run.get("text").and_then(|t| t.as_str()).unwrap_or("");
-                if let Some(bid) = run.pointer("/navigationEndpoint/browseEndpoint/browseId").and_then(|b| b.as_str()) {
-                    if (bid.starts_with("UC") || bid.starts_with("FEmusic_library_privately_owned_artist")) && album_view.artist.is_none() {
-                        album_view.artist = Some(text.to_string());
-                    }
-                } else if text.chars().all(|c| c.is_ascii_digit()) && text.len() == 4 {
-                    album_view.year = Some(text.to_string());
-                }
-            }
+        if let Some(subtitle_runs) = header.pointer("/subtitle/runs").and_then(Value::as_array) {
+            album_view.album_type = subtitle_runs
+                .first()
+                .and_then(|run| run.get("text"))
+                .and_then(Value::as_str)
+                .map(ToString::to_string);
+            album_view.year = subtitle_runs.iter().find_map(|run| {
+                let text = run.get("text").and_then(Value::as_str)?;
+                (text.len() == 4 && text.chars().all(|ch| ch.is_ascii_digit()))
+                    .then(|| text.to_string())
+            });
         }
 
-        album_view.thumbnail = header.pointer("/thumbnail/musicThumbnailRenderer/thumbnail/thumbnails/0/url")
-            .or_else(|| header.pointer("/thumbnail/thumbnails/0/url"))
-            .and_then(|u| u.as_str())
-            .map(|s| s.to_string());
+        album_view.artists = music_album_artists(header);
+        album_view.artist = (!album_view.artists.is_empty()).then(|| {
+            album_view
+                .artists
+                .iter()
+                .map(|artist| artist.name.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        });
+
+        if let Some(second_runs) = header.pointer("/secondSubtitle/runs").and_then(Value::as_array) {
+            let texts: Vec<&str> = second_runs
+                .iter()
+                .filter_map(|run| run.get("text").and_then(Value::as_str))
+                .filter(|text| *text != " • ")
+                .collect();
+            album_view.track_count = texts.first().and_then(|text| parse_music_count(text));
+            album_view.duration = texts.get(1).map(|text| (*text).to_string()).or_else(|| {
+                (texts.len() == 1 && album_view.track_count.is_none())
+                    .then(|| texts[0].to_string())
+            });
+        }
+
+        album_view.description = header
+            .pointer("/description/musicDescriptionShelfRenderer/description")
+            .or_else(|| header.get("description"))
+            .and_then(music_text);
+        album_view.thumbnail = music_album_thumbnail(header);
+        album_view.audio_playlist_id = music_album_audio_playlist_id(header);
+        album_view.is_explicit = header
+            .get("subtitleBadge")
+            .or_else(|| header.get("subtitleBadges"))
+            .is_some_and(|badge| {
+                value_contains_string(badge, "MUSIC_EXPLICIT_BADGE")
+                    || value_contains_string(badge, "Explicit")
+            });
     }
 
-    // Tracklist extraction using modular parser
     let parsed_tree = Parser::parse_tree(raw);
     for item in parsed_tree.find_music_items() {
-        album_view.tracks.push(convert_music_node_to_track_item(item));
+        let track = convert_music_node_to_track_item(item);
+        if !track.video_id.is_empty() {
+            album_view.tracks.push(track);
+        }
+    }
+
+    if album_view.track_count.is_none() && !album_view.tracks.is_empty() {
+        album_view.track_count = u32::try_from(album_view.tracks.len()).ok();
+    }
+    let complete_tracklist = album_view
+        .track_count
+        .map(|count| count as usize == album_view.tracks.len())
+        .unwrap_or(true);
+    if complete_tracklist
+        && !album_view.tracks.is_empty()
+        && album_view.tracks.iter().all(|track| track.duration_ms.is_some())
+    {
+        album_view.duration_ms = Some(album_view.tracks.iter().filter_map(|track| track.duration_ms).sum());
     }
 
     Ok(album_view)

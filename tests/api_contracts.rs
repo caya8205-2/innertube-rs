@@ -658,3 +658,116 @@ fn test_api_contract_25_attestation_challenge_contract() {
     assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_SIGNIN");
     assert_eq!(payload["ids"][0]["key"], "val");
 }
+
+#[test]
+fn test_api_contract_26_music_album_responsive_header_metadata() {
+    let raw = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [
+                                    {
+                                        "musicResponsiveHeaderRenderer": {
+                                            "title": { "runs": [{ "text": "Fixture Album" }] },
+                                            "subtitle": { "runs": [
+                                                { "text": "EP" },
+                                                { "text": " • " },
+                                                { "text": "2025" }
+                                            ] },
+                                            "straplineTextOne": { "runs": [{
+                                                "text": "Fixture Artist",
+                                                "navigationEndpoint": {
+                                                    "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                }
+                                            }] },
+                                            "secondSubtitle": { "runs": [
+                                                { "text": "1 song" },
+                                                { "text": " • " },
+                                                { "text": "4 minutes" }
+                                            ] },
+                                            "thumbnail": {
+                                                "musicThumbnailRenderer": {
+                                                    "thumbnail": {
+                                                        "thumbnails": [
+                                                            { "url": "https://example.test/small.jpg", "width": 120, "height": 120 },
+                                                            { "url": "https://example.test/large.jpg", "width": 544, "height": 544 }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "buttons": [{
+                                                "musicPlayButtonRenderer": {
+                                                    "playNavigationEndpoint": {
+                                                        "watchEndpoint": {
+                                                            "videoId": "fixture-track",
+                                                            "playlistId": "OLAK5uy_fixture_album"
+                                                        }
+                                                    }
+                                                }
+                                            }],
+                                            "subtitleBadge": [{
+                                                "musicInlineBadgeRenderer": {
+                                                    "icon": { "iconType": "MUSIC_EXPLICIT_BADGE" }
+                                                }
+                                            }]
+                                        }
+                                    },
+                                    {
+                                        "musicShelfRenderer": {
+                                            "contents": [{
+                                                "musicResponsiveListItemRenderer": {
+                                                    "playlistItemData": { "videoId": "fixture-track" },
+                                                    "flexColumns": [
+                                                        {
+                                                            "musicResponsiveListItemFlexColumnRenderer": {
+                                                                "text": { "runs": [{ "text": "Fixture Track" }] }
+                                                            }
+                                                        },
+                                                        {
+                                                            "musicResponsiveListItemFlexColumnRenderer": {
+                                                                "text": { "runs": [
+                                                                    {
+                                                                        "text": "Fixture Artist",
+                                                                        "navigationEndpoint": {
+                                                                            "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                                        }
+                                                                    },
+                                                                    { "text": " • " },
+                                                                    { "text": "4:12" }
+                                                                ] }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let album = endpoints::music::parse_music_album_response("MPREb_fixture", &raw)
+        .expect("responsive Music album fixture should parse");
+    assert_eq!(album.title, "Fixture Album");
+    assert_eq!(album.album_type.as_deref(), Some("EP"));
+    assert_eq!(album.year.as_deref(), Some("2025"));
+    assert_eq!(album.artist.as_deref(), Some("Fixture Artist"));
+    assert_eq!(album.artists.len(), 1);
+    assert_eq!(album.artists[0].browse_id.as_deref(), Some("UC_fixture_artist"));
+    assert_eq!(album.track_count, Some(1));
+    assert_eq!(album.duration.as_deref(), Some("4 minutes"));
+    assert_eq!(album.duration_ms, Some(252_000));
+    assert_eq!(album.audio_playlist_id.as_deref(), Some("OLAK5uy_fixture_album"));
+    assert_eq!(album.thumbnail.as_deref(), Some("https://example.test/large.jpg"));
+    assert!(album.is_explicit);
+    assert_eq!(album.tracks.len(), 1);
+    assert_eq!(album.tracks[0].video_id, "fixture-track");
+}
