@@ -87,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(r) => {
                 let status = r.status();
                 let body = r.text().await.unwrap_or_default();
-                println!("== {label} -> HTTP {status}\n{}\n", &body.chars().take(600).collect::<String>());
+                println!("== {label} -> HTTP {status}\n{}\n", body.chars().take(600).collect::<String>());
             }
             Err(e) => println!("== {label} -> ERROR {e}\n"),
         }
