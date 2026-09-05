@@ -50,7 +50,7 @@ cargo add innertube-rs
 
 Or add the following line to your Cargo.toml:
 ```bash
-innertube-rs = "0.8.0"
+innertube-rs = "0.9.0"
 ```
 
 ---
