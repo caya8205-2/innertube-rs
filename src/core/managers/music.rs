@@ -1,7 +1,7 @@
 use crate::core::session::Session;
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home,
-    get_music_home_continuation, get_music_lyrics, search_music,
+    get_music_home_continuation, get_music_lyrics, get_music_playlist_details, search_music,
 };
 use crate::error::Result;
 use crate::models::music::{
@@ -36,6 +36,15 @@ impl<'a> MusicManager<'a> {
     /// Fetch a YouTube Music album page.
     pub async fn get_album(&self, album_id: &str) -> Result<MusicAlbumView> {
         get_music_album(self.session, album_id).await
+    }
+
+    /// Fetch a YouTube Music playlist detail page (`MusicPlaylistView` with
+    /// owned/privacy/duration metadata; distinct from `get_playlist`).
+    pub async fn get_playlist_details(
+        &self,
+        playlist_id: &str,
+    ) -> Result<crate::models::music::MusicPlaylistView> {
+        get_music_playlist_details(self.session, playlist_id).await
     }
 
     /// Fetch song lyrics.
