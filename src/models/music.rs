@@ -63,7 +63,11 @@ pub struct MusicTrackItem {
 pub struct MusicAlbumItem {
     pub browse_id: String,
     pub title: String,
+    /// Convenience primary-artist name retained for existing callers.
     pub artist: Option<String>,
+    /// Full server-order artist list for collaborative / compilation releases.
+    #[serde(default)]
+    pub artists: Vec<MusicArtistRef>,
     pub year: Option<String>,
     pub thumbnail: Option<String>,
     pub track_count: Option<u32>,

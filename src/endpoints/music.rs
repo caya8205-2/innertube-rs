@@ -331,6 +331,14 @@ pub fn parse_music_search_response(
                     browse_id: item.album_id.clone().or_else(|| item.id.clone()).unwrap_or_default(),
                     title: item.title.clone(),
                     artist: item.artists.first().map(|a| a.name.clone()),
+                    artists: item
+                        .artists
+                        .iter()
+                        .map(|artist| MusicArtistRef {
+                            name: artist.name.clone(),
+                            browse_id: artist.id.clone(),
+                        })
+                        .collect(),
                     year: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
                     track_count: None,
@@ -505,6 +513,7 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
                 for node in &parsed_shelf {
                     if let YTNode::MusicCard(card) = node {
                         page.albums.push(MusicAlbumItem {
+                            artists: Vec::new(),
                             browse_id: card.id.clone().unwrap_or_default(),
                             title: card.title.clone(),
                             artist: card.subtitle.clone(),
@@ -518,6 +527,7 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
                 for node in &parsed_shelf {
                     if let YTNode::MusicCard(card) = node {
                         page.singles.push(MusicAlbumItem {
+                            artists: Vec::new(),
                             browse_id: card.id.clone().unwrap_or_default(),
                             title: card.title.clone(),
                             artist: card.subtitle.clone(),
@@ -587,6 +597,7 @@ pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
                 if let YTNode::MusicCard(card) = node {
                     if card.item_type.as_deref() == Some("MUSIC_PAGE_TYPE_ALBUM") {
                         shelf.albums.push(MusicAlbumItem {
+                            artists: Vec::new(),
                             browse_id: card.id.clone().unwrap_or_default(),
                             title: card.title.clone(),
                             artist: card.subtitle.clone(),
@@ -630,6 +641,7 @@ pub fn parse_music_explore_response(raw: &Value) -> Result<MusicExplore> {
     for node in &parsed_tree {
         if let YTNode::MusicCard(card) = node {
             explore.new_releases.push(MusicAlbumItem {
+                artists: Vec::new(),
                 browse_id: card.id.clone().unwrap_or_default(),
                 title: card.title.clone(),
                 artist: card.subtitle.clone(),
