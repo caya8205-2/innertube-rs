@@ -245,7 +245,7 @@ async fn test_live_authenticated_rating_mutation_with_cleanup() {
 
     // 1. Perform like mutation
     let like_res = innertube_rs::Actions::like(&yt.session, test_video_id).await;
-    assert!(like_res.is_ok(), "Authenticated like should succeed");
+    assert!(like_res.is_ok(), "Authenticated like should succeed: {:?}", like_res.err());
 
     // 2. Perform cleanup: remove rating
     let clean_res = innertube_rs::Actions::remove_rating(&yt.session, test_video_id).await;
@@ -276,7 +276,7 @@ async fn test_live_authenticated_subscription_mutation_with_cleanup() {
 
     // 2. Cleanup: Unsubscribe
     let unsub_res = innertube_rs::Actions::unsubscribe(&yt.session, &[test_channel_id]).await;
-    assert!(unsub_res.is_ok(), "Authenticated unsubscribe cleanup should succeed");
+    assert!(unsub_res.is_ok(), "Authenticated unsubscribe cleanup should succeed: {:?}", unsub_res.err());
 }
 
 #[tokio::test]
@@ -297,7 +297,7 @@ async fn test_live_authenticated_playlist_lifecycle_with_cleanup() {
 
     // 1. Create temporary test playlist
     let create_res = innertube_rs::Actions::create_playlist(&yt.session, "Test Temp Playlist", Some(&["dQw4w9WgXcQ"])).await;
-    assert!(create_res.is_ok(), "Authenticated create_playlist should succeed");
+    assert!(create_res.is_ok(), "Authenticated create_playlist should succeed: {:?}", create_res.err());
 
     let playlist_id = create_res.unwrap().playlist_id;
     if let Some(pid) = playlist_id {

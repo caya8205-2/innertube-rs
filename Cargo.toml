@@ -126,6 +126,10 @@ path = "examples/live/test_live_chat.rs"
 name = "test_oauth_flow"
 path = "examples/auth/test_oauth_flow.rs"
 
+[[example]]
+name = "debug_mutations"
+path = "examples/auth/debug_mutations.rs"
+
 # Diagnostics & Benchmarks
 [[example]]
 name = "test_android_testsuite"

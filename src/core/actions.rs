@@ -128,7 +128,6 @@ impl Actions {
     /// Delete a YouTube playlist (`POST /playlist/delete`).
     pub async fn delete_playlist(session: &Session, playlist_id: &str) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        // Legacy deletePlaylistServiceEndpoint uses `sourcePlaylistId`.
         let payload = delete_playlist_payload(playlist_id);
 
         let resp = session.post_innertube("/playlist/delete", payload).await?;
@@ -319,7 +318,7 @@ impl Actions {
         playlist_id: &str,
     ) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = rating_payload(playlist_id);
+        let payload = playlist_rating_payload(playlist_id);
 
         let resp = session.post_innertube("/like/like", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
@@ -338,7 +337,7 @@ impl Actions {
         playlist_id: &str,
     ) -> Result<ActionResult> {
         session.ensure_authenticated()?;
-        let payload = rating_payload(playlist_id);
+        let payload = playlist_rating_payload(playlist_id);
 
         let resp = session.post_innertube("/like/removelike", payload).await?;
         let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
@@ -710,8 +709,17 @@ fn remove_playlist_actions(set_video_ids: &[&str]) -> Vec<Value> {
         .collect()
 }
 
+/// Rating payload. Live-verified 2026-09-05: YouTube rejects a bare string
+/// target with 400 INVALID_ARGUMENT (LikeTarget type) — the wire shape is an
+/// object. Legacy `LikeEndpoint.buildRequest` forwards the raw string
+/// (likely stale); we send the object form the server accepts.
 fn rating_payload(video_id: &str) -> Value {
-    json!({ "target": video_id })
+    json!({ "target": { "videoId": video_id } })
+}
+
+/// Playlist library rating payload (`target.playlistId`).
+fn playlist_rating_payload(playlist_id: &str) -> Value {
+    json!({ "target": { "playlistId": playlist_id } })
 }
 
 /// Legacy subscribe/unsubscribe params (`EgIIAhgA` / `CgIIAhgA`).
@@ -722,9 +730,12 @@ fn subscription_payload(channel_ids: &[&str], subscribe: bool) -> Value {
     })
 }
 
-/// Legacy `deletePlaylistServiceEndpoint` payload (`sourcePlaylistId`).
+/// Playlist delete payload. Live-verified 2026-09-05: the server expects
+/// `playlistId`. Legacy `DeletePlaylistEndpoint.buildRequest` is buggy
+/// (checks `data.playlistId` but assigns `data.sourcePlaylistId`, sending an
+/// empty request); we send the working `playlistId` form.
 fn delete_playlist_payload(playlist_id: &str) -> Value {
-    json!({ "sourcePlaylistId": playlist_id })
+    json!({ "playlistId": playlist_id })
 }
 
 /// Legacy quirk: setName uses the snake_case `playlist_id` key (unlike
@@ -756,7 +767,14 @@ mod tests {
 
     #[test]
     fn rating_target_matches_legacy_like_endpoint_request() {
-        assert_eq!(rating_payload("dQw4w9WgXcQ"), json!({ "target": "dQw4w9WgXcQ" }));
+        assert_eq!(
+            rating_payload("dQw4w9WgXcQ"),
+            json!({ "target": { "videoId": "dQw4w9WgXcQ" } })
+        );
+        assert_eq!(
+            playlist_rating_payload("PL_test"),
+            json!({ "target": { "playlistId": "PL_test" } })
+        );
     }
 
     #[test]
@@ -770,10 +788,10 @@ mod tests {
     }
 
     #[test]
-    fn delete_playlist_uses_source_playlist_id() {
+    fn delete_playlist_uses_playlist_id() {
         let payload = delete_playlist_payload("PL_test");
-        assert_eq!(payload, json!({ "sourcePlaylistId": "PL_test" }));
-        assert!(payload.get("playlistId").is_none());
+        assert_eq!(payload, json!({ "playlistId": "PL_test" }));
+        assert!(payload.get("sourcePlaylistId").is_none());
     }
 
     #[test]
