@@ -252,6 +252,8 @@ pub struct PlaylistPanelVideoNode {
     pub author: Option<String>,
     pub duration: Option<String>,
     pub selected: bool,
+    /// Current rating state, inverted from the toggle menu's default action.
+    pub like_status: Option<String>,
 }
 
 impl PlaylistPanelVideoNode {
@@ -285,12 +287,31 @@ impl PlaylistPanelVideoNode {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
+        // The toggle menu's default action is the inverse of the current state:
+        // "LIKE" (click to like) means INDIFFERENT now, and vice versa.
+        let like_status = target
+            .pointer("/menu/menuRenderer/items")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .find_map(|item| {
+                let action = item
+                    .pointer("/toggleMenuServiceItemRenderer/defaultServiceEndpoint/likeEndpoint/status")
+                    .and_then(Value::as_str)?;
+                match action {
+                    "LIKE" => Some("INDIFFERENT".to_string()),
+                    "INDIFFERENT" => Some("LIKE".to_string()),
+                    _ => None,
+                }
+            });
+
         Some(Self {
             id,
             title,
             author,
             duration,
             selected,
+            like_status,
         })
     }
 }

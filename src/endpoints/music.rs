@@ -918,5 +918,8 @@ fn convert_music_node_to_track_item(item: &MusicResponsiveListItemNode) -> Music
         duration_ms: item.duration_ms,
         thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
         is_explicit: item.is_explicit,
+        like_status: crate::models::music::MusicLikeStatus::from_api_status(
+            item.like_status.as_deref(),
+        ),
     }
 }
