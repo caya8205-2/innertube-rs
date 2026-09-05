@@ -129,6 +129,75 @@ fn filterable_feed_dropdown_path_uses_list_items() {
 }
 
 #[test]
+fn selected_primary_with_secondary_uses_current_page_as_base() {
+    // Primary "All" already selected + secondary "Recent" also selected:
+    // legacy returns the current page (no calls), not a no-op None.
+    let raw = json!({
+        "contents": [
+            {
+                "chipView": {
+                    "text": "Type",
+                    "displayType": "CHIP_VIEW_MODEL_DISPLAY_TYPE_DROP_DOWN",
+                    "selected": true,
+                    "tapCommand": {
+                        "innertubeCommand": {
+                            "showSheetCommand": {
+                                "inlineContent": {
+                                    "sheetView": {
+                                        "content": {
+                                            "listView": {
+                                                "items": [
+                                                    {
+                                                        "listItemView": {
+                                                            "title": { "content": "Videos" },
+                                                            "isSelected": true,
+                                                            "rendererContext": {
+                                                                "commandContext": {
+                                                                    "onTap": {
+                                                                        "commandMetadata": { "webCommandMetadata": { "apiUrl": "/youtubei/v1/browse" } },
+                                                                        "browseEndpoint": { "browseId": "FEwhat_to_watch" }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            { "chipView": { "text": "Recent", "selected": true } }
+        ]
+    });
+    let nodes = Parser::parse_tree(&raw);
+    let feed = FilterableFeed::from_nodes(&nodes).unwrap();
+    assert!(!feed.page_nodes.is_empty(), "page nodes retained");
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let session = rt.block_on(async {
+        innertube_rs::Session::create(innertube_rs::SessionOptions {
+            generate_session_locally: Some(true),
+            retrieve_innertube_config: Some(false),
+            ..Default::default()
+        })
+        .await
+        .unwrap()
+    });
+
+    // Videos (selected) + Recent (selected secondary) → current page nodes.
+    let result = rt
+        .block_on(feed.get_filtered_feed(&session, "Videos", Some("Recent")))
+        .unwrap();
+    let page = result.expect("selected+selected secondary returns current page");
+    assert!(!page.is_empty());
+}
+
+#[test]
 fn tabbed_feed_lookup_rules() {
     let feed = TrendingFeed {
         current_tab: "Now".to_string(),

@@ -177,6 +177,9 @@ impl FilterNode {
 pub struct FilterableFeed {
     pub primary_filters: Vec<FilterNode>,
     pub secondary_filters: Vec<ChipViewNode>,
+    /// Current page nodes (needed when applying a secondary filter to an
+    /// already-selected primary filter — legacy uses `this.page`).
+    pub page_nodes: Vec<YTNode>,
 }
 
 impl FilterableFeed {
@@ -248,6 +251,7 @@ impl FilterableFeed {
         Ok(Self {
             primary_filters,
             secondary_filters,
+            page_nodes: nodes.to_vec(),
         })
     }
 
@@ -303,9 +307,11 @@ impl FilterableFeed {
         };
 
         if let Some(secondary) = secondary_filter {
+            // Legacy: `response = isSelected ? this.page : await call(...)` —
+            // an already-selected primary filter uses the current page as base.
             let base_nodes = match nodes {
                 Some(n) => n,
-                None => return Ok(None),
+                None => self.page_nodes.clone(),
             };
             let feed = FilterableFeed::from_nodes(&base_nodes)?;
             if !feed.secondary_filter_labels().iter().any(|f| f == secondary) {
