@@ -382,6 +382,7 @@ fn test_fixture_actions_execute_response() {
         success: true,
         status_code: 200,
         data: raw_success.clone(),
+        parsed: None,
     };
 
     assert!(api_response.success);

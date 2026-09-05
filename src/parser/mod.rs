@@ -109,6 +109,9 @@ pub trait NodeListExt {
     fn find_posts(&self) -> Vec<&PostNode>;
     /// Community posts (`BackstagePost`), legacy `Feed.posts`.
     fn find_backstage_posts(&self) -> Vec<&crate::parser::nodes::misc::music_shorts_misc::BackstagePostNode>;
+    /// All post types (Post, SharedPost, BackstagePost), legacy
+    /// `Feed.posts` coverage.
+    fn find_feed_posts(&self) -> Vec<crate::models::feed::FeedPost>;
     fn find_continuation_token(&self) -> Option<String>;
     fn find_shelves(&self) -> Vec<&ShelfNode>;
     fn find_tabs(&self) -> Vec<&TabNode>;
@@ -195,6 +198,21 @@ impl NodeListExt for [YTNode] {
         self.iter()
             .filter_map(|n| match n {
                 YTNode::BackstagePost(p) => Some(p),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn find_feed_posts(&self) -> Vec<crate::models::feed::FeedPost> {
+        self.iter()
+            .filter_map(|n| match n {
+                YTNode::Post(p) => Some(crate::models::feed::FeedPost::Post(p.clone())),
+                YTNode::SharedPost(p) => {
+                    Some(crate::models::feed::FeedPost::SharedPost(p.clone()))
+                }
+                YTNode::BackstagePost(p) => {
+                    Some(crate::models::feed::FeedPost::BackstagePost(p.clone()))
+                }
                 _ => None,
             })
             .collect()

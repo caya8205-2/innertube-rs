@@ -34,8 +34,9 @@ pub struct BrowseFeed {
     pub videos: Vec<VideoNode>,
     pub channels: Vec<ChannelNode>,
     pub playlists: Vec<PlaylistNode>,
-    /// Community posts (legacy `Feed.posts`).
-    pub posts: Vec<crate::parser::nodes::misc::music_shorts_misc::BackstagePostNode>,
+    /// Community posts (legacy `Feed.posts`: Post, SharedPost,
+    /// BackstagePost).
+    pub posts: Vec<FeedPost>,
     pub continuation_token: Option<String>,
 }
 
@@ -169,6 +170,16 @@ impl FilterNode {
                 .and_then(NavigationEndpointNode::from_value),
         }
     }
+}
+
+/// A community post in a feed (legacy `Feed.posts` coverage: Post,
+/// SharedPost, BackstagePost).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FeedPost {
+    Post(crate::parser::nodes::post::PostNode),
+    SharedPost(crate::parser::nodes::misc::music_shorts_misc::SharedPostNode),
+    BackstagePost(crate::parser::nodes::misc::music_shorts_misc::BackstagePostNode),
 }
 
 /// Legacy `FilterableFeed` mixin: primary/secondary filter extraction and

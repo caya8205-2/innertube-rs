@@ -336,4 +336,25 @@ fn browse_feed_collects_posts() {
     });
     let feed = innertube_rs::endpoints::feed::parse_browse_feed_response("FEchannels", &raw).unwrap();
     assert_eq!(feed.posts.len(), 1);
+    assert!(matches!(
+        feed.posts[0],
+        innertube_rs::models::feed::FeedPost::BackstagePost(_)
+    ));
+}
+
+#[test]
+fn continuation_command_node_carries_request_and_token() {
+    // ContinuationCommand (parser/continuations.ts): request + token.
+    let raw = json!({
+        "continuationCommand": {
+            "request": { "requestType": "CONTINUATION_REQUEST_TYPE_BROWSE" },
+            "token": "cont-token-123"
+        }
+    });
+    let node = Parser::parse_node(&raw).expect("continuation command parses");
+    let YTNode::ContinuationCommand(cmd) = node else {
+        panic!("expected ContinuationCommand");
+    };
+    assert_eq!(cmd.token.as_deref(), Some("cont-token-123"));
+    assert_eq!(cmd.request.as_ref().and_then(|r| r.get("requestType")).and_then(|v| v.as_str()), Some("CONTINUATION_REQUEST_TYPE_BROWSE"));
 }

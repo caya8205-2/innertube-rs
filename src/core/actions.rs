@@ -454,14 +454,18 @@ impl Actions {
         let success = resp.status().is_success();
         let mut data: Value = resp.json().await.map_err(InnertubeError::Network)?;
 
-        if prepared.parse {
+        let parsed = if prepared.parse {
             data = follow_navigate_redirect(session, data).await?;
-        }
+            Some(crate::parser::Parser::parse_response(&data))
+        } else {
+            None
+        };
 
         Ok(ApiResponse {
             success,
             status_code,
             data,
+            parsed,
         })
     }
 }
@@ -679,12 +683,15 @@ pub(crate) async fn follow_navigate_redirect(session: &Session, mut data: Value)
     ))
 }
 
-/// An unparsed InnerTube API response matching `ApiResponse` in Actions.ts.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+/// An InnerTube API response matching `ApiResponse` in Actions.ts. When the
+/// call used `parse: true`, `parsed` carries the typed
+/// `parser::ParsedResponse` assembly (legacy returns `ParsedResponse<T>`).
+#[derive(Debug, Clone)]
 pub struct ApiResponse {
     pub success: bool,
     pub status_code: u16,
     pub data: Value,
+    pub parsed: Option<crate::parser::ParsedResponse>,
 }
 
 fn resp_success(data: &Value, status_code: u16) -> bool {

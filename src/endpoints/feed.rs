@@ -162,7 +162,7 @@ pub fn parse_browse_feed_response(browse_id: &str, raw: &Value) -> Result<Browse
         videos: tree.find_videos().into_iter().cloned().collect(),
         channels: tree.find_channels().into_iter().cloned().collect(),
         playlists: tree.find_playlists().into_iter().cloned().collect(),
-        posts: tree.find_backstage_posts().into_iter().cloned().collect(),
+        posts: tree.find_feed_posts(),
         continuation_token: Parser::parse_body_tree(raw).find_continuation_token(),
     })
 }

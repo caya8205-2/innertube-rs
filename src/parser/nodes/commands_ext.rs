@@ -152,7 +152,9 @@ impl AddToPlaylistCommandNode {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContinuationCommandNode {
-    pub request: Option<String>,
+    /// Legacy `ContinuationCommand.request` (a `ContinuationCommandRequest`
+    /// object on the wire, e.g. `{ "requestType": "..." }`).
+    pub request: Option<Value>,
     pub token: Option<String>,
     pub form_data: Option<Value>,
 }
@@ -161,7 +163,7 @@ impl ContinuationCommandNode {
     pub fn from_value(val: &Value) -> Option<Self> {
         let node = val.get("continuationCommand").unwrap_or(val);
         Some(Self {
-            request: node.get("request").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            request: node.get("request").cloned(),
             token: node.get("token").and_then(|v| v.as_str()).map(|s| s.to_string()),
             form_data: node.get("formData").cloned(),
         })
