@@ -221,6 +221,16 @@ impl NodeListExt for [YTNode] {
     fn find_continuation_token(&self) -> Option<String> {
         self.iter().find_map(|n| match n {
             YTNode::Continuation(c) => Some(c.token.clone()),
+            YTNode::SectionListContinuation(c) => c.continuation.clone(),
+            YTNode::ItemSectionContinuation(c) => c.continuation.clone(),
+            YTNode::GridContinuation(c) => c.continuation.clone(),
+            YTNode::MusicShelfContinuation(c) => c.continuation.clone(),
+            YTNode::MusicPlaylistShelfContinuation(c) => c.continuation.clone(),
+            YTNode::PlaylistPanelContinuation(c) => c.continuation.clone(),
+            YTNode::ReloadContinuationItemsCommand(c) => c.continuation.clone(),
+            YTNode::LiveChatContinuation(c) => {
+                c.continuation.as_ref().map(|t| t.token.clone())
+            }
             _ => None,
         })
     }

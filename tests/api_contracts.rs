@@ -1229,3 +1229,85 @@ fn test_api_contract_30_music_track_like_status() {
         .expect("watch neutral fixture should parse");
     assert_eq!(watch_neutral.like_status.as_deref(), Some("INDIFFERENT"));
 }
+
+fn music_home_track(video_id: &str, title: &str) -> Value {
+    json!({
+        "musicResponsiveListItemRenderer": {
+            "playlistItemData": { "videoId": video_id },
+            "flexColumns": [
+                {
+                    "musicResponsiveListItemFlexColumnRenderer": {
+                        "text": { "runs": [{ "text": title }] }
+                    }
+                }
+            ]
+        }
+    })
+}
+
+fn music_home_shelf(title: &str, video_id: &str) -> Value {
+    json!({
+        "musicCarouselShelfRenderer": {
+            "header": {
+                "musicCarouselShelfBasicHeaderRenderer": {
+                    "title": { "runs": [{ "text": title }] }
+                }
+            },
+            "contents": [music_home_track(video_id, title)]
+        }
+    })
+}
+
+#[test]
+fn test_api_contract_31_music_home_initial_page_retains_continuation() {
+    let raw = json!({
+        "contents": {
+            "singleColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [music_home_shelf("Quick picks", "track-page-1")],
+                                "continuations": [{
+                                    "nextContinuationData": {
+                                        "continuation": "music-home-page-2"
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("initial Music home fixture should parse");
+    assert_eq!(feed.shelves.len(), 1);
+    assert_eq!(feed.shelves[0].title, "Quick picks");
+    assert_eq!(feed.shelves[0].tracks.len(), 1);
+    assert_eq!(feed.continuation_token.as_deref(), Some("music-home-page-2"));
+}
+
+#[test]
+fn test_api_contract_32_music_home_continuation_parses_shelves_and_next_token() {
+    let raw = json!({
+        "continuationContents": {
+            "sectionListContinuation": {
+                "contents": [music_home_shelf("Listen again", "track-page-2")],
+                "continuations": [{
+                    "nextContinuationData": {
+                        "continuation": "music-home-page-3"
+                    }
+                }]
+            }
+        }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("Music home continuation fixture should parse");
+    assert_eq!(feed.shelves.len(), 1);
+    assert_eq!(feed.shelves[0].title, "Listen again");
+    assert_eq!(feed.shelves[0].tracks.len(), 1);
+    assert_eq!(feed.continuation_token.as_deref(), Some("music-home-page-3"));
+}

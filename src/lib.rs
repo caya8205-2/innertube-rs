@@ -871,6 +871,14 @@ impl Innertube {
         get_music_home(&self.session).await
     }
 
+    /// Fetch a continuation page of the YouTube Music Home Feed.
+    pub async fn get_music_home_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<MusicHomeFeed> {
+        crate::endpoints::music::get_music_home_continuation(&self.session, continuation_token).await
+    }
+
     /// Fetch the main YouTube Home Feed (`FEwhat_to_watch`).
     pub async fn get_home_feed(&self, params: Option<&str>) -> Result<HomeFeed> {
         get_home_feed(&self.session, params).await
