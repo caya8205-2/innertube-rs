@@ -1,7 +1,7 @@
 use crate::core::session::Session;
 use crate::endpoints::music::{
-    get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_lyrics,
-    search_music,
+    get_music_album, get_music_artist, get_music_explore, get_music_home,
+    get_music_home_continuation, get_music_lyrics, get_music_playlist_details, search_music,
 };
 use crate::error::Result;
 use crate::models::music::{
@@ -38,6 +38,15 @@ impl<'a> MusicManager<'a> {
         get_music_album(self.session, album_id).await
     }
 
+    /// Fetch a YouTube Music playlist detail page (`MusicPlaylistView` with
+    /// owned/privacy/duration metadata; distinct from `get_playlist`).
+    pub async fn get_playlist_details(
+        &self,
+        playlist_id: &str,
+    ) -> Result<crate::models::music::MusicPlaylistView> {
+        get_music_playlist_details(self.session, playlist_id).await
+    }
+
     /// Fetch song lyrics.
     pub async fn get_lyrics(&self, video_id: &str) -> Result<MusicLyrics> {
         get_music_lyrics(self.session, video_id).await
@@ -46,6 +55,14 @@ impl<'a> MusicManager<'a> {
     /// Fetch YouTube Music Home Feed.
     pub async fn get_home(&self) -> Result<MusicHomeFeed> {
         get_music_home(self.session).await
+    }
+
+    /// Fetch a continuation page of the YouTube Music Home Feed.
+    pub async fn get_home_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<MusicHomeFeed> {
+        get_music_home_continuation(self.session, continuation_token).await
     }
 
     /// Fetch YouTube Music Explore page.

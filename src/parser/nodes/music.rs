@@ -20,6 +20,7 @@ pub struct MusicResponsiveListItemNode {
     pub endpoint: Option<NavigationEndpointNode>,
     pub item_type: Option<String>,
     pub is_explicit: bool,
+    pub like_status: Option<String>,
 }
 
 /// Represents a YouTube Music two-row grid card (`MusicTwoRowItem.ts`).
@@ -28,6 +29,7 @@ pub struct MusicTwoRowItemNode {
     pub id: Option<String>,
     pub title: String,
     pub subtitle: Option<String>,
+    pub track_count: Option<u32>,
     pub thumbnails: ThumbnailListNode,
     pub endpoint: Option<NavigationEndpointNode>,
     pub item_type: Option<String>,
@@ -104,6 +106,20 @@ impl MusicResponsiveListItemNode {
         let is_explicit = target.pointer("/badges/0/musicInlineBadgeRenderer/icon/iconType")
             .and_then(|i| i.as_str()) == Some("MUSIC_EXPLICIT_BADGE");
 
+        let like_status = target
+            .pointer("/menu/menuRenderer/topLevelButtons")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .find_map(|button| {
+                button
+                    .get("likeButtonRenderer")
+                    .or_else(|| button.get("musicLikeButtonRenderer"))
+                    .and_then(|renderer| renderer.get("likeStatus"))
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string)
+            });
+
         Some(Self {
             id,
             title,
@@ -116,6 +132,7 @@ impl MusicResponsiveListItemNode {
             endpoint,
             item_type,
             is_explicit,
+            like_status,
         })
     }
 }
@@ -143,6 +160,16 @@ impl MusicTwoRowItemNode {
             .and_then(TextNode::from_value)
             .map(|t| t.text);
 
+        // Track count from the 3rd subtitle run (e.g. "123 songs").
+        let track_count = target
+            .pointer("/subtitle/runs")
+            .and_then(Value::as_array)
+            .filter(|runs| runs.len() == 3)
+            .and_then(|runs| runs.get(2))
+            .and_then(|run| run.get("text"))
+            .and_then(Value::as_str)
+            .and_then(parse_music_card_track_count);
+
         let thumbnails = ThumbnailListNode::from_value(
             target.pointer("/thumbnailRenderer/musicThumbnailRenderer")
                 .or_else(|| target.get("thumbnailRenderer"))
@@ -159,10 +186,24 @@ impl MusicTwoRowItemNode {
             id,
             title,
             subtitle,
+            track_count,
             thumbnails,
             endpoint,
             item_type,
         })
+    }
+}
+
+fn parse_music_card_track_count(text: &str) -> Option<u32> {
+    let lower = text.to_ascii_lowercase();
+    if !lower.contains("track") && !lower.contains("song") {
+        return None;
+    }
+    let digits: String = text.chars().filter(|ch| ch.is_ascii_digit()).collect();
+    if digits.is_empty() {
+        None
+    } else {
+        digits.parse().ok()
     }
 }
 

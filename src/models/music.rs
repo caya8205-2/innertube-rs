@@ -43,6 +43,26 @@ pub struct MusicAlbumRef {
     pub browse_id: Option<String>,
 }
 
+/// Rating state for a YouTube Music track.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MusicLikeStatus {
+    Like,
+    Dislike,
+    #[default]
+    Indifferent,
+}
+
+impl MusicLikeStatus {
+    pub(crate) fn from_api_status(status: Option<&str>) -> Self {
+        match status {
+            Some("LIKE") => Self::Like,
+            Some("DISLIKE") => Self::Dislike,
+            _ => Self::Indifferent,
+        }
+    }
+}
+
 /// A track item in YouTube Music (song or music video).
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -55,6 +75,7 @@ pub struct MusicTrackItem {
     pub duration_ms: Option<u64>,
     pub thumbnail: Option<String>,
     pub is_explicit: bool,
+    pub like_status: MusicLikeStatus,
 }
 
 /// An album card item in YouTube Music search / explore.
@@ -63,7 +84,11 @@ pub struct MusicTrackItem {
 pub struct MusicAlbumItem {
     pub browse_id: String,
     pub title: String,
+    /// Convenience primary-artist name retained for existing callers.
     pub artist: Option<String>,
+    /// Full server-order artist list for collaborative / compilation releases.
+    #[serde(default)]
+    pub artists: Vec<MusicArtistRef>,
     pub year: Option<String>,
     pub thumbnail: Option<String>,
     pub track_count: Option<u32>,
@@ -88,6 +113,24 @@ pub struct MusicPlaylistItem {
     pub author: Option<String>,
     pub track_count: Option<u32>,
     pub thumbnail: Option<String>,
+}
+
+/// Full YouTube Music playlist details with the native initial track window.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicPlaylistView {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub author: Option<MusicArtistRef>,
+    pub track_count: Option<u32>,
+    pub thumbnail: Option<String>,
+    pub tracks: Vec<MusicTrackItem>,
+    pub owned: bool,
+    pub privacy: Option<String>,
+    pub duration: Option<String>,
+    pub year: Option<String>,
+    pub is_collaborative: bool,
 }
 
 /// Consolidated YouTube Music search results.
@@ -120,10 +163,18 @@ pub struct MusicLyrics {
 pub struct MusicAlbumView {
     pub browse_id: String,
     pub title: String,
+    /// Convenience display artist retained for existing callers.
     pub artist: Option<String>,
+    pub artists: Vec<MusicArtistRef>,
+    pub album_type: Option<String>,
     pub year: Option<String>,
     pub description: Option<String>,
     pub thumbnail: Option<String>,
+    pub track_count: Option<u32>,
+    pub duration: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub audio_playlist_id: Option<String>,
+    pub is_explicit: bool,
     pub tracks: Vec<MusicTrackItem>,
 }
 
@@ -142,10 +193,18 @@ pub struct MusicExplore {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicArtistPage {
+    /// Canonical browse ID used to fetch the artist page.
     pub id: String,
+    /// Subscription channel ID returned by the artist header, when present.
+    pub channel_id: Option<String>,
     pub name: String,
     pub description: Option<String>,
+    pub views: Option<String>,
     pub subscribers: Option<String>,
+    pub monthly_listeners: Option<String>,
+    pub subscribed: bool,
+    pub shuffle_id: Option<String>,
+    pub radio_id: Option<String>,
     pub thumbnail: Option<String>,
     pub top_songs: Vec<MusicTrackItem>,
     pub albums: Vec<MusicAlbumItem>,

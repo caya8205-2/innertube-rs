@@ -148,8 +148,8 @@ pub use models::live_chat::{
 pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem, MusicSearchFilter,
-    MusicSearchResults, MusicShelf, MusicTrackItem,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics, MusicPlaylistItem,
+    MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
 };
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
@@ -869,6 +869,22 @@ impl Innertube {
     /// Fetch YouTube Music Home Feed with dynamic shelves (`FEmusic_home`).
     pub async fn get_music_home(&self) -> Result<MusicHomeFeed> {
         get_music_home(&self.session).await
+    }
+
+    /// Fetch a continuation page of the YouTube Music Home Feed.
+    pub async fn get_music_home_continuation(
+        &self,
+        continuation_token: &str,
+    ) -> Result<MusicHomeFeed> {
+        crate::endpoints::music::get_music_home_continuation(&self.session, continuation_token).await
+    }
+
+    /// Fetch YouTube Music playlist details and the native initial track window.
+    pub async fn get_music_playlist_details(
+        &self,
+        playlist_id: &str,
+    ) -> Result<crate::models::music::MusicPlaylistView> {
+        crate::endpoints::music::get_music_playlist_details(&self.session, playlist_id).await
     }
 
     /// Fetch the main YouTube Home Feed (`FEwhat_to_watch`).

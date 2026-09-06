@@ -5,8 +5,9 @@ use innertube_rs::{
     CommentThread, CommentsResult, CreateCommentResult, CreatePlaylistResult, DownloadOptions,
     DownloadRange, FormatFilter, FormatOptions, FormatType, GetVideoInfoOptions, GuideResponse,
     HashtagFeed, HistoryFeed, HomeFeed, Innertube, LibraryFeed, LiveChatMessage, LiveChatResponse,
-    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicLyrics, MusicSearchFilter,
-    MusicSearchResults, NavigationEndpointNode, NodeListExt, NotificationPreferenceType, Parser,
+    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics,
+    MusicSearchFilter, MusicSearchResults, NavigationEndpointNode, NodeListExt,
+    NotificationPreferenceType, Parser,
     PlaylistContinuation, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
     PlaylistVideoItem, PlaylistVideoNode, PlaylistView, PostCommentSort, PostNode,
     QualityPreference, ReelShelfNode, SearchFilters, SearchPrioritize, SearchResultItem,
@@ -660,4 +661,851 @@ fn test_api_contract_25_attestation_challenge_contract() {
     );
     assert_eq!(payload["engagementType"], "ENGAGEMENT_TYPE_SIGNIN");
     assert_eq!(payload["ids"][0]["key"], "val");
+}
+
+#[test]
+fn test_api_contract_26_music_album_search_preserves_all_artists() {
+    let raw = json!({
+        "contents": [{
+            "musicResponsiveListItemRenderer": {
+                "flexColumns": [
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Collaborative Album" }] }
+                        }
+                    },
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [
+                                {
+                                    "text": "Artist One",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": { "browseId": "UC_artist_one" }
+                                    }
+                                },
+                                { "text": " • " },
+                                {
+                                    "text": "Artist Two",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": { "browseId": "UC_artist_two" }
+                                    }
+                                }
+                            ] }
+                        }
+                    }
+                ]
+            }
+        }]
+    });
+
+    let parsed = endpoints::music::parse_music_search_response(
+        "collaborative album",
+        Some(MusicSearchFilter::Albums),
+        &raw,
+    )
+    .expect("multi-artist album search fixture should parse");
+
+    assert_eq!(parsed.albums.len(), 1);
+    let album = &parsed.albums[0];
+    assert_eq!(album.title, "Collaborative Album");
+    assert_eq!(album.artist.as_deref(), Some("Artist One"));
+    assert_eq!(album.artists.len(), 2);
+    assert_eq!(album.artists[0].name, "Artist One");
+    assert_eq!(album.artists[0].browse_id.as_deref(), Some("UC_artist_one"));
+    assert_eq!(album.artists[1].name, "Artist Two");
+    assert_eq!(album.artists[1].browse_id.as_deref(), Some("UC_artist_two"));
+}
+
+#[test]
+fn test_api_contract_27_music_album_responsive_header_metadata() {
+    let raw = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [
+                                    {
+                                        "musicResponsiveHeaderRenderer": {
+                                            "title": { "runs": [{ "text": "Fixture Album" }] },
+                                            "subtitle": { "runs": [
+                                                { "text": "EP" },
+                                                { "text": " • " },
+                                                { "text": "2025" }
+                                            ] },
+                                            "straplineTextOne": { "runs": [{
+                                                "text": "Fixture Artist",
+                                                "navigationEndpoint": {
+                                                    "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                }
+                                            }] },
+                                            "secondSubtitle": { "runs": [
+                                                { "text": "1 song" },
+                                                { "text": " • " },
+                                                { "text": "4 minutes" }
+                                            ] },
+                                            "thumbnail": {
+                                                "musicThumbnailRenderer": {
+                                                    "thumbnail": {
+                                                        "thumbnails": [
+                                                            { "url": "https://example.test/small.jpg", "width": 120, "height": 120 },
+                                                            { "url": "https://example.test/large.jpg", "width": 544, "height": 544 }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "buttons": [{
+                                                "musicPlayButtonRenderer": {
+                                                    "playNavigationEndpoint": {
+                                                        "watchEndpoint": {
+                                                            "videoId": "fixture-track",
+                                                            "playlistId": "OLAK5uy_fixture_album"
+                                                        }
+                                                    }
+                                                }
+                                            }],
+                                            "subtitleBadge": [{
+                                                "musicInlineBadgeRenderer": {
+                                                    "icon": { "iconType": "MUSIC_EXPLICIT_BADGE" }
+                                                }
+                                            }]
+                                        }
+                                    },
+                                    {
+                                        "musicShelfRenderer": {
+                                            "contents": [{
+                                                "musicResponsiveListItemRenderer": {
+                                                    "playlistItemData": { "videoId": "fixture-track" },
+                                                    "flexColumns": [
+                                                        {
+                                                            "musicResponsiveListItemFlexColumnRenderer": {
+                                                                "text": { "runs": [{ "text": "Fixture Track" }] }
+                                                            }
+                                                        },
+                                                        {
+                                                            "musicResponsiveListItemFlexColumnRenderer": {
+                                                                "text": { "runs": [
+                                                                    {
+                                                                        "text": "Fixture Artist",
+                                                                        "navigationEndpoint": {
+                                                                            "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                                        }
+                                                                    },
+                                                                    { "text": " • " },
+                                                                    { "text": "4:12" }
+                                                                ] }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let album = endpoints::music::parse_music_album_response("MPREb_fixture", &raw)
+        .expect("responsive Music album fixture should parse");
+    assert_eq!(album.title, "Fixture Album");
+    assert_eq!(album.album_type.as_deref(), Some("EP"));
+    assert_eq!(album.year.as_deref(), Some("2025"));
+    assert_eq!(album.artist.as_deref(), Some("Fixture Artist"));
+    assert_eq!(album.artists.len(), 1);
+    assert_eq!(album.artists[0].browse_id.as_deref(), Some("UC_fixture_artist"));
+    assert_eq!(album.track_count, Some(1));
+    assert_eq!(album.duration.as_deref(), Some("4 minutes"));
+    assert_eq!(album.duration_ms, Some(252_000));
+    assert_eq!(album.audio_playlist_id.as_deref(), Some("OLAK5uy_fixture_album"));
+    assert_eq!(album.thumbnail.as_deref(), Some("https://example.test/large.jpg"));
+    assert!(album.is_explicit);
+    assert_eq!(album.tracks.len(), 1);
+    assert_eq!(album.tracks[0].video_id, "fixture-track");
+}
+
+#[test]
+fn test_api_contract_28_music_artist_details_and_mpla_normalization() {
+    let raw = json!({
+        "header": {
+            "musicImmersiveHeaderRenderer": {
+                "title": { "runs": [{ "text": "Fixture Artist" }] },
+                "subscriptionButton": {
+                    "subscribeButtonRenderer": {
+                        "channelId": "UC_subscription_fixture",
+                        "subscriberCountText": { "runs": [{ "text": "12K subscribers" }] },
+                        "subscribed": true
+                    }
+                },
+                "monthlyListenerCount": { "runs": [{ "text": "2.5M monthly audience" }] },
+                "playButton": {
+                    "buttonRenderer": {
+                        "navigationEndpoint": {
+                            "watchEndpoint": { "playlistId": "RDA_fixture_shuffle" }
+                        }
+                    }
+                },
+                "startRadioButton": {
+                    "buttonRenderer": {
+                        "navigationEndpoint": {
+                            "watchEndpoint": { "playlistId": "RDEM_fixture_radio" }
+                        }
+                    }
+                },
+                "thumbnail": {
+                    "musicThumbnailRenderer": {
+                        "thumbnail": {
+                            "thumbnails": [
+                                { "url": "https://example.test/artist-small.jpg", "width": 120, "height": 120 },
+                                { "url": "https://example.test/artist-large.jpg", "width": 544, "height": 544 }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "contents": {
+            "singleColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [
+                                    {
+                                        "musicShelfRenderer": {
+                                            "title": {
+                                                "runs": [{
+                                                    "text": "Top songs",
+                                                    "navigationEndpoint": {
+                                                        "browseEndpoint": { "browseId": "VL_top_songs_fixture" }
+                                                    }
+                                                }]
+                                            },
+                                            "contents": [{
+                                                "musicResponsiveListItemRenderer": {
+                                                    "playlistItemData": { "videoId": "artist-track-1" },
+                                                    "flexColumns": [
+                                                        {
+                                                            "musicResponsiveListItemFlexColumnRenderer": {
+                                                                "text": { "runs": [{ "text": "Artist Track" }] }
+                                                            }
+                                                        },
+                                                        {
+                                                            "musicResponsiveListItemFlexColumnRenderer": {
+                                                                "text": { "runs": [
+                                                                    {
+                                                                        "text": "Fixture Artist",
+                                                                        "navigationEndpoint": {
+                                                                            "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                                        }
+                                                                    },
+                                                                    { "text": " • " },
+                                                                    { "text": "3:05" }
+                                                                ] }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }]
+                                        }
+                                    },
+                                    {
+                                        "musicCarouselShelfRenderer": {
+                                            "header": {
+                                                "musicCarouselShelfBasicHeaderRenderer": {
+                                                    "title": { "runs": [{ "text": "Albums" }] }
+                                                }
+                                            },
+                                            "contents": [{
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Fixture Album" }] },
+                                                    "subtitle": { "runs": [{ "text": "2026" }] },
+                                                    "navigationEndpoint": {
+                                                        "browseEndpoint": { "browseId": "MPREb_fixture_album" }
+                                                    }
+                                                }
+                                            }]
+                                        }
+                                    },
+                                    {
+                                        "musicCarouselShelfRenderer": {
+                                            "header": {
+                                                "musicCarouselShelfBasicHeaderRenderer": {
+                                                    "title": { "runs": [{ "text": "Singles & EPs" }] }
+                                                }
+                                            },
+                                            "contents": [{
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Fixture Single" }] },
+                                                    "subtitle": { "runs": [
+                                                        { "text": "Single" },
+                                                        { "text": " • " },
+                                                        { "text": "2025" }
+                                                    ] },
+                                                    "navigationEndpoint": {
+                                                        "browseEndpoint": { "browseId": "MPREb_fixture_single" }
+                                                    }
+                                                }
+                                            }]
+                                        }
+                                    },
+                                    {
+                                        "musicCarouselShelfRenderer": {
+                                            "header": {
+                                                "musicCarouselShelfBasicHeaderRenderer": {
+                                                    "title": { "runs": [{ "text": "Videos" }] }
+                                                }
+                                            },
+                                            "contents": [{
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Fixture Video" }] },
+                                                    "subtitle": { "runs": [
+                                                        { "text": "Fixture Artist" },
+                                                        { "text": " • " },
+                                                        { "text": "1.2M views" }
+                                                    ] },
+                                                    "navigationEndpoint": {
+                                                        "watchEndpoint": {
+                                                            "videoId": "artist-video-1",
+                                                            "playlistId": "PL_fixture_artist_videos"
+                                                        }
+                                                    },
+                                                    "thumbnailRenderer": {
+                                                        "musicThumbnailRenderer": {
+                                                            "thumbnail": {
+                                                                "thumbnails": [
+                                                                    { "url": "https://example.test/video-small.jpg", "width": 120, "height": 68 },
+                                                                    { "url": "https://example.test/video-large.jpg", "width": 544, "height": 306 }
+                                                                ]
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }]
+                                        }
+                                    },
+                                    {
+                                        "musicDescriptionShelfRenderer": {
+                                            "description": { "runs": [{ "text": "Fixture biography" }] },
+                                            "subheader": { "runs": [{ "text": "123M views" }] }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let artist = endpoints::music::parse_music_artist_response("MPLAUC_fixture_artist", &raw)
+        .expect("Music artist fixture should parse");
+    assert_eq!(artist.id, "UC_fixture_artist");
+    assert_eq!(artist.channel_id.as_deref(), Some("UC_subscription_fixture"));
+    assert_eq!(artist.name, "Fixture Artist");
+    assert_eq!(artist.description.as_deref(), Some("Fixture biography"));
+    assert_eq!(artist.views.as_deref(), Some("123M views"));
+    assert_eq!(artist.subscribers.as_deref(), Some("12K subscribers"));
+    assert_eq!(artist.monthly_listeners.as_deref(), Some("2.5M"));
+    assert!(artist.subscribed);
+    assert_eq!(artist.shuffle_id.as_deref(), Some("RDA_fixture_shuffle"));
+    assert_eq!(artist.radio_id.as_deref(), Some("RDEM_fixture_radio"));
+    assert_eq!(artist.thumbnail.as_deref(), Some("https://example.test/artist-large.jpg"));
+    assert_eq!(artist.top_songs.len(), 1);
+    assert_eq!(artist.top_songs[0].video_id, "artist-track-1");
+    assert_eq!(artist.top_songs[0].duration_ms, Some(185_000));
+    assert_eq!(artist.albums.len(), 1);
+    assert_eq!(artist.albums[0].year.as_deref(), Some("2026"));
+    assert_eq!(artist.singles.len(), 1);
+    assert_eq!(artist.singles[0].year.as_deref(), Some("2025"));
+    assert_eq!(artist.videos.len(), 1);
+    assert_eq!(artist.videos[0].video_id, "artist-video-1");
+    assert_eq!(artist.videos[0].title, "Fixture Video");
+    assert_eq!(artist.videos[0].thumbnail.as_deref(), Some("https://example.test/video-large.jpg"));
+}
+
+#[test]
+fn test_api_contract_29_music_playlist_card_track_counts() {
+    let playlist_endpoint = |browse_id: &str| {
+        json!({
+            "browseEndpoint": {
+                "browseId": browse_id,
+                "browseEndpointContextSupportedConfigs": {
+                    "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_PLAYLIST"
+                    }
+                }
+            }
+        })
+    };
+    let raw = json!({
+        "contents": {
+            "singleColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicCarouselShelfRenderer": {
+                                        "header": {
+                                            "musicCarouselShelfBasicHeaderRenderer": {
+                                                "title": { "runs": [{ "text": "Fixture playlists" }] }
+                                            }
+                                        },
+                                        "contents": [
+                                            {
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Counted Playlist" }] },
+                                                    "subtitle": { "runs": [
+                                                        {
+                                                            "text": "Fixture Listener",
+                                                            "navigationEndpoint": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_listener" }
+                                                            }
+                                                        },
+                                                        { "text": " • " },
+                                                        { "text": "123 songs" }
+                                                    ] },
+                                                    "navigationEndpoint": playlist_endpoint("VLfixture-counted")
+                                                }
+                                            },
+                                            {
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "Made For Playlist" }] },
+                                                    "subtitle": { "runs": [
+                                                        { "text": "Made for " },
+                                                        {
+                                                            "text": "Fixture Listener",
+                                                            "navigationEndpoint": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_listener" }
+                                                            }
+                                                        },
+                                                        { "text": " • " },
+                                                        { "text": "100 songs" }
+                                                    ] },
+                                                    "navigationEndpoint": playlist_endpoint("VLfixture-made-for")
+                                                }
+                                            },
+                                            {
+                                                "musicTwoRowItemRenderer": {
+                                                    "title": { "runs": [{ "text": "System Playlist" }] },
+                                                    "subtitle": { "runs": [{ "text": "Auto playlist" }] },
+                                                    "navigationEndpoint": playlist_endpoint("VLfixture-system")
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("Music playlist-card count fixture should parse");
+    assert_eq!(feed.shelves.len(), 1);
+    assert_eq!(feed.shelves[0].playlists.len(), 3);
+    assert_eq!(feed.shelves[0].playlists[0].track_count, Some(123));
+    assert_eq!(feed.shelves[0].playlists[1].track_count, None);
+    assert_eq!(feed.shelves[0].playlists[2].track_count, None);
+}
+
+#[test]
+fn test_api_contract_30_music_track_like_status() {
+    let raw = json!({
+        "contents": [
+            {
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "liked-track" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Liked Track" }] }
+                        }
+                    }],
+                    "menu": {
+                        "menuRenderer": {
+                            "topLevelButtons": [{
+                                "likeButtonRenderer": { "likeStatus": "LIKE" }
+                            }]
+                        }
+                    }
+                }
+            },
+            {
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "disliked-track" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Disliked Track" }] }
+                        }
+                    }],
+                    "menu": {
+                        "menuRenderer": {
+                            "topLevelButtons": [{
+                                "likeButtonRenderer": { "likeStatus": "DISLIKE" }
+                            }]
+                        }
+                    }
+                }
+            },
+            {
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "neutral-track" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Neutral Track" }] }
+                        }
+                    }]
+                }
+            }
+        ]
+    });
+
+    let parsed = endpoints::music::parse_music_search_response(
+        "fixture",
+        Some(MusicSearchFilter::Songs),
+        &raw,
+    )
+    .expect("Music track-rating fixture should parse");
+    assert_eq!(parsed.songs.len(), 3);
+    assert_eq!(parsed.songs[0].like_status, MusicLikeStatus::Like);
+    assert_eq!(parsed.songs[1].like_status, MusicLikeStatus::Dislike);
+    assert_eq!(parsed.songs[2].like_status, MusicLikeStatus::Indifferent);
+
+    let currently_liked = json!({
+        "playlistPanelVideoRenderer": {
+            "videoId": "watch-liked",
+            "title": { "runs": [{ "text": "Watch Liked" }] },
+            "menu": {
+                "menuRenderer": {
+                    "items": [{
+                        "toggleMenuServiceItemRenderer": {
+                            "defaultServiceEndpoint": {
+                                "likeEndpoint": { "status": "INDIFFERENT" }
+                            },
+                            "toggledServiceEndpoint": {
+                                "likeEndpoint": { "status": "LIKE" }
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    });
+    let watch = PlaylistPanelVideoNode::from_value(&currently_liked)
+        .expect("watch playlist rating fixture should parse");
+    assert_eq!(watch.like_status.as_deref(), Some("LIKE"));
+
+    let currently_indifferent = json!({
+        "playlistPanelVideoRenderer": {
+            "videoId": "watch-neutral",
+            "title": { "runs": [{ "text": "Watch Neutral" }] },
+            "menu": {
+                "menuRenderer": {
+                    "items": [{
+                        "toggleMenuServiceItemRenderer": {
+                            "defaultServiceEndpoint": {
+                                "likeEndpoint": { "status": "LIKE" }
+                            },
+                            "toggledServiceEndpoint": {
+                                "likeEndpoint": { "status": "INDIFFERENT" }
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    });
+    let watch_neutral = PlaylistPanelVideoNode::from_value(&currently_indifferent)
+        .expect("watch neutral fixture should parse");
+    assert_eq!(watch_neutral.like_status.as_deref(), Some("INDIFFERENT"));
+}
+
+fn music_home_track(video_id: &str, title: &str) -> Value {
+    json!({
+        "musicResponsiveListItemRenderer": {
+            "playlistItemData": { "videoId": video_id },
+            "flexColumns": [
+                {
+                    "musicResponsiveListItemFlexColumnRenderer": {
+                        "text": { "runs": [{ "text": title }] }
+                    }
+                }
+            ]
+        }
+    })
+}
+
+fn music_home_shelf(title: &str, video_id: &str) -> Value {
+    json!({
+        "musicCarouselShelfRenderer": {
+            "header": {
+                "musicCarouselShelfBasicHeaderRenderer": {
+                    "title": { "runs": [{ "text": title }] }
+                }
+            },
+            "contents": [music_home_track(video_id, title)]
+        }
+    })
+}
+
+#[test]
+fn test_api_contract_31_music_home_initial_page_retains_continuation() {
+    let raw = json!({
+        "contents": {
+            "singleColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [music_home_shelf("Quick picks", "track-page-1")],
+                                "continuations": [{
+                                    "nextContinuationData": {
+                                        "continuation": "music-home-page-2"
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("initial Music home fixture should parse");
+    assert_eq!(feed.shelves.len(), 1);
+    assert_eq!(feed.shelves[0].title, "Quick picks");
+    assert_eq!(feed.shelves[0].tracks.len(), 1);
+    assert_eq!(feed.continuation_token.as_deref(), Some("music-home-page-2"));
+}
+
+#[test]
+fn test_api_contract_32_music_home_continuation_parses_shelves_and_next_token() {
+    let raw = json!({
+        "continuationContents": {
+            "sectionListContinuation": {
+                "contents": [music_home_shelf("Listen again", "track-page-2")],
+                "continuations": [{
+                    "nextContinuationData": {
+                        "continuation": "music-home-page-3"
+                    }
+                }]
+            }
+        }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("Music home continuation fixture should parse");
+    assert_eq!(feed.shelves.len(), 1);
+    assert_eq!(feed.shelves[0].title, "Listen again");
+    assert_eq!(feed.shelves[0].tracks.len(), 1);
+    assert_eq!(feed.continuation_token.as_deref(), Some("music-home-page-3"));
+}
+
+#[test]
+fn test_api_contract_33_music_playlist_details_metadata() {
+    let followed = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicResponsiveHeaderRenderer": {
+                                        "title": { "runs": [{ "text": "Fixture Playlist" }] },
+                                        "description": {
+                                            "musicDescriptionShelfRenderer": {
+                                                "description": { "runs": [
+                                                    { "text": "First line. " },
+                                                    { "text": "Second line." }
+                                                ] }
+                                            }
+                                        },
+                                        "facepile": {
+                                            "avatarStackViewModel": {
+                                                "text": { "content": "Fixture Curator" },
+                                                "rendererContext": {
+                                                    "commandContext": {
+                                                        "onTap": {
+                                                            "innertubeCommand": {
+                                                                "browseEndpoint": { "browseId": "UC_fixture_curator" }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "subtitle": { "runs": [
+                                            { "text": "Playlist" },
+                                            { "text": " • " },
+                                            { "text": "2026" }
+                                        ] },
+                                        "secondSubtitle": { "runs": [
+                                            { "text": "1.2K views" },
+                                            { "text": " • " },
+                                            { "text": "321 songs" },
+                                            { "text": " • " },
+                                            { "text": "18 hours" }
+                                        ] },
+                                        "thumbnail": {
+                                            "musicThumbnailRenderer": {
+                                                "thumbnail": {
+                                                    "thumbnails": [
+                                                        { "url": "https://example.test/playlist-small.jpg", "width": 120, "height": 120 },
+                                                        { "url": "https://example.test/playlist-large.jpg", "width": 544, "height": 544 }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }],
+                                "secondaryContents": {
+                                    "sectionListRenderer": {
+                                        "contents": [{
+                                            "musicPlaylistShelfRenderer": {
+                                                "contents": [{
+                                                    "musicResponsiveListItemRenderer": {
+                                                        "playlistItemData": { "videoId": "fixture-playlist-track" },
+                                                        "flexColumns": [
+                                                            {
+                                                                "musicResponsiveListItemFlexColumnRenderer": {
+                                                                    "text": { "runs": [{ "text": "Fixture Track" }] }
+                                                                }
+                                                            },
+                                                            {
+                                                                "musicResponsiveListItemFlexColumnRenderer": {
+                                                                    "text": { "runs": [
+                                                                        {
+                                                                            "text": "Fixture Artist",
+                                                                            "navigationEndpoint": {
+                                                                                "browseEndpoint": { "browseId": "UC_fixture_artist" }
+                                                                            }
+                                                                        },
+                                                                        { "text": " • " },
+                                                                        {
+                                                                            "text": "Fixture Album",
+                                                                            "navigationEndpoint": {
+                                                                                "browseEndpoint": { "browseId": "MPREb_fixture_album" }
+                                                                            }
+                                                                        },
+                                                                        { "text": " • " },
+                                                                        { "text": "4:02" }
+                                                                    ] }
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }]
+                                            }
+                                        }]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let playlist = endpoints::music::parse_music_playlist_details_response(
+        "VLfixture-followed",
+        &followed,
+    )
+    .expect("followed Music playlist fixture should parse");
+    assert_eq!(playlist.id, "fixture-followed");
+    assert_eq!(playlist.title, "Fixture Playlist");
+    assert_eq!(playlist.description.as_deref(), Some("First line. Second line."));
+    assert_eq!(playlist.author.as_ref().map(|author| author.name.as_str()), Some("Fixture Curator"));
+    assert_eq!(
+        playlist.author.as_ref().and_then(|author| author.browse_id.as_deref()),
+        Some("UC_fixture_curator")
+    );
+    assert_eq!(playlist.track_count, Some(321));
+    assert_eq!(playlist.duration.as_deref(), Some("18 hours"));
+    assert_eq!(playlist.year.as_deref(), Some("2026"));
+    assert_eq!(playlist.privacy.as_deref(), Some("PUBLIC"));
+    assert!(!playlist.owned);
+    assert!(!playlist.is_collaborative);
+    assert_eq!(playlist.thumbnail.as_deref(), Some("https://example.test/playlist-large.jpg"));
+    assert_eq!(playlist.tracks.len(), 1);
+    assert_eq!(playlist.tracks[0].video_id, "fixture-playlist-track");
+    assert_eq!(playlist.tracks[0].duration_ms, Some(242_000));
+
+    let owned = json!({
+        "contents": {
+            "twoColumnBrowseResultsRenderer": {
+                "tabs": [{
+                    "tabRenderer": {
+                        "content": {
+                            "sectionListRenderer": {
+                                "contents": [{
+                                    "musicEditablePlaylistDetailHeaderRenderer": {
+                                        "playlistId": "fixture-owned",
+                                        "editHeader": {
+                                            "musicPlaylistEditHeaderRenderer": { "privacy": "PRIVATE" }
+                                        },
+                                        "header": {
+                                            "musicResponsiveHeaderRenderer": {
+                                                "title": { "runs": [{ "text": "Owned Fixture" }] },
+                                                "facepile": {
+                                                    "avatarStackViewModel": {
+                                                        "text": { "content": "Fixture Owner" },
+                                                        "rendererContext": {
+                                                            "commandContext": {
+                                                                "onTap": {
+                                                                    "innertubeCommand": {
+                                                                        "browseEndpoint": { "browseId": "UC_fixture_owner" }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "subtitle": { "runs": [
+                                                    { "text": "Playlist" },
+                                                    { "text": " • " },
+                                                    { "text": "Fixture Owner" },
+                                                    { "text": " • " },
+                                                    { "text": "2025" }
+                                                ] },
+                                                "secondSubtitle": { "runs": [
+                                                    { "text": "62 songs" },
+                                                    { "text": " • " },
+                                                    { "text": "3 hours" }
+                                                ] }
+                                            }
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+
+    let playlist = endpoints::music::parse_music_playlist_details_response("fixture-owned", &owned)
+        .expect("owned Music playlist fixture should parse");
+    assert_eq!(playlist.id, "fixture-owned");
+    assert_eq!(playlist.title, "Owned Fixture");
+    assert!(playlist.owned);
+    assert_eq!(playlist.privacy.as_deref(), Some("PRIVATE"));
+    assert_eq!(playlist.track_count, Some(62));
+    assert_eq!(playlist.duration.as_deref(), Some("3 hours"));
+    assert_eq!(playlist.year.as_deref(), Some("2025"));
+    assert_eq!(playlist.author.as_ref().map(|author| author.name.as_str()), Some("Fixture Owner"));
+    assert!(playlist.tracks.is_empty());
 }
