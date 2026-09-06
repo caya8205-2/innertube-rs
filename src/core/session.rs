@@ -1,14 +1,17 @@
+use regex::Regex;
 use reqwest::header::{
-    HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CONTENT_TYPE, COOKIE, ORIGIN, REFERER,
-    USER_AGENT,
+    HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, AUTHORIZATION, CONTENT_TYPE, COOKIE, ORIGIN,
+    REFERER, USER_AGENT,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha1::{Digest, Sha1};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::constants::{
     clients, DEFAULT_CLIENT_VERSION, DEFAULT_INNERTUBE_KEY, DEFAULT_USER_AGENT,
     GOOGLE_SEARCH_BASE_URL, INNERTUBE_API_BASE_URL, SUPPORTED_CLIENTS, YOUTUBE_BASE_URL,
+    YOUTUBE_MUSIC_BASE_URL,
 };
 use crate::error::{InnertubeError, Result};
 use crate::models::context::{
@@ -24,6 +27,10 @@ pub struct SessionOptions {
     pub location: Option<String>,
     pub user_agent: Option<String>,
     pub account_index: Option<usize>,
+    /// User-session component used by modern cookie SID authorization.
+    /// Discovered from `DATASYNC_ID` when browser cookies are supplied unless
+    /// local session generation is requested.
+    pub user_session_id: Option<String>,
     pub visitor_data: Option<String>,
     pub client_name: Option<String>,
     pub client_version: Option<String>,
@@ -45,6 +52,7 @@ pub struct Session {
     pub api_key: String,
     pub api_version: String,
     pub account_index: usize,
+    pub user_session_id: Option<String>,
     pub config_data: Option<String>,
     pub cookie: Option<String>,
     pub po_token: Option<String>,
@@ -60,6 +68,88 @@ struct SwSessionData {
     context: InnerTubeContext,
 }
 
+fn parse_data_sync_id(data_sync_id: &str) -> Option<String> {
+    let (first, second) = data_sync_id.split_once("||").unwrap_or((data_sync_id, ""));
+    if !second.is_empty() {
+        Some(second.to_string())
+    } else if !first.is_empty() {
+        Some(first.to_string())
+    } else {
+        None
+    }
+}
+
+fn extract_user_session_id(html: &str) -> Option<String> {
+    let pattern = Regex::new(r#"ytcfg\.set\s*\(\s*(\{.+?\})\s*\)\s*;"#).ok()?;
+    for capture in pattern.captures_iter(html) {
+        let raw = capture.get(1)?.as_str();
+        let Ok(config) = serde_json::from_str::<Value>(raw) else {
+            continue;
+        };
+        if let Some(data_sync_id) = config.get("DATASYNC_ID").and_then(Value::as_str) {
+            return parse_data_sync_id(data_sync_id);
+        }
+    }
+    None
+}
+
+fn generate_sid_auth(
+    scheme: &str,
+    sid: &str,
+    origin: &str,
+    timestamp: u64,
+    user_session_id: Option<&str>,
+) -> String {
+    let input = if let Some(user_session_id) = user_session_id {
+        format!("{user_session_id} {timestamp} {sid} {origin}")
+    } else {
+        format!("{timestamp} {sid} {origin}")
+    };
+    let digest = Sha1::digest(input.as_bytes());
+    if user_session_id.is_some() {
+        format!("{scheme} {timestamp}_{digest:x}_u")
+    } else {
+        format!("{scheme} {timestamp}_{digest:x}")
+    }
+}
+
+fn client_origin(client_name: &str) -> &'static str {
+    if client_name.eq_ignore_ascii_case("WEB_REMIX") || client_name.eq_ignore_ascii_case("YTMUSIC")
+    {
+        YOUTUBE_MUSIC_BASE_URL
+    } else {
+        YOUTUBE_BASE_URL
+    }
+}
+
+fn sid_authorization(
+    cookies: &str,
+    origin: &str,
+    timestamp: u64,
+    user_session_id: Option<&str>,
+) -> Option<String> {
+    let sapisid = crate::utils::auth::get_cookie(cookies, "SAPISID")
+        .or_else(|| crate::utils::auth::get_cookie(cookies, "__Secure-3PAPISID"));
+    let candidates = [
+        ("SAPISIDHASH", sapisid),
+        (
+            "SAPISID1PHASH",
+            crate::utils::auth::get_cookie(cookies, "__Secure-1PAPISID"),
+        ),
+        (
+            "SAPISID3PHASH",
+            crate::utils::auth::get_cookie(cookies, "__Secure-3PAPISID"),
+        ),
+    ];
+    let values: Vec<String> = candidates
+        .into_iter()
+        .filter_map(|(scheme, sid)| {
+            sid.map(|sid| generate_sid_auth(scheme, sid, origin, timestamp, user_session_id))
+        })
+        .collect();
+    (!values.is_empty()).then(|| values.join(" "))
+}
+
 impl Clone for Session {
     fn clone(&self) -> Self {
         Self {
@@ -67,6 +157,7 @@ impl Clone for Session {
             api_key: self.api_key.clone(),
             api_version: self.api_version.clone(),
             account_index: self.account_index,
+            user_session_id: self.user_session_id.clone(),
             config_data: self.config_data.clone(),
             cookie: self.cookie.clone(),
             po_token: self.po_token.clone(),
@@ -90,6 +181,21 @@ impl Session {
 
         let generate_locally = options.generate_session_locally.unwrap_or(false);
         let fail_fast = options.fail_fast.unwrap_or(false);
+        let user_session_id = if options.user_session_id.is_some() {
+            options.user_session_id.clone()
+        } else if !generate_locally
+            && options
+                .cookie
+                .as_deref()
+                .is_some_and(|cookie| !cookie.trim().is_empty())
+        {
+            Self::fetch_user_session_id(&http_client, &options)
+                .await
+                .ok()
+                .flatten()
+        } else {
+            None
+        };
 
         let sw_data = if !generate_locally {
             match Self::fetch_sw_session_data(&http_client, &options).await {
@@ -131,6 +237,7 @@ impl Session {
             api_key,
             api_version,
             account_index: options.account_index.unwrap_or(0),
+            user_session_id,
             config_data: None,
             cookie: options.cookie,
             po_token: options.po_token,
@@ -146,6 +253,29 @@ impl Session {
         }
 
         Ok(session)
+    }
+
+    async fn fetch_user_session_id(
+        client: &reqwest::Client,
+        options: &SessionOptions,
+    ) -> Result<Option<String>> {
+        let Some(cookie) = options.cookie.as_deref() else {
+            return Ok(None);
+        };
+        let user_agent = options.user_agent.as_deref().unwrap_or(DEFAULT_USER_AGENT);
+        let response = client
+            .get(YOUTUBE_BASE_URL)
+            .header(ACCEPT, "text/html,*/*")
+            .header(USER_AGENT, user_agent)
+            .header(COOKIE, cookie)
+            .send()
+            .await
+            .map_err(InnertubeError::Network)?;
+        if !response.status().is_success() {
+            return Ok(None);
+        }
+        let html = response.text().await.map_err(InnertubeError::Network)?;
+        Ok(extract_user_session_id(&html))
     }
 
     /// POST `/youtubei/v1/config` and merge `configData`, cold/hot config
@@ -693,6 +823,18 @@ impl Session {
         headers: &mut HeaderMap,
         is_web_kids: bool,
     ) -> Result<()> {
+        self.apply_auth_headers_for_origin(headers, is_web_kids, YOUTUBE_BASE_URL)
+            .await
+    }
+
+    /// Apply authentication headers using the request's actual origin. Music
+    /// requests must be signed for `https://music.youtube.com`, not the WEB origin.
+    pub async fn apply_auth_headers_for_origin(
+        &self,
+        headers: &mut HeaderMap,
+        is_web_kids: bool,
+        origin: &'static str,
+    ) -> Result<()> {
         if !self.is_authenticated() || is_web_kids {
             return Ok(());
         }
@@ -729,23 +871,36 @@ impl Session {
         }
 
         if let Some(ref cookie) = self.cookie {
-            if let Some(sapisid) = crate::utils::auth::get_cookie(cookie, "SAPISID") {
-                if let Ok(val) =
-                    HeaderValue::from_str(&crate::utils::auth::generate_sid_auth(sapisid))
-                {
-                    headers.insert(reqwest::header::AUTHORIZATION, val);
-                }
-                if let Ok(val) = HeaderValue::from_str(&self.account_index.to_string()) {
-                    headers.insert("X-Goog-Authuser", val);
-                }
-                if let Some(page_id) = self
-                    .context
-                    .user
-                    .as_ref()
-                    .and_then(|u| u.on_behalf_of_user.as_deref())
-                {
-                    if let Ok(val) = HeaderValue::from_str(page_id) {
-                        headers.insert("X-Goog-PageId", val);
+            let timestamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|duration| duration.as_secs())
+                .unwrap_or_default();
+            if let Some(authorization) =
+                sid_authorization(cookie, origin, timestamp, self.user_session_id.as_deref())
+            {
+                if let Ok(value) = HeaderValue::from_str(&authorization) {
+                    headers.insert(AUTHORIZATION, value);
+                    if let Ok(value) = HeaderValue::from_str(&self.account_index.to_string()) {
+                        headers.insert("X-Goog-Authuser", value);
+                    }
+                    if let Ok(value) = HeaderValue::from_str(origin) {
+                        headers.insert("X-Origin", value);
+                    }
+                    if self.user_session_id.is_some() {
+                        headers.insert(
+                            "X-Youtube-Bootstrap-Logged-In",
+                            HeaderValue::from_static("true"),
+                        );
+                    }
+                    if let Some(page_id) = self
+                        .context
+                        .user
+                        .as_ref()
+                        .and_then(|user| user.on_behalf_of_user.as_deref())
+                    {
+                        if let Ok(value) = HeaderValue::from_str(page_id) {
+                            headers.insert("X-Goog-PageId", value);
+                        }
                     }
                 }
             }
@@ -1058,8 +1213,9 @@ impl Session {
         mut payload: Value,
     ) -> Result<reqwest::Response> {
         let clean_endpoint = endpoint.trim_start_matches('/');
+        let request_origin = client_origin(client_name);
         let url = format!(
-            "{INNERTUBE_API_BASE_URL}/{clean_endpoint}?prettyPrint=false&alt=json&key={}",
+            "{request_origin}/youtubei/v1/{clean_endpoint}?prettyPrint=false&alt=json&key={}",
             self.api_key
         );
 
@@ -1075,6 +1231,13 @@ impl Session {
         }
 
         let mut headers = self.build_innertube_headers();
+        headers.insert(ORIGIN, HeaderValue::from_static(request_origin));
+        if request_origin == YOUTUBE_MUSIC_BASE_URL {
+            headers.insert(
+                REFERER,
+                HeaderValue::from_static("https://music.youtube.com/"),
+            );
+        }
         let client_id = Self::client_name_id(&adjusted_context.client.client_name);
         headers.insert("X-Youtube-Client-Name", HeaderValue::from_static(client_id));
         if let Ok(val) = HeaderValue::from_str(&adjusted_context.client.client_version) {
@@ -1082,7 +1245,8 @@ impl Session {
         }
         Self::apply_client_header_overrides(&mut headers, &adjusted_context.client.client_name);
         let is_web_kids = adjusted_context.client.client_name == clients::WEB_KIDS_NAME;
-        self.apply_auth_headers(&mut headers, is_web_kids).await?;
+        self.apply_auth_headers_for_origin(&mut headers, is_web_kids, request_origin)
+            .await?;
 
         let res = self
             .http_client
@@ -1108,6 +1272,7 @@ mod tests {
             api_key: "test-key".to_string(),
             api_version: "v1".to_string(),
             account_index: 0,
+            user_session_id: None,
             config_data: None,
             cookie: cookie.map(ToString::to_string),
             po_token: None,
@@ -1132,6 +1297,44 @@ mod tests {
         let session = session_with_cookie(Some("SID=test"));
         assert!(session.is_authenticated());
         assert!(session.ensure_authenticated().is_ok());
+    }
+
+    #[test]
+    fn modern_sid_authorization_uses_user_session_and_secure_cookies() {
+        let authorization = sid_authorization(
+            "SAPISID=s0; __Secure-1PAPISID=s1; __Secure-3PAPISID=s3",
+            YOUTUBE_MUSIC_BASE_URL,
+            1_700_000_000,
+            Some("user_session"),
+        )
+        .expect("modern SID cookies should produce authorization");
+        assert_eq!(
+            authorization,
+            "SAPISIDHASH 1700000000_e62c83785193599f21223e35ba49e8c78967aae2_u SAPISID1PHASH 1700000000_d203afad737b9b14c294fd43d9d5b66da64d72ec_u SAPISID3PHASH 1700000000_992fdea0264fba143edc391950741889005ca09e_u"
+        );
+    }
+
+    #[test]
+    fn extracts_user_session_id_from_data_sync_id() {
+        assert_eq!(parse_data_sync_id("primary-user||").as_deref(), Some("primary-user"));
+        assert_eq!(
+            parse_data_sync_id("delegated-page||secondary-user").as_deref(),
+            Some("secondary-user")
+        );
+        assert_eq!(
+            extract_user_session_id(
+                r#"<script>ytcfg.set({"LOGGED_IN":true,"DATASYNC_ID":"page||user"});</script>"#
+            )
+            .as_deref(),
+            Some("user")
+        );
+    }
+
+    #[test]
+    fn ytmusic_uses_music_origin() {
+        assert_eq!(client_origin("YTMUSIC"), YOUTUBE_MUSIC_BASE_URL);
+        assert_eq!(client_origin("WEB_REMIX"), YOUTUBE_MUSIC_BASE_URL);
+        assert_eq!(client_origin("WEB"), YOUTUBE_BASE_URL);
     }
 
     #[tokio::test]
