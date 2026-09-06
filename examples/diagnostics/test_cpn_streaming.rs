@@ -1,7 +1,7 @@
 use innertube_rs::constants::clients;
 use innertube_rs::core::session::{Session, SessionOptions};
 use innertube_rs::models::video::PlayerResponse;
-use rand::Rng;
+use rand::RngExt;
 use serde_json::json;
 
 fn generate_cpn() -> String {

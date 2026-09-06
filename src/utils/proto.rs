@@ -1,7 +1,7 @@
 use base64::engine::general_purpose::{STANDARD, URL_SAFE};
 use base64::Engine;
 use prost::Message;
-use rand::Rng;
+use rand::RngExt;
 
 use crate::error::{InnertubeError, Result};
 use crate::models::comments::PostCommentSort;
