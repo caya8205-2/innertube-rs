@@ -33,7 +33,7 @@ sha1 = "0.10"
 bytes = "1"
 
 [build-dependencies]
-prost-build = "0.13"
+prost-build = "0.14"
 protoc-bin-vendored = "3"
 
 [[bin]]
