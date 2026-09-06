@@ -1160,21 +1160,23 @@ fn parse_music_playlist_panel_track(value: &Value) -> Option<MusicTrackItem> {
                 .and_then(Value::as_str);
 
             match page_type {
-                Some("MUSIC_PAGE_TYPE_ARTIST" | "MUSIC_PAGE_TYPE_USER_CHANNEL" | "MUSIC_PAGE_TYPE_UNKNOWN") => {
-                    if !text.is_empty() {
-                        artists.push(MusicArtistRef {
-                            name: text.to_string(),
-                            browse_id: browse_id.map(ToString::to_string),
-                        });
-                    }
+                Some(
+                    "MUSIC_PAGE_TYPE_ARTIST"
+                    | "MUSIC_PAGE_TYPE_USER_CHANNEL"
+                    | "MUSIC_PAGE_TYPE_UNKNOWN",
+                ) if !text.is_empty() => {
+                    artists.push(MusicArtistRef {
+                        name: text.to_string(),
+                        browse_id: browse_id.map(ToString::to_string),
+                    });
                 }
-                Some("MUSIC_PAGE_TYPE_ALBUM" | "MUSIC_PAGE_TYPE_AUDIOBOOK") => {
-                    if !text.is_empty() {
-                        album = Some(MusicAlbumRef {
-                            title: text.to_string(),
-                            browse_id: browse_id.map(ToString::to_string),
-                        });
-                    }
+                Some("MUSIC_PAGE_TYPE_ALBUM" | "MUSIC_PAGE_TYPE_AUDIOBOOK")
+                    if !text.is_empty() =>
+                {
+                    album = Some(MusicAlbumRef {
+                        title: text.to_string(),
+                        browse_id: browse_id.map(ToString::to_string),
+                    });
                 }
                 _ => {}
             }
