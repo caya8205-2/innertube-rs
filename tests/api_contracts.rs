@@ -1931,7 +1931,7 @@ fn test_api_contract_39_music_history_preserves_order_duplicates_and_feedback() 
 }
 
 #[test]
-fn test_api_contract_29_music_uploaded_songs_parse_menu_identity_and_metadata() {
+fn test_api_contract_40_music_uploaded_songs_parse_menu_identity_and_metadata() {
     let uploaded = json!({
         "musicShelfRenderer": {
             "contents": [

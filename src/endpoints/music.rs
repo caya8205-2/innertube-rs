@@ -1997,6 +1997,7 @@ fn parse_uploaded_music_track(item: &Value) -> Option<MusicTrackItem> {
         duration_ms,
         thumbnail: thumbnails.best_url().map(ToString::to_string),
         is_explicit,
+        like_status: crate::models::music::MusicLikeStatus::Indifferent,
     })
 }
 
