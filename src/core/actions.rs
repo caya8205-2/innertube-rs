@@ -1,5 +1,7 @@
+use reqwest::header::{HeaderValue, ORIGIN, REFERER};
 use serde_json::{json, Value};
 
+use crate::constants::{YOUTUBE_BASE_URL, YOUTUBE_MUSIC_BASE_URL};
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::actions::{ActionResult, CreateCommentResult, CreatePlaylistResult};
@@ -485,9 +487,45 @@ pub const LOGIN_REQUIRED_BROWSE_IDS: [&str; 11] = [
     "SPtime_watched",
 ];
 
+fn build_stats_url(
+    url: &str,
+    client_name: &str,
+    client_version: &str,
+    params: &[(&str, String)],
+) -> Result<url::Url> {
+    let mut parsed = url::Url::parse(url)
+        .map_err(|e| InnertubeError::Format(format!("Invalid stats URL: {e}")))?;
+    let custom_keys: Vec<&str> = params.iter().map(|(key, _)| *key).collect();
+    let retained: Vec<(String, String)> = parsed
+        .query_pairs()
+        .filter(|(key, _)| {
+            !matches!(key.as_ref(), "ver" | "c" | "cbrver" | "cver")
+                && !custom_keys.iter().any(|custom| key.as_ref() == *custom)
+        })
+        .map(|(key, value)| (key.into_owned(), value.into_owned()))
+        .collect();
+
+    parsed.set_query(None);
+    {
+        let mut qp = parsed.query_pairs_mut();
+        for (key, value) in retained {
+            qp.append_pair(&key, &value);
+        }
+        qp.append_pair("ver", "2");
+        qp.append_pair("c", &client_name.to_lowercase());
+        qp.append_pair("cbrver", client_version);
+        qp.append_pair("cver", client_version);
+        for (key, value) in params {
+            qp.append_pair(key, value);
+        }
+    }
+    Ok(parsed)
+}
+
 impl Actions {
     /// Playback tracking stats call (legacy `Actions.stats`): GET with
-    /// `ver=2`, `c`, `cbrver`, `cver` plus caller params.
+    /// `ver=2`, `c`, `cbrver`, `cver` plus caller params. Existing tracking
+    /// keys are replaced, matching `URLSearchParams.set` in YouTube.js.
     pub async fn stats(
         session: &Session,
         url: &str,
@@ -495,26 +533,32 @@ impl Actions {
         client_version: &str,
         params: &[(&str, String)],
     ) -> Result<reqwest::Response> {
-        let mut parsed = url::Url::parse(url)
-            .map_err(|e| InnertubeError::Format(format!("Invalid stats URL: {e}")))?;
-        {
-            let mut qp = parsed.query_pairs_mut();
-            qp.append_pair("ver", "2");
-            qp.append_pair("c", &client_name.to_lowercase());
-            qp.append_pair("cbrver", client_version);
-            qp.append_pair("cver", client_version);
-            for (k, v) in params {
-                qp.append_pair(k, v);
-            }
+        let parsed = build_stats_url(url, client_name, client_version, params)?;
+        let origin = if parsed.host_str() == Some("music.youtube.com") {
+            YOUTUBE_MUSIC_BASE_URL
+        } else {
+            YOUTUBE_BASE_URL
+        };
+        let mut headers = session.build_innertube_headers();
+        headers.insert(ORIGIN, HeaderValue::from_static(origin));
+        if origin == YOUTUBE_MUSIC_BASE_URL {
+            headers.insert(
+                REFERER,
+                HeaderValue::from_static("https://music.youtube.com/"),
+            );
         }
+        session
+            .apply_auth_headers_for_origin(&mut headers, false, origin)
+            .await?;
 
         let resp = session
             .http_client
             .get(parsed.as_str())
+            .headers(headers)
             .send()
             .await
             .map_err(InnertubeError::Network)?;
-        Ok(resp)
+        Session::ensure_success("playback stats", resp).await
     }
 }
 
@@ -753,6 +797,31 @@ fn set_playlist_name_payload(playlist_id: &str, name: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn playback_stats_url_replaces_stale_tracking_keys() {
+        let url = build_stats_url(
+            "https://music.youtube.com/api/stats/playback?docid=test&ver=1&cpn=old",
+            "WEB_REMIX",
+            "1.20250219.01.00",
+            &[
+                ("cpn", "abcdefghijklmnop".to_string()),
+                ("fmt", "251".to_string()),
+                ("rtn", "0".to_string()),
+                ("rt", "0".to_string()),
+            ],
+        )
+        .expect("stats URL should parse");
+        let pairs: std::collections::HashMap<_, _> = url.query_pairs().into_owned().collect();
+
+        assert_eq!(pairs.get("docid").map(String::as_str), Some("test"));
+        assert_eq!(pairs.get("ver").map(String::as_str), Some("2"));
+        assert_eq!(pairs.get("c").map(String::as_str), Some("web_remix"));
+        assert_eq!(pairs.get("cbrver").map(String::as_str), Some("1.20250219.01.00"));
+        assert_eq!(pairs.get("cver").map(String::as_str), Some("1.20250219.01.00"));
+        assert_eq!(pairs.get("cpn").map(String::as_str), Some("abcdefghijklmnop"));
+        assert_eq!(pairs.get("fmt").map(String::as_str), Some("251"));
+    }
 
     #[test]
     fn playlist_removal_actions_match_legacy_protocol() {

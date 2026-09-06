@@ -194,6 +194,38 @@ impl VideoInfo {
         .await
     }
 
+    /// Report a YouTube Music playback event using the `TrackInfo`
+    /// specialization: WEB_REMIX tracking identity on the Music stats host.
+    pub async fn add_to_music_watch_history(
+        &self,
+        session: &crate::core::session::Session,
+    ) -> crate::error::Result<reqwest::Response> {
+        let url = self
+            .player_response
+            .playback_tracking
+            .as_ref()
+            .and_then(|pt| pt.videostats_playback_url.as_ref())
+            .and_then(|u| u.base_url.as_ref())
+            .ok_or_else(|| {
+                crate::error::InnertubeError::Other("Playback tracking not available".to_string())
+            })?
+            .replace("https://s.", "https://music.");
+
+        crate::core::actions::Actions::stats(
+            session,
+            &url,
+            crate::constants::clients::WEB_REMIX_NAME,
+            crate::constants::clients::WEB_REMIX_VERSION,
+            &[
+                ("cpn", self.cpn.clone()),
+                ("fmt", "251".to_string()),
+                ("rtn", "0".to_string()),
+                ("rt", "0".to_string()),
+            ],
+        )
+        .await
+    }
+
     /// Update watch time on the stats endpoint (legacy
     /// `MediaInfo.updateWatchTime`; st/et/cmt fixed to 3 decimals, final=1).
     pub async fn update_watch_time(
@@ -218,6 +250,41 @@ impl VideoInfo {
             &url,
             crate::constants::clients::WEB_NAME,
             crate::constants::clients::WEB_VERSION,
+            &[
+                ("cpn", self.cpn.clone()),
+                ("st", ts.clone()),
+                ("et", ts.clone()),
+                ("cmt", ts),
+                ("final", "1".to_string()),
+            ],
+        )
+        .await
+    }
+
+    /// Update YouTube Music watch time using the `TrackInfo` client/host
+    /// specialization from YouTube.js.
+    pub async fn update_music_watch_time(
+        &self,
+        session: &crate::core::session::Session,
+        start_time: f64,
+    ) -> crate::error::Result<reqwest::Response> {
+        let url = self
+            .player_response
+            .playback_tracking
+            .as_ref()
+            .and_then(|pt| pt.videostats_watchtime_url.as_ref())
+            .and_then(|u| u.base_url.as_ref())
+            .ok_or_else(|| {
+                crate::error::InnertubeError::Other("Playback tracking not available".to_string())
+            })?
+            .replace("https://s.", "https://music.");
+
+        let ts = format!("{start_time:.3}");
+        crate::core::actions::Actions::stats(
+            session,
+            &url,
+            crate::constants::clients::WEB_REMIX_NAME,
+            crate::constants::clients::WEB_REMIX_VERSION,
             &[
                 ("cpn", self.cpn.clone()),
                 ("st", ts.clone()),

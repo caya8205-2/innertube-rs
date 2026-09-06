@@ -80,6 +80,23 @@ impl<'a> MusicManager<'a> {
         get_music_history(self.session).await
     }
 
+    /// Publish the initial playback event for an already-fetched Music track.
+    pub async fn add_to_watch_history(
+        &self,
+        info: &crate::models::video::VideoInfo,
+    ) -> Result<reqwest::Response> {
+        info.add_to_music_watch_history(self.session).await
+    }
+
+    /// Publish a watch-time update for an already-fetched Music track.
+    pub async fn update_watch_time(
+        &self,
+        info: &crate::models::video::VideoInfo,
+        start_time: f64,
+    ) -> Result<reqwest::Response> {
+        info.update_music_watch_time(self.session, start_time).await
+    }
+
     /// Fetch one page from a persistent YouTube Music recommendation radio.
     pub async fn get_radio_page(
         &self,
