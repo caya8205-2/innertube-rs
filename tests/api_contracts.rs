@@ -1600,3 +1600,41 @@ fn test_api_contract_34_music_playlist_pagination() {
     assert_eq!(second.continuation_token.as_deref(), Some("playlist-page-3"));
     assert!(second.is_collaborative);
 }
+
+#[test]
+fn test_api_contract_35_music_watch_pagination_contract() {
+    let raw = json!({
+        "continuationContents": {
+            "playlistPanelContinuation": {
+                "contents": [{
+                    "playlistPanelVideoRenderer": {
+                        "videoId": "music-watch-video",
+                        "title": { "runs": [{ "text": "Music Watch Track" }] },
+                        "shortBylineText": { "runs": [{ "text": "Music Artist" }] },
+                        "lengthText": { "runs": [{ "text": "3:05" }] },
+                        "thumbnail": {
+                            "thumbnails": [{
+                                "url": "https://example.test/music-watch.jpg",
+                                "width": 120,
+                                "height": 120
+                            }]
+                        }
+                    }
+                }],
+                "continuations": [{
+                    "nextRadioContinuationData": {
+                        "continuation": "music-radio-next"
+                    }
+                }]
+            }
+        }
+    });
+
+    let page = endpoints::music::parse_music_watch_response(&raw, true)
+        .expect("Music watch continuation should parse");
+    assert_eq!(page.tracks.len(), 1);
+    assert_eq!(page.tracks[0].video_id, "music-watch-video");
+    assert_eq!(page.tracks[0].artists[0].name, "Music Artist");
+    assert_eq!(page.tracks[0].duration_ms, Some(185_000));
+    assert_eq!(page.continuation_token.as_deref(), Some("music-radio-next"));
+}

@@ -241,3 +241,11 @@ pub struct MusicPlaylistPage {
     pub continuation_token: Option<String>,
     pub is_collaborative: bool,
 }
+
+/// One native page from a persistent YouTube Music watch queue.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicWatchPage {
+    pub tracks: Vec<MusicTrackItem>,
+    pub continuation_token: Option<String>,
+}
