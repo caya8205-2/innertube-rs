@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::parser::nodes::misc::author::AuthorNode;
+use crate::parser::nodes::misc::menu::MenuNode;
 use crate::parser::nodes::misc::navigation::NavigationEndpointNode;
 use crate::parser::nodes::misc::text::TextNode;
 use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
@@ -34,6 +35,7 @@ pub struct MusicTwoRowItemNode {
     pub author: Option<AuthorNode>,
     pub thumbnails: ThumbnailListNode,
     pub endpoint: Option<NavigationEndpointNode>,
+    pub menu: Option<MenuNode>,
     pub item_type: Option<String>,
 }
 
@@ -225,6 +227,7 @@ impl MusicTwoRowItemNode {
         );
 
         let endpoint = target.get("navigationEndpoint").and_then(NavigationEndpointNode::from_value);
+        let menu = target.get("menu").and_then(MenuNode::from_value);
 
         let item_type = target.pointer("/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
             .and_then(|p| p.as_str())
@@ -256,6 +259,7 @@ impl MusicTwoRowItemNode {
             author,
             thumbnails,
             endpoint,
+            menu,
             item_type,
         })
     }

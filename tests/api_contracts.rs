@@ -2038,3 +2038,55 @@ fn test_api_contract_40_music_uploaded_songs_parse_menu_identity_and_metadata() 
     assert_eq!(track.thumbnail.as_deref(), Some("https://example.test/upload.jpg"));
     assert_eq!(page.continuation_token.as_deref(), Some("uploads-next"));
 }
+
+#[test]
+fn test_api_contract_41_music_library_playlist_ownership() {
+    fn playlist_card(title: &str, id: &str, editor_id: Option<&str>) -> Value {
+        let menu = editor_id.map(|playlist_id| {
+            json!({
+                "menuRenderer": {
+                    "items": [{
+                        "menuNavigationItemRenderer": {
+                            "text": { "runs": [{ "text": "Edit playlist" }] },
+                            "navigationEndpoint": {
+                                "playlistEditorEndpoint": { "playlistId": playlist_id }
+                            }
+                        }
+                    }]
+                }
+            })
+        });
+        json!({
+            "musicTwoRowItemRenderer": {
+                "title": { "runs": [{ "text": title }] },
+                "subtitle": { "runs": [{ "text": "Playlist" }] },
+                "navigationEndpoint": {
+                    "browseEndpoint": {
+                        "browseId": format!("VL{id}"),
+                        "browseEndpointContextSupportedConfigs": {
+                            "browseEndpointContextMusicConfig": {
+                                "pageType": "MUSIC_PAGE_TYPE_PLAYLIST"
+                            }
+                        }
+                    }
+                },
+                "menu": menu
+            }
+        })
+    }
+
+    let raw = json!({
+        "gridRenderer": {
+            "items": [
+                playlist_card("Owned", "PL_owned", Some("PL_owned")),
+                playlist_card("Followed", "PL_followed", None)
+            ]
+        }
+    });
+    let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Playlists, &raw)
+        .expect("playlist ownership fixture should parse");
+
+    assert_eq!(page.playlists.len(), 2);
+    assert!(page.playlists[0].owned);
+    assert!(!page.playlists[1].owned);
+}

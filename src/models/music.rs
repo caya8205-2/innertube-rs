@@ -114,6 +114,7 @@ pub struct MusicPlaylistItem {
     pub author: Option<String>,
     pub track_count: Option<u32>,
     pub thumbnail: Option<String>,
+    pub owned: bool,
 }
 
 /// Full YouTube Music playlist details with the native initial track window.
