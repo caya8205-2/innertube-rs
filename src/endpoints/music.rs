@@ -1916,17 +1916,11 @@ fn music_card_to_playlist(
     if card.title.is_empty() {
         return None;
     }
-    let author = card
-        .subtitle
-        .as_deref()
-        .and_then(|subtitle| subtitle.split(" • ").next())
-        .map(str::trim)
-        .filter(|part| !part.is_empty() && !part.eq_ignore_ascii_case("playlist"))
-        .map(ToString::to_string);
     Some(MusicPlaylistItem {
         browse_id,
         title: card.title.clone(),
-        author,
+        description: card.subtitle.clone(),
+        author: card.author.as_ref().map(|author| author.name.clone()),
         track_count: card.track_count,
         thumbnail: card.thumbnails.best_url().map(ToString::to_string),
     })

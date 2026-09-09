@@ -1859,7 +1859,8 @@ fn test_api_contract_38_music_library_page_kinds() {
             "items": [{ "musicTwoRowItemRenderer": {
                 "title": { "runs": [{ "text": "Saved Playlist" }] },
                 "subtitle": { "runs": [
-                    { "text": "Playlist Owner" }, { "text": " • " }, { "text": "12 songs" }
+                    { "text": "Playlist Owner", "navigationEndpoint": { "browseEndpoint": { "browseId": "UC_playlist_owner" } } },
+                    { "text": " • " }, { "text": "12 songs" }
                 ] },
                 "navigationEndpoint": { "browseEndpoint": {
                     "browseId": "VLPL_saved_playlist",
@@ -1874,6 +1875,7 @@ fn test_api_contract_38_music_library_page_kinds() {
     let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Playlists, &playlists)
         .expect("saved playlists fixture should parse");
     assert_eq!(page.playlists[0].browse_id, "VLPL_saved_playlist");
+    assert_eq!(page.playlists[0].description.as_deref(), Some("Playlist Owner • 12 songs"));
     assert_eq!(page.playlists[0].author.as_deref(), Some("Playlist Owner"));
     assert_eq!(page.continuation_token.as_deref(), Some("playlists-next"));
 }
