@@ -148,9 +148,9 @@ pub use models::live_chat::{
 pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLikeStatus, MusicLyrics, MusicPlaylistItem,
-    MusicPlaylistPage, MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf,
-    MusicTrackItem, MusicWatchPage,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLikeStatus, MusicLyrics,
+    MusicPlaylistItem, MusicPlaylistPage, MusicPlaylistView, MusicSearchFilter,
+    MusicSearchResults, MusicShelf, MusicTrackItem, MusicWatchPage,
 };
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};

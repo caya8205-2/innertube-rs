@@ -3,7 +3,7 @@ use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicLyrics, MusicPlaylistItem,
+    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLyrics, MusicPlaylistItem,
     MusicPlaylistPage, MusicSearchFilter, MusicSearchResults, MusicShelf, MusicTrackItem,
     MusicWatchPage,
 };
@@ -1417,6 +1417,268 @@ pub fn parse_music_watch_response(raw: &Value, radio: bool) -> Result<MusicWatch
     })
 }
 
+fn music_home_card_page_type(target: &Value) -> Option<&str> {
+    target
+        .pointer("/title/runs/0/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
+        .or_else(|| {
+            target.pointer("/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
+        })
+        .and_then(Value::as_str)
+}
+
+fn music_home_card_year(target: &Value) -> Option<String> {
+    target
+        .pointer("/subtitle/runs")
+        .and_then(Value::as_array)
+        .and_then(|runs| {
+            runs.iter().find_map(|run| {
+                let text = run.get("text").and_then(Value::as_str)?.trim();
+                (text.len() == 4 && text.chars().all(|ch| ch.is_ascii_digit()))
+                    .then(|| text.to_string())
+            })
+        })
+}
+
+fn music_home_card_artists(target: &Value) -> Vec<MusicArtistRef> {
+    let Some(runs) = target.pointer("/subtitle/runs").and_then(Value::as_array) else {
+        return Vec::new();
+    };
+
+    let mut artists = Vec::new();
+    for (index, run) in runs.iter().enumerate() {
+        if index % 2 != 0 {
+            continue;
+        }
+        let Some(text) = run.get("text").and_then(Value::as_str) else {
+            continue;
+        };
+        let browse_id = run
+            .pointer("/navigationEndpoint/browseEndpoint/browseId")
+            .and_then(Value::as_str);
+        if browse_id.is_some_and(|id| id.starts_with("MPRE") || id.contains("release_detail")) {
+            continue;
+        }
+        if let Some(id) = browse_id {
+            artists.push(MusicArtistRef {
+                name: text.to_string(),
+                browse_id: Some(id.to_string()),
+            });
+        }
+    }
+
+    if !artists.is_empty() {
+        return artists;
+    }
+
+    if runs.len() >= 3 {
+        if let Some(text) = runs
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| index % 2 == 0)
+            .filter_map(|(_, run)| run.get("text").and_then(Value::as_str))
+            .next_back()
+        {
+            let trimmed = text.trim();
+            let is_duration = trimmed.split(':').count() > 1
+                && trimmed.split(':').all(|part| part.parse::<u64>().is_ok());
+            let is_year = trimmed.len() == 4 && trimmed.chars().all(|ch| ch.is_ascii_digit());
+            if !trimmed.is_empty() && !is_duration && !is_year {
+                artists.push(MusicArtistRef {
+                    name: trimmed.to_string(),
+                    browse_id: None,
+                });
+            }
+        }
+    }
+
+    artists
+}
+
+fn music_home_card_album(target: &Value) -> Option<MusicAlbumRef> {
+    target
+        .pointer("/subtitle/runs")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .find_map(|run| {
+            let browse_id = run
+                .pointer("/navigationEndpoint/browseEndpoint/browseId")
+                .and_then(Value::as_str)?;
+            if !browse_id.starts_with("MPRE") && !browse_id.contains("release_detail") {
+                return None;
+            }
+            let title = run.get("text").and_then(Value::as_str)?;
+            Some(MusicAlbumRef {
+                title: title.to_string(),
+                browse_id: Some(browse_id.to_string()),
+            })
+        })
+}
+
+fn music_home_two_row_track(target: &Value) -> Option<MusicTrackItem> {
+    let video_id = target
+        .pointer("/navigationEndpoint/watchEndpoint/videoId")
+        .and_then(Value::as_str)?;
+    let title = target
+        .pointer("/title/runs/0/text")
+        .or_else(|| target.pointer("/title/simpleText"))
+        .and_then(Value::as_str)?;
+    let thumbnail = target
+        .pointer("/thumbnailRenderer/musicThumbnailRenderer/thumbnail")
+        .or_else(|| target.get("thumbnailRenderer"))
+        .and_then(|value| {
+            crate::parser::nodes::misc::thumbnail::ThumbnailListNode::from_value(value)
+                .best_url()
+                .map(ToString::to_string)
+        });
+
+    Some(MusicTrackItem {
+        video_id: video_id.to_string(),
+        title: title.to_string(),
+        artists: music_home_card_artists(target),
+        album: music_home_card_album(target),
+        thumbnail,
+        ..Default::default()
+    })
+}
+
+fn music_home_album_card(target: &Value) -> Option<MusicAlbumItem> {
+    let browse_id = target
+        .pointer("/title/runs/0/navigationEndpoint/browseEndpoint/browseId")
+        .or_else(|| target.pointer("/navigationEndpoint/browseEndpoint/browseId"))
+        .and_then(Value::as_str)?;
+    let title = target
+        .pointer("/title/runs/0/text")
+        .or_else(|| target.pointer("/title/simpleText"))
+        .and_then(Value::as_str)?;
+    let artists = music_home_card_artists(target);
+    let artist = artists.iter().map(|artist| artist.name.as_str()).collect::<Vec<_>>();
+    let thumbnail = target
+        .pointer("/thumbnailRenderer/musicThumbnailRenderer/thumbnail")
+        .or_else(|| target.get("thumbnailRenderer"))
+        .and_then(|value| {
+            crate::parser::nodes::misc::thumbnail::ThumbnailListNode::from_value(value)
+                .best_url()
+                .map(ToString::to_string)
+        });
+
+    Some(MusicAlbumItem {
+        browse_id: browse_id.to_string(),
+        title: title.to_string(),
+        artist: (!artist.is_empty()).then(|| artist.join(", ")),
+        artists,
+        year: music_home_card_year(target),
+        thumbnail,
+        track_count: None,
+    })
+}
+
+fn music_home_playlist_card(target: &Value) -> Option<MusicPlaylistItem> {
+    let browse_id = target
+        .pointer("/title/runs/0/navigationEndpoint/browseEndpoint/browseId")
+        .or_else(|| target.pointer("/navigationEndpoint/browseEndpoint/browseId"))
+        .or_else(|| target.pointer("/navigationEndpoint/watchPlaylistEndpoint/playlistId"))
+        .and_then(Value::as_str)?;
+    let title = target
+        .pointer("/title/runs/0/text")
+        .or_else(|| target.pointer("/title/simpleText"))
+        .and_then(Value::as_str)?;
+    let author = target
+        .get("subtitle")
+        .and_then(crate::parser::nodes::misc::text::TextNode::from_value)
+        .map(|text| text.text)
+        .filter(|text| !text.is_empty());
+    let thumbnail = target
+        .pointer("/thumbnailRenderer/musicThumbnailRenderer/thumbnail")
+        .or_else(|| target.get("thumbnailRenderer"))
+        .and_then(|value| {
+            crate::parser::nodes::misc::thumbnail::ThumbnailListNode::from_value(value)
+                .best_url()
+                .map(ToString::to_string)
+        });
+
+    let track_count = crate::parser::nodes::music::MusicTwoRowItemNode::from_value(target)
+        .and_then(|card| card.track_count);
+
+    Some(MusicPlaylistItem {
+        browse_id: browse_id.to_string(),
+        title: title.to_string(),
+        author,
+        track_count,
+        thumbnail,
+    })
+}
+
+fn music_home_artist_card(target: &Value) -> Option<MusicArtistItem> {
+    let browse_id = target
+        .pointer("/title/runs/0/navigationEndpoint/browseEndpoint/browseId")
+        .or_else(|| target.pointer("/navigationEndpoint/browseEndpoint/browseId"))
+        .and_then(Value::as_str)?;
+    let name = target
+        .pointer("/title/runs/0/text")
+        .or_else(|| target.pointer("/title/simpleText"))
+        .and_then(Value::as_str)?;
+    let subscribers = target
+        .get("subtitle")
+        .and_then(crate::parser::nodes::misc::text::TextNode::from_value)
+        .map(|text| text.text)
+        .filter(|text| !text.is_empty());
+    let thumbnail = target
+        .pointer("/thumbnailRenderer/musicThumbnailRenderer/thumbnail")
+        .or_else(|| target.get("thumbnailRenderer"))
+        .and_then(|value| {
+            crate::parser::nodes::misc::thumbnail::ThumbnailListNode::from_value(value)
+                .best_url()
+                .map(ToString::to_string)
+        });
+
+    Some(MusicArtistItem {
+        browse_id: browse_id.to_string(),
+        name: name.to_string(),
+        subscribers,
+        thumbnail,
+    })
+}
+
+fn parse_music_home_item(raw_item: &Value) -> Option<MusicHomeItem> {
+    if raw_item.get("musicResponsiveListItemRenderer").is_some() {
+        let item = MusicResponsiveListItemNode::from_value(raw_item)?;
+        let track = convert_music_node_to_track_item(&item);
+        return (!track.video_id.is_empty()).then_some(MusicHomeItem::Track(track));
+    }
+
+    let target = raw_item.get("musicTwoRowItemRenderer")?;
+    match music_home_card_page_type(target) {
+        Some("MUSIC_PAGE_TYPE_ALBUM" | "MUSIC_PAGE_TYPE_AUDIOBOOK") => {
+            music_home_album_card(target).map(MusicHomeItem::Album)
+        }
+        Some("MUSIC_PAGE_TYPE_ARTIST" | "MUSIC_PAGE_TYPE_USER_CHANNEL") => {
+            music_home_artist_card(target).map(MusicHomeItem::Artist)
+        }
+        Some("MUSIC_PAGE_TYPE_PLAYLIST") => {
+            music_home_playlist_card(target).map(MusicHomeItem::Playlist)
+        }
+        Some(_) => None,
+        None => {
+            if target.pointer("/navigationEndpoint/watchEndpoint/videoId").is_some() {
+                music_home_two_row_track(target).map(MusicHomeItem::Track)
+            } else {
+                music_home_playlist_card(target).map(MusicHomeItem::Playlist)
+            }
+        }
+    }
+}
+
+fn push_music_home_item(shelf: &mut MusicShelf, item: MusicHomeItem) {
+    match &item {
+        MusicHomeItem::Track(track) => shelf.tracks.push(track.clone()),
+        MusicHomeItem::Album(album) => shelf.albums.push(album.clone()),
+        MusicHomeItem::Artist(artist) => shelf.artists.push(artist.clone()),
+        MusicHomeItem::Playlist(playlist) => shelf.playlists.push(playlist.clone()),
+    }
+    shelf.items.push(item);
+}
+
 /// Parse YouTube Music Home Feed response (`HomeFeed.ts`).
 pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
     let mut feed = MusicHomeFeed::default();
@@ -1444,40 +1706,21 @@ pub fn parse_music_home_response(raw: &Value) -> Result<MusicHomeFeed> {
             let mut shelf = MusicShelf {
                 title,
                 subtitle,
-                tracks: Vec::new(),
-                albums: Vec::new(),
-                playlists: Vec::new(),
+                ..Default::default()
             };
 
-            let parsed_shelf = Parser::parse_tree(shelf_target);
-            for item in parsed_shelf.find_music_items() {
-                shelf.tracks.push(convert_music_node_to_track_item(item));
-            }
-            for node in &parsed_shelf {
-                if let YTNode::MusicCard(card) = node {
-                    if card.item_type.as_deref() == Some("MUSIC_PAGE_TYPE_ALBUM") {
-                        shelf.albums.push(MusicAlbumItem {
-                            artists: Vec::new(),
-                            browse_id: card.id.clone().unwrap_or_default(),
-                            title: card.title.clone(),
-                            artist: card.subtitle.clone(),
-                            year: None,
-                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
-                            track_count: None,
-                        });
-                    } else {
-                        shelf.playlists.push(MusicPlaylistItem {
-                            browse_id: card.id.clone().unwrap_or_default(),
-                            title: card.title.clone(),
-                            author: card.subtitle.clone(),
-                            track_count: card.track_count,
-                            thumbnail: card.thumbnails.best_url().map(|s| s.to_string()),
-                        });
-                    }
+            for raw_item in shelf_target
+                .get("contents")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+            {
+                if let Some(item) = parse_music_home_item(raw_item) {
+                    push_music_home_item(&mut shelf, item);
                 }
             }
 
-            if !shelf.tracks.is_empty() || !shelf.albums.is_empty() || !shelf.playlists.is_empty() {
+            if !shelf.items.is_empty() {
                 feed.shelves.push(shelf);
             }
         }
