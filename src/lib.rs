@@ -537,6 +537,23 @@ impl Innertube {
         })
     }
 
+    /// Publish the initial playback event for a YouTube Music track.
+    pub async fn add_music_to_watch_history(
+        &self,
+        info: &VideoInfo,
+    ) -> Result<reqwest::Response> {
+        info.add_to_music_watch_history(&self.session).await
+    }
+
+    /// Publish a YouTube Music watch-time update for an already-fetched track.
+    pub async fn update_music_watch_time(
+        &self,
+        info: &VideoInfo,
+        start_time: f64,
+    ) -> Result<reqwest::Response> {
+        info.update_music_watch_time(&self.session, start_time).await
+    }
+
     /// Fetch Shorts video metadata and reel watch sequence navigation.
     pub async fn get_shorts_video_info(
         &self,
