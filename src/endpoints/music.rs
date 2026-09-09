@@ -8,6 +8,7 @@ use crate::models::music::{
 };
 use crate::parser::nodes::music::{MusicDescriptionShelfNode, MusicResponsiveListItemNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
+use crate::utils::proto::encode_music_search_filter;
 
 /// Perform a filtered search on YouTube Music (`WEB_REMIX`).
 pub async fn search_music(
@@ -15,13 +16,35 @@ pub async fn search_music(
     query: &str,
     filter: Option<MusicSearchFilter>,
 ) -> Result<MusicSearchResults> {
+    search_music_page(session, query, filter, None).await
+}
+
+/// Fetch one continuation page of filtered YouTube Music search results.
+pub async fn search_music_continuation(
+    session: &Session,
+    query: &str,
+    filter: Option<MusicSearchFilter>,
+    continuation_token: &str,
+) -> Result<MusicSearchResults> {
+    search_music_page(session, query, filter, Some(continuation_token)).await
+}
+
+async fn search_music_page(
+    session: &Session,
+    query: &str,
+    filter: Option<MusicSearchFilter>,
+    continuation_token: Option<&str>,
+) -> Result<MusicSearchResults> {
     let mut payload = json!({
         "query": query,
     });
 
-    if let Some(f) = filter {
-        if let Some(obj) = payload.as_object_mut() {
-            obj.insert("params".to_string(), json!(f.to_param_str()));
+    if let Some(object) = payload.as_object_mut() {
+        if let Some(filter) = filter {
+            object.insert("params".to_string(), json!(encode_music_search_filter(filter)?));
+        }
+        if let Some(token) = continuation_token {
+            object.insert("continuation".to_string(), json!(token));
         }
     }
 
@@ -326,6 +349,31 @@ fn extract_lyrics_browse_id(raw: &Value) -> Option<String> {
     None
 }
 
+fn find_music_search_shelf(value: &Value) -> Option<&Value> {
+    if let Some(continuation) = value.pointer("/continuationContents/musicShelfContinuation") {
+        return Some(continuation);
+    }
+    match value {
+        Value::Object(map) => {
+            if let Some(shelf) = map.get("musicShelfRenderer") {
+                return Some(shelf);
+            }
+            map.values().find_map(find_music_search_shelf)
+        }
+        Value::Array(items) => items.iter().find_map(find_music_search_shelf),
+        _ => None,
+    }
+}
+
+fn music_search_continuation_token(raw: &Value) -> Option<String> {
+    let shelf = find_music_search_shelf(raw)?;
+    shelf
+        .pointer("/continuations/0/nextContinuationData/continuation")
+        .or_else(|| shelf.pointer("/continuations/0/reloadContinuationData/continuation"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+}
+
 /// Parse YouTube Music search results using modular AST nodes.
 pub fn parse_music_search_response(
     query: &str,
@@ -339,6 +387,8 @@ pub fn parse_music_search_response(
     };
 
     let parsed_tree = Parser::parse_tree(raw);
+
+    results.continuation_token = music_search_continuation_token(raw);
 
     for item in parsed_tree.find_music_items() {
         let track = convert_music_node_to_track_item(item);

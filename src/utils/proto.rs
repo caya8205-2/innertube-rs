@@ -5,6 +5,7 @@ use rand::RngExt;
 
 use crate::error::{InnertubeError, Result};
 use crate::models::comments::PostCommentSort;
+use crate::models::music::MusicSearchFilter;
 use crate::models::search::{
     DurationFilter, FeatureFilter, SearchFilters, SearchPrioritize, SearchTypeFilter,
     UploadDateFilter,
@@ -136,6 +137,40 @@ pub fn encode_community_post_comments_continuation(
 
     let continuation = STANDARD.encode(container_buf);
     Ok(url::form_urlencoded::byte_serialize(continuation.as_bytes()).collect())
+}
+
+/// Encode a YouTube Music search type using the same `SearchFilter` protobuf
+/// contract as YouTube.js. Featured/community playlist filters remain legacy
+/// YouTube Music presets because they are not represented by `MusicSearchType`.
+pub fn encode_music_search_filter(filter: MusicSearchFilter) -> Result<String> {
+    if matches!(
+        filter,
+        MusicSearchFilter::FeaturedPlaylists | MusicSearchFilter::CommunityPlaylists
+    ) {
+        return Ok(filter.to_param_str().to_string());
+    }
+
+    let music_search_type = search_filter::filters::MusicSearchType {
+        song: (filter == MusicSearchFilter::Songs).then_some(true),
+        video: (filter == MusicSearchFilter::Videos).then_some(true),
+        album: (filter == MusicSearchFilter::Albums).then_some(true),
+        artist: (filter == MusicSearchFilter::Artists).then_some(true),
+        playlist: (filter == MusicSearchFilter::Playlists).then_some(true),
+    };
+    let proto_filter = SearchFilter {
+        prioritize: None,
+        filters: Some(search_filter::Filters {
+            music_search_type: Some(music_search_type),
+            ..Default::default()
+        }),
+    };
+
+    let mut buf = Vec::with_capacity(proto_filter.encoded_len());
+    proto_filter.encode(&mut buf).map_err(|err| {
+        InnertubeError::Other(format!("Failed to encode Music search filter: {err}"))
+    })?;
+    let base64 = STANDARD.encode(buf);
+    Ok(url::form_urlencoded::byte_serialize(base64.as_bytes()).collect())
 }
 
 /// Encode `SearchFilters` into URL-encoded base64 `SearchFilter` protobuf params.
@@ -547,6 +582,23 @@ mod tests {
         assert_eq!(field.post_id, "UgkxMjM0NTY3ODkw");
         assert_eq!(field.ucid1, "UC_test");
         assert_eq!(field.ucid2, "UC_test");
+    }
+
+    #[test]
+    fn test_music_search_filter_matches_youtubejs_contract() {
+        let cases = [
+            (MusicSearchFilter::Songs, "EgWKAQIIAQ%3D%3D"),
+            (MusicSearchFilter::Videos, "EgWKAQIQAQ%3D%3D"),
+            (MusicSearchFilter::Albums, "EgWKAQIYAQ%3D%3D"),
+            (MusicSearchFilter::Artists, "EgWKAQIgAQ%3D%3D"),
+            (MusicSearchFilter::Playlists, "EgWKAQIoAQ%3D%3D"),
+        ];
+
+        for (filter, expected) in cases {
+            let encoded = encode_music_search_filter(filter).expect("Music search filter should encode");
+            assert_eq!(encoded, expected);
+            assert_eq!(filter.to_param_str(), expected);
+        }
     }
 
     #[test]

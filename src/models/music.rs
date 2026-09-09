@@ -16,11 +16,11 @@ impl MusicSearchFilter {
     /// Return the Protobuf search parameter string used by YouTube Music.
     pub fn to_param_str(self) -> &'static str {
         match self {
-            Self::Songs => "EgWKAQIIAWoQEAMQBBAJEA4QChAFEBEQEBA%3D",
-            Self::Videos => "EgWKAQIQAWoQEAMQBBAJEA4QChAFEBEQEBA%3D",
-            Self::Albums => "EgWKAQIYAWoQEAMQBBAJEA4QChAFEBEQEBA%3D",
-            Self::Artists => "EgWKAQIgAWoQEAMQBBAJEA4QChAFEBEQEBA%3D",
-            Self::Playlists => "EgWKAQIwAWoQEAMQBBAJEA4QChAFEBEQEBA%3D",
+            Self::Songs => "EgWKAQIIAQ%3D%3D",
+            Self::Videos => "EgWKAQIQAQ%3D%3D",
+            Self::Albums => "EgWKAQIYAQ%3D%3D",
+            Self::Artists => "EgWKAQIgAQ%3D%3D",
+            Self::Playlists => "EgWKAQIoAQ%3D%3D",
             Self::FeaturedPlaylists => "EgeKAQQoADgBagwQDhAKEAMQBBAJEAU%3D",
             Self::CommunityPlaylists => "EgeKAQQoAEABagwQDhAKEAMQBBAJEAU%3D",
         }

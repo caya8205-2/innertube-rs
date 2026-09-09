@@ -2,6 +2,7 @@ use crate::core::session::Session;
 use crate::endpoints::music::{
     get_music_album, get_music_artist, get_music_explore, get_music_home,
     get_music_home_continuation, get_music_lyrics, get_music_playlist_details, search_music,
+    search_music_continuation,
 };
 use crate::error::Result;
 use crate::models::music::{
@@ -26,6 +27,16 @@ impl<'a> MusicManager<'a> {
         filter: Option<MusicSearchFilter>,
     ) -> Result<MusicSearchResults> {
         search_music(self.session, query, filter).await
+    }
+
+    /// Continue a filtered YouTube Music search.
+    pub async fn search_continuation(
+        &self,
+        query: &str,
+        filter: Option<MusicSearchFilter>,
+        continuation_token: &str,
+    ) -> Result<MusicSearchResults> {
+        search_music_continuation(self.session, query, filter, continuation_token).await
     }
 
     /// Fetch a YouTube Music artist page.
