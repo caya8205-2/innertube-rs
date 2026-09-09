@@ -1740,3 +1740,61 @@ fn test_api_contract_36_music_home_preserves_mixed_order() {
     assert!(matches!(shelf.items[3], MusicHomeItem::Track(_)));
     assert!(matches!(shelf.items[4], MusicHomeItem::Artist(_)));
 }
+
+#[test]
+fn test_api_contract_37_music_playlist_card_metadata() {
+    let playlist_endpoint = |browse_id: &str| json!({
+        "browseEndpoint": {
+            "browseId": browse_id,
+            "browseEndpointContextSupportedConfigs": {
+                "browseEndpointContextMusicConfig": { "pageType": "MUSIC_PAGE_TYPE_PLAYLIST" }
+            }
+        }
+    });
+    let raw = json!({
+        "contents": { "singleColumnBrowseResultsRenderer": { "tabs": [{ "tabRenderer": {
+            "content": { "sectionListRenderer": { "contents": [{ "musicCarouselShelfRenderer": {
+                "header": { "musicCarouselShelfBasicHeaderRenderer": {
+                    "title": { "runs": [{ "text": "Fixture playlists" }] }
+                } },
+                "contents": [
+                    { "musicTwoRowItemRenderer": {
+                        "title": { "runs": [{ "text": "Counted Playlist" }] },
+                        "subtitle": { "runs": [
+                            { "text": "Fixture Owner", "navigationEndpoint": { "browseEndpoint": { "browseId": "UC_fixture_owner" } } },
+                            { "text": " • " }, { "text": "17 tracks" }
+                        ] },
+                        "navigationEndpoint": playlist_endpoint("VLfixture-counted")
+                    } },
+                    { "musicTwoRowItemRenderer": {
+                        "title": { "runs": [{ "text": "Made For Playlist" }] },
+                        "subtitle": { "runs": [
+                            { "text": "Made for " },
+                            { "text": "Fixture Listener", "navigationEndpoint": { "browseEndpoint": { "browseId": "UC_fixture_listener" } } },
+                            { "text": " • " }, { "text": "100 songs" }
+                        ] },
+                        "navigationEndpoint": playlist_endpoint("VLfixture-made-for")
+                    } },
+                    { "musicTwoRowItemRenderer": {
+                        "title": { "runs": [{ "text": "System Playlist" }] },
+                        "subtitle": { "runs": [{ "text": "Auto playlist" }] },
+                        "navigationEndpoint": playlist_endpoint("VLfixture-system")
+                    } }
+                ]
+            } }] } }
+        } }] } }
+    });
+
+    let feed = endpoints::music::parse_music_home_response(&raw)
+        .expect("playlist-card metadata fixture should parse");
+    let playlists = &feed.shelves[0].playlists;
+    assert_eq!(playlists.len(), 3);
+    assert_eq!(playlists[0].description.as_deref(), Some("Fixture Owner • 17 tracks"));
+    assert_eq!(playlists[0].author.as_deref(), Some("Fixture Owner"));
+    assert_eq!(playlists[0].track_count, Some(17));
+    assert_eq!(playlists[1].description.as_deref(), Some("Made for Fixture Listener • 100 songs"));
+    assert_eq!(playlists[1].author, None);
+    assert_eq!(playlists[1].track_count, None);
+    assert_eq!(playlists[2].description.as_deref(), Some("Auto playlist"));
+    assert_eq!(playlists[2].author, None);
+}

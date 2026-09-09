@@ -535,6 +535,7 @@ pub fn parse_music_search_response(
                 results.playlists.push(MusicPlaylistItem {
                     browse_id: item.id.clone().unwrap_or_default(),
                     title: item.title.clone(),
+                    description: None,
                     author: item.artists.first().map(|a| a.name.clone()),
                     track_count: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
@@ -547,6 +548,7 @@ pub fn parse_music_search_response(
                 results.playlists.push(MusicPlaylistItem {
                     browse_id: item.id.clone().unwrap_or_default(),
                     title: item.title.clone(),
+                    description: None,
                     author: item.artists.first().map(|a| a.name.clone()),
                     track_count: None,
                     thumbnail: item.thumbnails.best_url().map(|s| s.to_string()),
@@ -1583,7 +1585,7 @@ fn music_home_playlist_card(target: &Value) -> Option<MusicPlaylistItem> {
         .pointer("/title/runs/0/text")
         .or_else(|| target.pointer("/title/simpleText"))
         .and_then(Value::as_str)?;
-    let author = target
+    let description = target
         .get("subtitle")
         .and_then(crate::parser::nodes::misc::text::TextNode::from_value)
         .map(|text| text.text)
@@ -1597,12 +1599,17 @@ fn music_home_playlist_card(target: &Value) -> Option<MusicPlaylistItem> {
                 .map(ToString::to_string)
         });
 
-    let track_count = crate::parser::nodes::music::MusicTwoRowItemNode::from_value(target)
-        .and_then(|card| card.track_count);
+    let card = crate::parser::nodes::music::MusicTwoRowItemNode::from_value(target);
+    let track_count = card.as_ref().and_then(|card| card.track_count);
+    let author = card
+        .as_ref()
+        .and_then(|card| card.author.as_ref())
+        .map(|author| author.name.clone());
 
     Some(MusicPlaylistItem {
         browse_id: browse_id.to_string(),
         title: title.to_string(),
+        description,
         author,
         track_count,
         thumbnail,
