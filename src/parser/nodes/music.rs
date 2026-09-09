@@ -11,6 +11,7 @@ use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
 pub struct MusicResponsiveListItemNode {
     pub id: Option<String>,
     pub title: String,
+    pub subtitle: Option<String>,
     pub artists: Vec<AuthorNode>,
     pub album: Option<String>,
     pub album_id: Option<String>,
@@ -55,6 +56,7 @@ impl MusicResponsiveListItemNode {
         let id = target.pointer("/playlistItemData/videoId")
             .or_else(|| target.pointer("/flexColumns/0/musicResponsiveListItemFlexColumnRenderer/text/runs/0/navigationEndpoint/watchEndpoint/videoId"))
             .or_else(|| target.pointer("/overlay/musicItemThumbnailOverlayRenderer/content/musicPlayButtonRenderer/playNavigationEndpoint/watchEndpoint/videoId"))
+            .or_else(|| target.pointer("/navigationEndpoint/browseEndpoint/browseId"))
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
 
@@ -63,11 +65,19 @@ impl MusicResponsiveListItemNode {
             .map(|t| t.text)
             .unwrap_or_default();
 
+        let subtitle = target
+            .pointer("/flexColumns/1/musicResponsiveListItemFlexColumnRenderer/text")
+            .and_then(TextNode::from_value)
+            .map(|text| text.text);
+
         let mut artists = Vec::new();
         let mut album = None;
         let mut album_id = None;
         let mut duration = None;
-        let mut item_type = None;
+        let mut item_type = target
+            .pointer("/navigationEndpoint/browseEndpoint/browseEndpointContextSupportedConfigs/browseEndpointContextMusicConfig/pageType")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
 
         if let Some(columns) = target.get("flexColumns").and_then(Value::as_array) {
             for (column_index, column) in columns.iter().enumerate() {
@@ -137,6 +147,7 @@ impl MusicResponsiveListItemNode {
         );
 
         let endpoint = target.pointer("/flexColumns/0/musicResponsiveListItemFlexColumnRenderer/text/runs/0/navigationEndpoint")
+            .or_else(|| target.get("navigationEndpoint"))
             .and_then(NavigationEndpointNode::from_value);
 
         let is_explicit = target.pointer("/badges/0/musicInlineBadgeRenderer/icon/iconType")
@@ -159,6 +170,7 @@ impl MusicResponsiveListItemNode {
         Some(Self {
             id,
             title,
+            subtitle,
             artists,
             album,
             album_id,

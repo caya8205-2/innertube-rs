@@ -5,8 +5,9 @@ use innertube_rs::{
     CommentThread, CommentsResult, CreateCommentResult, CreatePlaylistResult, DownloadOptions,
     DownloadRange, FormatFilter, FormatOptions, FormatType, GetVideoInfoOptions, GuideResponse,
     HashtagFeed, HistoryFeed, HomeFeed, Innertube, LibraryFeed, LiveChatMessage, LiveChatResponse,
-    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLikeStatus,
-    MusicLyrics, MusicSearchFilter, MusicSearchResults, NavigationEndpointNode, NodeListExt,
+    MusicAlbumView, MusicArtistPage, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLibraryKind,
+    MusicLikeStatus, MusicLyrics, MusicSearchFilter, MusicSearchResults, NavigationEndpointNode,
+    NodeListExt,
     NotificationPreferenceType, Parser,
     PlaylistContinuation, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
     PlaylistVideoItem, PlaylistVideoNode, PlaylistView, PostCommentSort, PostNode,
@@ -1797,4 +1798,84 @@ fn test_api_contract_37_music_playlist_card_metadata() {
     assert_eq!(playlists[1].track_count, None);
     assert_eq!(playlists[2].description.as_deref(), Some("Auto playlist"));
     assert_eq!(playlists[2].author, None);
+}
+
+#[test]
+fn test_api_contract_38_music_library_page_kinds() {
+    let songs = json!({
+        "musicShelfRenderer": {
+            "contents": [music_home_track("song-video-1", "Saved Song")],
+            "continuations": [{ "nextContinuationData": { "continuation": "songs-next" } }]
+        }
+    });
+    let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Songs, &songs)
+        .expect("saved songs fixture should parse");
+    assert_eq!(page.songs[0].video_id, "song-video-1");
+    assert_eq!(page.continuation_token.as_deref(), Some("songs-next"));
+
+    let artists = json!({
+        "musicShelfRenderer": { "contents": [{ "musicResponsiveListItemRenderer": {
+            "navigationEndpoint": { "browseEndpoint": {
+                "browseId": "UC_artist_1",
+                "browseEndpointContextSupportedConfigs": { "browseEndpointContextMusicConfig": {
+                    "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                } }
+            } },
+            "flexColumns": [
+                { "musicResponsiveListItemFlexColumnRenderer": { "text": { "runs": [{ "text": "Saved Artist" }] } } },
+                { "musicResponsiveListItemFlexColumnRenderer": { "text": { "runs": [{ "text": "456K subscribers" }] } } }
+            ]
+        } }] }
+    });
+    let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Artists, &artists)
+        .expect("saved artists fixture should parse");
+    assert_eq!(page.artists[0].browse_id, "UC_artist_1");
+    assert_eq!(page.artists[0].subscribers.as_deref(), Some("456K subscribers"));
+
+    let albums = json!({
+        "gridRenderer": { "items": [{ "musicTwoRowItemRenderer": {
+            "title": { "runs": [{ "text": "Saved Album" }] },
+            "subtitle": { "runs": [
+                { "text": "Album" }, { "text": " • " }, { "text": "Album Artist" },
+                { "text": " • " }, { "text": "2026" }
+            ] },
+            "navigationEndpoint": { "browseEndpoint": {
+                "browseId": "MPREb_saved_album",
+                "browseEndpointContextSupportedConfigs": { "browseEndpointContextMusicConfig": {
+                    "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                } }
+            } },
+            "menu": { "continuations": [{ "nextContinuationData": { "continuation": "unrelated-menu-token" } }] }
+        } }] }
+    });
+    let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Albums, &albums)
+        .expect("saved albums fixture should parse");
+    assert_eq!(page.albums[0].artist.as_deref(), Some("Album Artist"));
+    assert_eq!(page.albums[0].year.as_deref(), Some("2026"));
+    assert_eq!(page.continuation_token, None);
+
+    let playlists = json!({
+        "continuationContents": { "gridContinuation": {
+            "items": [{ "musicTwoRowItemRenderer": {
+                "title": { "runs": [{ "text": "Saved Playlist" }] },
+                "subtitle": { "runs": [
+                    { "text": "Playlist Owner", "navigationEndpoint": { "browseEndpoint": { "browseId": "UC_playlist_owner" } } },
+                    { "text": " • " }, { "text": "12 songs" }
+                ] },
+                "navigationEndpoint": { "browseEndpoint": {
+                    "browseId": "VLPL_saved_playlist",
+                    "browseEndpointContextSupportedConfigs": { "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_PLAYLIST"
+                    } }
+                } }
+            } }],
+            "continuations": [{ "nextContinuationData": { "continuation": "playlists-next" } }]
+        } }
+    });
+    let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Playlists, &playlists)
+        .expect("saved playlists fixture should parse");
+    assert_eq!(page.playlists[0].browse_id, "VLPL_saved_playlist");
+    assert_eq!(page.playlists[0].description.as_deref(), Some("Playlist Owner • 12 songs"));
+    assert_eq!(page.playlists[0].author.as_deref(), Some("Playlist Owner"));
+    assert_eq!(page.continuation_token.as_deref(), Some("playlists-next"));
 }
