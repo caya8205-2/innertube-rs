@@ -142,6 +142,7 @@ pub enum MusicLibraryKind {
     Albums,
     Artists,
     Playlists,
+    Uploads,
 }
 
 impl MusicLibraryKind {
@@ -151,6 +152,7 @@ impl MusicLibraryKind {
             Self::Albums => "FEmusic_liked_albums",
             Self::Artists => "FEmusic_library_corpus_track_artists",
             Self::Playlists => "FEmusic_liked_playlists",
+            Self::Uploads => "FEmusic_library_privately_owned_tracks",
         }
     }
 }

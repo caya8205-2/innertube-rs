@@ -1929,3 +1929,112 @@ fn test_api_contract_39_music_history_preserves_order_duplicates_and_feedback() 
     assert_eq!(history.entries[0].feedback_token.as_deref(), Some("feedback-first"));
     assert_eq!(history.entries[1].feedback_token.as_deref(), Some("feedback-second"));
 }
+
+#[test]
+fn test_api_contract_40_music_uploaded_songs_parse_menu_identity_and_metadata() {
+    let uploaded = json!({
+        "musicShelfRenderer": {
+            "contents": [
+                {
+                    "musicResponsiveListItemRenderer": {
+                        "flexColumns": [{
+                            "musicResponsiveListItemFlexColumnRenderer": {
+                                "text": { "runs": [{ "text": "Shuffle all" }] }
+                            }
+                        }]
+                    }
+                },
+                {
+                    "musicResponsiveListItemRenderer": {
+                        "flexColumns": [
+                            {
+                                "musicResponsiveListItemFlexColumnRenderer": {
+                                    "text": { "runs": [{ "text": "Uploaded Song" }] }
+                                }
+                            },
+                            {
+                                "musicResponsiveListItemFlexColumnRenderer": {
+                                    "text": { "runs": [{
+                                        "text": "Uploaded Artist",
+                                        "navigationEndpoint": {
+                                            "browseEndpoint": {
+                                                "browseId": "FEmusic_library_privately_owned_artist_detail_artist"
+                                            }
+                                        }
+                                    }] }
+                                }
+                            },
+                            {
+                                "musicResponsiveListItemFlexColumnRenderer": {
+                                    "text": { "runs": [{
+                                        "text": "Uploaded Album",
+                                        "navigationEndpoint": {
+                                            "browseEndpoint": {
+                                                "browseId": "FEmusic_library_privately_owned_release_detail_album"
+                                            }
+                                        }
+                                    }] }
+                                }
+                            }
+                        ],
+                        "fixedColumns": [{
+                            "musicResponsiveListItemFixedColumnRenderer": {
+                                "text": { "runs": [{ "text": "4:12" }] }
+                            }
+                        }],
+                        "thumbnail": {
+                            "musicThumbnailRenderer": {
+                                "thumbnail": {
+                                    "thumbnails": [{
+                                        "url": "https://example.test/upload.jpg",
+                                        "width": 120,
+                                        "height": 120
+                                    }]
+                                }
+                            }
+                        },
+                        "menu": {
+                            "menuRenderer": {
+                                "items": [{
+                                    "menuServiceItemRenderer": {
+                                        "serviceEndpoint": {
+                                            "queueAddEndpoint": {
+                                                "queueTarget": {
+                                                    "videoId": "upload-video-1"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }
+            ],
+            "continuations": [{
+                "nextContinuationData": { "continuation": "uploads-next" }
+            }]
+        }
+    });
+
+    let page = endpoints::music::parse_music_library_response(MusicLibraryKind::Uploads, &uploaded)
+        .expect("uploaded songs fixture should parse");
+    assert_eq!(page.songs.len(), 1, "shuffle/random-mix rows must be ignored");
+    let track = &page.songs[0];
+    assert_eq!(track.video_id, "upload-video-1");
+    assert_eq!(track.title, "Uploaded Song");
+    assert_eq!(track.artists[0].name, "Uploaded Artist");
+    assert_eq!(
+        track.artists[0].browse_id.as_deref(),
+        Some("FEmusic_library_privately_owned_artist_detail_artist")
+    );
+    assert_eq!(track.album.as_ref().map(|album| album.title.as_str()), Some("Uploaded Album"));
+    assert_eq!(
+        track.album.as_ref().and_then(|album| album.browse_id.as_deref()),
+        Some("FEmusic_library_privately_owned_release_detail_album")
+    );
+    assert_eq!(track.duration.as_deref(), Some("4:12"));
+    assert_eq!(track.duration_ms, Some(252_000));
+    assert_eq!(track.thumbnail.as_deref(), Some("https://example.test/upload.jpg"));
+    assert_eq!(page.continuation_token.as_deref(), Some("uploads-next"));
+}
