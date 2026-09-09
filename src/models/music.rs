@@ -281,6 +281,22 @@ pub struct MusicHomeFeed {
     pub continuation_token: Option<String>,
 }
 
+/// One ordered entry from the authenticated YouTube Music playback history.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicHistoryEntry {
+    pub track: MusicTrackItem,
+    pub played: String,
+    pub feedback_token: Option<String>,
+}
+
+/// Complete YouTube Music account playback-history snapshot.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct MusicHistory {
+    pub entries: Vec<MusicHistoryEntry>,
+}
+
 /// One native page of a YouTube Music playlist.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]

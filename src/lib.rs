@@ -148,10 +148,10 @@ pub use models::live_chat::{
 pub use models::manifest::{ManifestStream, ParsedManifest};
 pub use models::music::{
     MusicAlbumItem, MusicAlbumRef, MusicAlbumView, MusicArtistItem, MusicArtistPage,
-    MusicArtistRef, MusicExplore, MusicHomeFeed, MusicHomeItem, MusicLibraryKind,
-    MusicLibraryPage, MusicLikeStatus, MusicLyrics, MusicPlaylistItem, MusicPlaylistPage,
-    MusicPlaylistView, MusicSearchFilter,
-    MusicSearchResults, MusicShelf, MusicTrackItem, MusicWatchPage,
+    MusicArtistRef, MusicExplore, MusicHistory, MusicHistoryEntry, MusicHomeFeed, MusicHomeItem,
+    MusicLibraryKind, MusicLibraryPage, MusicLikeStatus, MusicLyrics, MusicPlaylistItem,
+    MusicPlaylistPage, MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf,
+    MusicTrackItem, MusicWatchPage,
 };
 pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
@@ -431,9 +431,10 @@ use crate::endpoints::feed::{
 use crate::endpoints::guide::get_guide;
 use crate::endpoints::live_chat::{extract_live_chat_continuation_token, get_live_chat};
 use crate::endpoints::music::{
-    get_music_album, get_music_artist, get_music_explore, get_music_home, get_music_library_page,
-    get_music_lyrics, get_music_playlist_continuation, get_music_playlist_page, get_music_radio_page,
-    get_music_shuffled_playlist_page, search_music, search_music_continuation,
+    get_music_album, get_music_artist, get_music_explore, get_music_history, get_music_home,
+    get_music_library_page, get_music_lyrics, get_music_playlist_continuation,
+    get_music_playlist_page, get_music_radio_page, get_music_shuffled_playlist_page, search_music,
+    search_music_continuation,
 };
 use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
@@ -938,6 +939,11 @@ impl Innertube {
         continuation_token: Option<&str>,
     ) -> Result<MusicLibraryPage> {
         get_music_library_page(&self.session, kind, continuation_token).await
+    }
+
+    /// Fetch the complete authenticated YouTube Music playback history.
+    pub async fn get_music_history(&self) -> Result<MusicHistory> {
+        get_music_history(&self.session).await
     }
 
     /// Fetch YouTube Music Home Feed with dynamic shelves (`FEmusic_home`).
