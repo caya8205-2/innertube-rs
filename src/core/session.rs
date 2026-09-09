@@ -106,10 +106,11 @@ fn generate_sid_auth(
         format!("{timestamp} {sid} {origin}")
     };
     let digest = Sha1::digest(input.as_bytes());
+    let hex: String = digest.iter().map(|b| format!("{b:02x}")).collect();
     if user_session_id.is_some() {
-        format!("{scheme} {timestamp}_{digest:x}_u")
+        format!("{scheme} {timestamp}_{hex}_u")
     } else {
-        format!("{scheme} {timestamp}_{digest:x}")
+        format!("{scheme} {timestamp}_{hex}")
     }
 }
 
