@@ -436,7 +436,7 @@ use crate::endpoints::navigation::resolve_url;
 use crate::endpoints::next::get_watch_next;
 use crate::endpoints::player::{
     fetch_player_response, fetch_player_response_with_options, fetch_shorts_video_info,
-    select_format, select_format_with_options,
+    resolve_stream_url, select_format, select_format_with_options,
 };
 use crate::endpoints::playlist::{get_playlist, get_playlist_continuation};
 use crate::endpoints::post::{get_post, get_post_comments};
@@ -555,6 +555,40 @@ impl Innertube {
             self.session.po_token.as_deref(),
             None,
         )
+    }
+
+    /// Resolve a YouTube Music stream through the `YTMUSIC` client alias used by
+    /// YouTube.js `Music.getInfo()` instead of the generic video-player fallback chain.
+    pub async fn get_music_stream_url(
+        &self,
+        video_id: &str,
+        filter: &FormatFilter,
+    ) -> Result<String> {
+        let options = GetVideoInfoOptions {
+            client: Some(crate::constants::clients::YTMUSIC_NAME.to_string()),
+            ..Default::default()
+        };
+        let info = self.get_basic_info(video_id, Some(&options)).await?;
+        let format = select_format(&info.player_response, filter)?;
+        resolve_stream_url(format, &self.player.decipherer)
+    }
+
+    /// Retrieve the selected YouTube Music stream format with its deciphered, playable URL.
+    pub async fn get_music_streaming_data(
+        &self,
+        video_id: &str,
+        filter: &FormatFilter,
+    ) -> Result<StreamingFormat> {
+        let options = GetVideoInfoOptions {
+            client: Some(crate::constants::clients::YTMUSIC_NAME.to_string()),
+            ..Default::default()
+        };
+        let info = self.get_basic_info(video_id, Some(&options)).await?;
+        let mut format = select_format(&info.player_response, filter)?.clone();
+        format.url = Some(resolve_stream_url(&format, &self.player.decipherer)?);
+        format.signature_cipher = None;
+        format.cipher = None;
+        Ok(format)
     }
 
     /// Retrieve the selected stream format with its deciphered, playable URL.
