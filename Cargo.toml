@@ -27,7 +27,7 @@ prost-types = "0.14"
 rand = "0.10"
 base64 = "0.23"
 regex = "1"
-rquickjs = { version = "0.9", features = ["parallel"] }
+rquickjs = { version = "0.12", features = ["parallel"] }
 url = "2"
 sha1 = "0.10"
 bytes = "1"
