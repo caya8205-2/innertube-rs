@@ -230,11 +230,11 @@ async fn main() {
             let is_video_target = matches!(target_format.as_str(), "mp4" | "webm" | "mkv");
             let target_height = parse_target_height(&target_quality);
 
-            // 1. Select optimal audio format (prioritize adaptive AAC itag 140 / progressive itag 18)
+            // 1. Select optimal audio format (prioritize reliable progressive itag 18 for full-stream playback, then adaptive formats)
             let audio_fmt: Option<&StreamingFormat> = info.streaming_data.as_ref().and_then(|sd| {
-                sd.adaptive_formats.iter().find(|f| f.itag == 140)
+                sd.formats.iter().find(|f| f.itag == 18 || f.is_audio_video())
+                    .or_else(|| sd.adaptive_formats.iter().find(|f| f.itag == 140))
                     .or_else(|| sd.adaptive_formats.iter().find(|f| f.mime_type.contains("mp4a")))
-                    .or_else(|| sd.formats.iter().find(|f| f.itag == 18 || f.is_audio_video()))
                     .or_else(|| sd.adaptive_formats.iter().find(|f| f.is_audio_only()))
             });
 
