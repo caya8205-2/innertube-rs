@@ -11,6 +11,10 @@ use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct MusicResponsiveListItemNode {
     pub id: Option<String>,
+    /// Browse id of the row's own page (`MPREb_…` album, `UC…` artist, `VL…` playlist)
+    /// from `navigationEndpoint.browseEndpoint`, unlike `id`, which prefers a play
+    /// overlay video id.
+    pub browse_id: Option<String>,
     pub title: String,
     pub subtitle: Option<String>,
     pub artists: Vec<AuthorNode>,
@@ -61,6 +65,11 @@ impl MusicResponsiveListItemNode {
             .or_else(|| target.pointer("/navigationEndpoint/browseEndpoint/browseId"))
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
+
+        let browse_id = target
+            .pointer("/navigationEndpoint/browseEndpoint/browseId")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
 
         let title = target.pointer("/flexColumns/0/musicResponsiveListItemFlexColumnRenderer/text")
             .and_then(TextNode::from_value)
@@ -171,6 +180,7 @@ impl MusicResponsiveListItemNode {
 
         Some(Self {
             id,
+            browse_id,
             title,
             subtitle,
             artists,

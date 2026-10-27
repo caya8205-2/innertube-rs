@@ -2090,3 +2090,81 @@ fn test_api_contract_41_music_library_playlist_ownership() {
     assert!(page.playlists[0].owned);
     assert!(!page.playlists[1].owned);
 }
+
+#[test]
+fn test_api_contract_42_music_album_search_uses_navigation_browse_id_not_play_overlay() {
+    fn search_row(title: &str, browse_id: &str, overlay_video_id: &str) -> Value {
+        json!({
+            "musicResponsiveListItemRenderer": {
+                "flexColumns": [
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": title }] }
+                        }
+                    },
+                    {
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [
+                                { "text": "Album" },
+                                { "text": " • " },
+                                {
+                                    "text": "Artist One",
+                                    "navigationEndpoint": {
+                                        "browseEndpoint": { "browseId": "UC_artist_one" }
+                                    }
+                                }
+                            ] }
+                        }
+                    }
+                ],
+                "overlay": {
+                    "musicItemThumbnailOverlayRenderer": {
+                        "content": {
+                            "musicPlayButtonRenderer": {
+                                "playNavigationEndpoint": {
+                                    "watchEndpoint": {
+                                        "videoId": overlay_video_id,
+                                        "playlistId": "OLAK5uy_overlay"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "navigationEndpoint": {
+                    "browseEndpoint": { "browseId": browse_id }
+                }
+            }
+        })
+    }
+    let raw = |ids: [(&str, &str, &str); 2]| {
+        json!({
+            "contents": ids.map(|(title, browse_id, video_id)| search_row(title, browse_id, video_id))
+        })
+    };
+
+    let albums = endpoints::music::parse_music_search_response(
+        "albums",
+        Some(MusicSearchFilter::Albums),
+        &raw([
+            ("First Album", "MPREb_first", "overlayVid01"),
+            ("Second Album", "MPREb_second", "overlayVid02"),
+        ]),
+    )
+    .expect("album search fixture should parse");
+    assert_eq!(albums.albums.len(), 2);
+    assert_eq!(albums.albums[0].browse_id, "MPREb_first");
+    assert_eq!(albums.albums[1].browse_id, "MPREb_second");
+
+    // Song rows keep their video id even when a browse endpoint is present.
+    let songs = endpoints::music::parse_music_search_response(
+        "songs",
+        Some(MusicSearchFilter::Songs),
+        &raw([
+            ("Song", "MPREb_song_album", "songVid001"),
+            ("Song 2", "MPREb_x", "songVid002"),
+        ]),
+    )
+    .expect("song search fixture should parse");
+    assert_eq!(songs.songs[0].video_id, "songVid001");
+}

@@ -544,7 +544,12 @@ pub fn parse_music_search_response(
             Some(MusicSearchFilter::Videos) => results.videos.push(track),
             Some(MusicSearchFilter::Albums) => {
                 results.albums.push(MusicAlbumItem {
-                    browse_id: item.album_id.clone().or_else(|| item.id.clone()).unwrap_or_default(),
+                    browse_id: item
+                        .browse_id
+                        .clone()
+                        .or_else(|| item.album_id.clone())
+                        .or_else(|| item.id.clone())
+                        .unwrap_or_default(),
                     title: item.title.clone(),
                     artist: item.artists.first().map(|a| a.name.clone()),
                     artists: item
