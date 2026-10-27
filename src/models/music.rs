@@ -242,6 +242,10 @@ pub struct MusicArtistPage {
     pub subscribed: bool,
     pub shuffle_id: Option<String>,
     pub radio_id: Option<String>,
+    /// Browse id (usually `VL…`/`OLAK5uy_…`) of the playlist the "Songs" / "Top songs"
+    /// shelf's "More" button opens; accepted by `get_music_playlist_page`.
+    #[serde(default)]
+    pub songs_playlist_id: Option<String>,
     pub thumbnail: Option<String>,
     pub top_songs: Vec<MusicTrackItem>,
     pub albums: Vec<MusicAlbumItem>,
