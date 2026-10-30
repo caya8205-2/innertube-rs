@@ -1,3 +1,4 @@
+use std::env;
 use innertube_rs::models::format::{FormatFilter, FormatType, QualityPreference};
 use innertube_rs::Innertube;
 
@@ -9,8 +10,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yt = Innertube::new().await?;
     println!("   >> Innertube client initialized!");
 
-    // Test with a famous public YouTube video: Rick Astley - Never Gonna Give You Up
-    let video_id = "dQw4w9WgXcQ";
+    let args: Vec<String> = env::args().collect();
+    let video_id = if args.len() > 1 {
+        &args[1]
+    } else {
+        "dQw4w9WgXcQ" // Test with a famous public YouTube video: Rick Astley - Never Gonna Give You Up
+    };
 
     println!("\n2. Fetching metadata for video ID: {video_id}...");
     let info = yt.get_video_info(video_id).await?;
