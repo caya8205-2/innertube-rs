@@ -1051,6 +1051,15 @@ fn music_artist_shelf_title(shelf: &Value) -> &str {
         .unwrap_or("")
 }
 
+/// Browse id behind a shelf's "More" button (`bottomEndpoint`), or its title link.
+fn music_artist_shelf_browse_id(shelf: &Value) -> Option<String> {
+    shelf
+        .pointer("/bottomEndpoint/browseEndpoint/browseId")
+        .or_else(|| shelf.pointer("/title/runs/0/navigationEndpoint/browseEndpoint/browseId"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+}
+
 fn music_artist_playlist_id(header: &Value, button_name: &str) -> Option<String> {
     header
         .pointer(&format!("/{button_name}/buttonRenderer/navigationEndpoint/watchEndpoint/playlistId"))
@@ -1180,6 +1189,9 @@ pub fn parse_music_artist_response(artist_id: &str, raw: &Value) -> Result<Music
             let parsed_shelf = Parser::parse_tree(shelf);
 
             if title.eq_ignore_ascii_case("Songs") || title.eq_ignore_ascii_case("Top songs") {
+                if page.songs_playlist_id.is_none() {
+                    page.songs_playlist_id = music_artist_shelf_browse_id(shelf);
+                }
                 page.top_songs.extend(
                     parsed_shelf
                         .find_music_items()
@@ -2361,5 +2373,86 @@ mod tests {
             .expect("shuffle continuation should parse");
         assert_eq!(shuffle.tracks[0].video_id, "shuffle-2");
         assert_eq!(shuffle.continuation_token.as_deref(), Some("shuffle-next"));
+    }
+
+    fn artist_songs_fixture(title: &str, shelf_extra: Value) -> Value {
+        let mut shelf = json!({
+            "title": { "runs": [{ "text": title }] },
+            "contents": [{
+                "musicResponsiveListItemRenderer": {
+                    "playlistItemData": { "videoId": "artist-track-1" },
+                    "flexColumns": [{
+                        "musicResponsiveListItemFlexColumnRenderer": {
+                            "text": { "runs": [{ "text": "Artist Track" }] }
+                        }
+                    }]
+                }
+            }]
+        });
+        shelf
+            .as_object_mut()
+            .unwrap()
+            .extend(shelf_extra.as_object().unwrap().clone());
+        json!({
+            "header": {
+                "musicImmersiveHeaderRenderer": {
+                    "title": { "runs": [{ "text": "Fixture Artist" }] }
+                }
+            },
+            "contents": {
+                "singleColumnBrowseResultsRenderer": {
+                    "tabs": [{
+                        "tabRenderer": {
+                            "content": {
+                                "sectionListRenderer": {
+                                    "contents": [
+                                        { "musicShelfRenderer": shelf },
+                                        {
+                                            "musicShelfRenderer": {
+                                                "title": { "runs": [{ "text": "Videos" }] },
+                                                "bottomEndpoint": {
+                                                    "browseEndpoint": { "browseId": "VL_not_songs" }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }]
+                }
+            }
+        })
+    }
+
+    #[test]
+    fn music_artist_keeps_songs_shelf_playlist_id() {
+        let bottom = json!({
+            "bottomEndpoint": { "browseEndpoint": { "browseId": "VLOLAK5uy_songs" } }
+        });
+        for title in ["Songs", "Top songs"] {
+            let raw = artist_songs_fixture(title, bottom.clone());
+            let page = parse_music_artist_response("UC_fixture_artist", &raw)
+                .expect("artist fixture should parse");
+            assert_eq!(page.top_songs.len(), 1);
+            assert_eq!(page.songs_playlist_id.as_deref(), Some("VLOLAK5uy_songs"));
+        }
+
+        // Falls back to the shelf title's own browse endpoint, which opens the same list.
+        let mut raw = artist_songs_fixture("Songs", json!({}));
+        raw["contents"]["singleColumnBrowseResultsRenderer"]["tabs"][0]["tabRenderer"]["content"]
+            ["sectionListRenderer"]["contents"][0]["musicShelfRenderer"]["title"]["runs"][0]
+            ["navigationEndpoint"] = json!({ "browseEndpoint": { "browseId": "VLOLAK5uy_title" } });
+        let page = parse_music_artist_response("UC_fixture_artist", &raw).unwrap();
+        assert_eq!(page.songs_playlist_id.as_deref(), Some("VLOLAK5uy_title"));
+    }
+
+    #[test]
+    fn music_artist_without_songs_shelf_endpoint_has_no_playlist_id() {
+        let raw = artist_songs_fixture("Songs", json!({}));
+        let page = parse_music_artist_response("UC_fixture_artist", &raw)
+            .expect("artist fixture should parse");
+        assert_eq!(page.top_songs.len(), 1);
+        assert_eq!(page.songs_playlist_id, None);
     }
 }
