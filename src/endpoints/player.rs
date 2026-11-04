@@ -85,18 +85,33 @@ pub async fn fetch_player_response_with_options(
     let needs_fallback = should_try_player_fallback(&player_response, options);
 
     if needs_fallback {
-        // 1. Fetch standard ANDROID client for reliable progressive formats (itag 18)
         let mut android_prog_formats = Vec::new();
-        if let Ok(android_response) = fetch_player_response_android(session, video_id).await {
-            if let Some(ref sd) = android_response.streaming_data {
+
+        // 1. Prioritize ANDROID_VR client (bypasses bot-guard / LOGIN_REQUIRED restrictions without PO-Token)
+        if let Ok(vr_response) = fetch_player_response_android_vr(session, video_id).await {
+            if let Some(ref sd) = vr_response.streaming_data {
                 android_prog_formats = sd.formats.clone();
             }
-            if android_response.playability_status.status == "OK" {
-                player_response = android_response;
+            if vr_response.playability_status.status == "OK" {
+                player_response = vr_response;
             }
         }
 
-        // 2. Fetch iOS client for high-res direct adaptive formats (1080p, 720p, 480p, AAC audio)
+        // 2. Fallback to standard ANDROID client if ANDROID_VR didn't succeed
+        if player_response.playability_status.status != "OK" {
+            if let Ok(android_response) = fetch_player_response_android(session, video_id).await {
+                if let Some(ref sd) = android_response.streaming_data {
+                    if android_prog_formats.is_empty() {
+                        android_prog_formats = sd.formats.clone();
+                    }
+                }
+                if android_response.playability_status.status == "OK" {
+                    player_response = android_response;
+                }
+            }
+        }
+
+        // 3. Fetch iOS client for high-res direct adaptive formats (1080p, 720p, 480p, AAC audio)
         if let Ok(ios_response) = fetch_player_response_ios(session, video_id).await {
             if ios_response.playability_status.status == "OK" {
                 let mut final_ios = ios_response;
@@ -116,7 +131,7 @@ pub async fn fetch_player_response_with_options(
             }
         }
 
-        // 3. Fallback to ANDROID_VR if adaptive formats still missing
+        // 4. Secondary check: if still unplayable or missing formats, re-attempt ANDROID_VR
         let still_needs_vr = player_response.playability_status.status != "OK"
             || player_response.streaming_data.as_ref().is_none_or(|sd| {
                 sd.adaptive_formats.is_empty()
@@ -148,7 +163,7 @@ pub async fn fetch_player_response_with_options(
             }
         }
 
-        // 4. Fallback to MWEB if still needed
+        // 5. Fallback to MWEB if still needed
         let still_needs_mweb = player_response.playability_status.status != "OK"
             || player_response.streaming_data.as_ref().is_none_or(|sd| {
                 sd.adaptive_formats.is_empty()
