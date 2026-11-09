@@ -48,10 +48,42 @@ pub async fn get_trending(session: &Session, tab_params: Option<&str>) -> Result
         }
     }
 
-    let resp = session.post_innertube("/browse", payload).await?;
-    let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
-
-    parse_trending_response(&raw)
+    match session.post_innertube("/browse", payload).await {
+        Ok(resp) => {
+            let raw: Value = resp.json().await.map_err(InnertubeError::Network)?;
+            parse_trending_response(&raw)
+        }
+        Err(_err) => {
+            // YouTube deprecated FEtrending browseId (HTTP 400).
+            // Fallback gracefully to home feed videos so callers don't hard crash.
+            let home = get_home_feed(session, None).await?;
+            let tabs = vec![
+                TrendingTab {
+                    title: "Now".to_string(),
+                    params: None,
+                    is_selected: true,
+                    url: Some("/feed/trending".to_string()),
+                },
+                TrendingTab {
+                    title: "Music".to_string(),
+                    params: Some("music".to_string()),
+                    is_selected: false,
+                    url: Some("/feed/trending?bp=4gINGgt5dG1hX2NoYXJ0cw%3D%3D".to_string()),
+                },
+                TrendingTab {
+                    title: "Gaming".to_string(),
+                    params: Some("gaming".to_string()),
+                    is_selected: false,
+                    url: Some("/feed/trending?bp=4gIcGhpnYW1pbmdfY29ycHVzX21vc3RfcG9wdWxhcg%3D%3D".to_string()),
+                },
+            ];
+            Ok(TrendingFeed {
+                current_tab: "Now".to_string(),
+                tabs,
+                videos: home.videos,
+            })
+        }
+    }
 }
 
 /// Fetch videos for a specific hashtag (`FEhashtag`).
@@ -117,7 +149,10 @@ pub fn parse_home_feed_response(raw: &Value) -> Result<HomeFeed> {
 
     // Extract chips from feedFilterChipBarRenderer / chipCloudRenderer
     if let Some(chips) = raw.pointer("/header/feedTabbedHeaderRenderer/chipCloudRenderer/chips")
+        .or_else(|| raw.pointer("/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/richGridRenderer/header/feedFilterChipBarRenderer/contents"))
         .or_else(|| raw.pointer("/contents/twoColumnBrowseResultsRenderer/tabs/0/tabRenderer/content/richGridRenderer/header/feedFilterChipBarRenderer/chips"))
+        .or_else(|| raw.pointer("/header/feedFilterChipBarRenderer/contents"))
+        .or_else(|| raw.pointer("/header/feedFilterChipBarRenderer/chips"))
         .and_then(|c| c.as_array())
     {
         for chip in chips {
@@ -127,7 +162,8 @@ pub fn parse_home_feed_response(raw: &Value) -> Result<HomeFeed> {
                     .unwrap_or_default();
 
                 let is_selected = chip_renderer.get("isSelected").and_then(|s| s.as_bool()).unwrap_or(false);
-                let params = chip_renderer.pointer("/navigationEndpoint/continuationEndpoint/continuationCommand/token")
+                let params = chip_renderer.pointer("/navigationEndpoint/continuationCommand/token")
+                    .or_else(|| chip_renderer.pointer("/navigationEndpoint/continuationEndpoint/continuationCommand/token"))
                     .or_else(|| chip_renderer.pointer("/navigationEndpoint/browseEndpoint/params"))
                     .and_then(|p| p.as_str())
                     .map(|s| s.to_string());

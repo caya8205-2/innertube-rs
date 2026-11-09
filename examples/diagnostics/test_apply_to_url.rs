@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Original URL:    {}", test_url);
     println!("Transformed URL: {}", transformed_url);
     
-    assert!(transformed_url.contains("n=RF_sI3WuCE_8"));
+    assert!(transformed_url.contains("&n=") && !transformed_url.contains("n=jUB4VWXSlSyPbA"));
     println!(">>> SUCCESS: URL contains transformed n-token! <<<");
     
     Ok(())

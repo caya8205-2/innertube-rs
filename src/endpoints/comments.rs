@@ -232,7 +232,19 @@ fn convert_node_to_comment(c: &CommentNode) -> Comment {
     }
 }
 
-fn parse_comment_thread_renderer(ctr: &Value, entity_map: &HashMap<String, String>) -> Option<CommentThread> {
+#[derive(Debug, Clone, Default)]
+struct CommentEntityData {
+    author_name: Option<String>,
+    author_thumbnail: Option<String>,
+    author_channel_id: Option<String>,
+    text: Option<String>,
+    published_time: Option<String>,
+    like_count_text: Option<String>,
+    reply_count: Option<u64>,
+    is_creator: bool,
+}
+
+fn parse_comment_thread_renderer(ctr: &Value, entity_map: &HashMap<String, CommentEntityData>) -> Option<CommentThread> {
     let comment = if let Some(cr) = ctr.pointer("/comment/commentRenderer") {
         CommentNode::from_value(cr).map(|c| convert_node_to_comment(&c))?
     } else {
@@ -251,37 +263,62 @@ fn parse_comment_thread_renderer(ctr: &Value, entity_map: &HashMap<String, Strin
     })
 }
 
-fn parse_comment_view_model(cvm: &Value, entity_map: &HashMap<String, String>) -> Option<Comment> {
+fn parse_comment_view_model(cvm: &Value, entity_map: &HashMap<String, CommentEntityData>) -> Option<Comment> {
     let comment_id = cvm.get("commentId").or_else(|| cvm.get("commentKey")).and_then(|c| c.as_str())?.to_string();
-    let author_name = cvm.pointer("/author/avatarViewModel/avatarImage/accessibility/accessibilityData/label")
-        .or_else(|| cvm.pointer("/author/displayName/content"))
+    let comment_key = cvm.get("commentKey").and_then(|k| k.as_str());
+    let entity = comment_key.and_then(|k| entity_map.get(k))
+        .or_else(|| entity_map.get(&comment_id));
+
+    let author_name = cvm.pointer("/author/displayName/content")
+        .or_else(|| cvm.pointer("/author/avatarViewModel/avatarImage/accessibility/accessibilityData/label"))
         .and_then(|a| a.as_str())
-        .unwrap_or("Unknown")
-        .to_string();
+        .map(|s| s.to_string())
+        .or_else(|| entity.and_then(|e| e.author_name.clone()))
+        .unwrap_or_else(|| "Unknown".to_string());
 
     let author_thumbnail = cvm.pointer("/author/avatarViewModel/avatarImage/sources/0/url")
         .and_then(|u| u.as_str())
-        .map(|s| s.to_string());
+        .map(|s| s.to_string())
+        .or_else(|| entity.and_then(|e| e.author_thumbnail.clone()));
 
     let author_channel_id = cvm.pointer("/author/channelCommand/innertubeCommand/browseEndpoint/browseId")
         .and_then(|id| id.as_str())
-        .map(|s| s.to_string());
+        .map(|s| s.to_string())
+        .or_else(|| entity.and_then(|e| e.author_channel_id.clone()));
 
     let entity_key = cvm.pointer("/content/content/entityKey").and_then(|k| k.as_str());
     let text = if let Some(key) = entity_key {
-        entity_map.get(key).cloned().unwrap_or_default()
+        entity_map.get(key).and_then(|e| e.text.clone()).unwrap_or_default()
     } else {
-        cvm.pointer("/content/content/content").and_then(|c| c.as_str()).unwrap_or("").to_string()
+        cvm.pointer("/content/content/content")
+            .and_then(|c| c.as_str())
+            .map(|s| s.to_string())
+            .or_else(|| entity.and_then(|e| e.text.clone()))
+            .unwrap_or_default()
     };
 
-    let published_time = cvm.pointer("/publishedTime/content").and_then(|p| p.as_str()).map(|s| s.to_string());
-    let like_count_text = cvm.pointer("/toolbar/likeCountNotliked/content").and_then(|l| l.as_str()).map(|s| s.to_string());
-    let is_pinned = cvm.pointer("/pinnedText/content").is_some();
-    let is_author_channel_owner = cvm.pointer("/author/isCreator").and_then(|c| c.as_bool()).unwrap_or(false);
+    let published_time = cvm.pointer("/publishedTime/content")
+        .and_then(|p| p.as_str())
+        .map(|s| s.to_string())
+        .or_else(|| entity.and_then(|e| e.published_time.clone()));
+
+    let like_count_text = cvm.pointer("/toolbar/likeCountNotliked/content")
+        .or_else(|| cvm.pointer("/toolbar/likeCountNotliked"))
+        .and_then(|l| l.as_str())
+        .map(|s| s.to_string())
+        .or_else(|| entity.and_then(|e| e.like_count_text.clone()));
+
+    let is_pinned = cvm.pointer("/pinnedText/content").is_some() || cvm.get("pinnedText").is_some();
+    let is_author_channel_owner = cvm.pointer("/author/isCreator")
+        .and_then(|c| c.as_bool())
+        .or_else(|| entity.map(|e| e.is_creator))
+        .unwrap_or(false);
 
     let reply_count = cvm.pointer("/toolbar/replyCount/content")
+        .or_else(|| cvm.pointer("/toolbar/replyCount"))
         .and_then(|r| r.as_str())
-        .and_then(|s| s.chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse().ok());
+        .and_then(|s| s.chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse().ok())
+        .or_else(|| entity.and_then(|e| e.reply_count));
 
     Some(Comment {
         comment_id,
@@ -299,16 +336,46 @@ fn parse_comment_view_model(cvm: &Value, entity_map: &HashMap<String, String>) -
     })
 }
 
-fn build_comment_entity_map(raw: &Value) -> HashMap<String, String> {
+fn build_comment_entity_map(raw: &Value) -> HashMap<String, CommentEntityData> {
     let mut map = HashMap::new();
     if let Some(mutations) = raw.pointer("/frameworkUpdates/entityBatchUpdate/mutations").and_then(|m| m.as_array()) {
         for mutation in mutations {
             if let Some(payload) = mutation.get("payload") {
                 if let Some(comment_entity) = payload.get("commentEntityPayload") {
+                    let author_name = comment_entity.pointer("/author/displayName").and_then(|d| d.as_str()).map(|s| s.to_string());
+                    let author_thumbnail = comment_entity.pointer("/author/avatarThumbnailUrl").and_then(|u| u.as_str()).map(|s| s.to_string());
+                    let author_channel_id = comment_entity.pointer("/author/channelId").and_then(|c| c.as_str()).map(|s| s.to_string());
+                    let is_creator = comment_entity.pointer("/author/isCreator").and_then(|c| c.as_bool()).unwrap_or(false);
+
+                    let text = comment_entity.pointer("/properties/content/content").and_then(|c| c.as_str()).map(|s| s.to_string());
+                    let published_time = comment_entity.pointer("/properties/publishedTime").and_then(|p| p.as_str()).map(|s| s.to_string());
+                    let comment_id = comment_entity.pointer("/properties/commentId").and_then(|c| c.as_str()).map(|s| s.to_string());
+
+                    let like_count_text = comment_entity.pointer("/toolbar/likeCountNotliked")
+                        .or_else(|| comment_entity.pointer("/toolbar/likeCountLiked"))
+                        .and_then(|l| l.as_str())
+                        .map(|s| s.to_string());
+
+                    let reply_count = comment_entity.pointer("/toolbar/replyCount")
+                        .and_then(|r| r.as_str())
+                        .and_then(|s| s.chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse().ok());
+
+                    let data = CommentEntityData {
+                        author_name,
+                        author_thumbnail,
+                        author_channel_id,
+                        text,
+                        published_time,
+                        like_count_text,
+                        reply_count,
+                        is_creator,
+                    };
+
                     if let Some(key) = comment_entity.get("key").and_then(|k| k.as_str()) {
-                        if let Some(content) = comment_entity.pointer("/properties/content/content").and_then(|c| c.as_str()) {
-                            map.insert(key.to_string(), content.to_string());
-                        }
+                        map.insert(key.to_string(), data.clone());
+                    }
+                    if let Some(cid) = comment_id {
+                        map.insert(cid, data);
                     }
                 }
             }

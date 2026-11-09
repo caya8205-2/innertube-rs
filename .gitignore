@@ -34,3 +34,6 @@ Thumbs.db
 
 # Internal agent documentation
 .agents/
+
+# Debug and diagnostics logs
+logs/

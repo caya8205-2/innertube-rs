@@ -109,6 +109,7 @@ pub mod constants;
 pub mod core;
 pub mod endpoints;
 pub mod error;
+pub mod log;
 pub mod models;
 pub mod parser;
 pub mod utils;
@@ -117,6 +118,7 @@ use std::sync::Arc;
 
 // Re-exports for convenient top-level access
 pub use core::actions::Actions;
+pub use core::actions::ApiResponse;
 pub use core::managers::{
     AccountManager, InteractionManager, KidsManager, MusicManager, PlaylistManager,
 };
@@ -127,7 +129,6 @@ pub use error::{InnertubeError, Result};
 pub use models::account::{
     AccountNotification, AccountNotificationsResponse, HistoryFeed, LibraryFeed,
 };
-pub use core::actions::ApiResponse;
 pub use models::actions::{
     ActionResult, CreateCommentResult, CreatePlaylistResult, NotificationPreferenceType,
 };
@@ -136,7 +137,9 @@ pub use models::channel::{
     ChannelTrack, ChannelVideoItem, ChannelVideosResponse, YouTubePlaylistView,
 };
 pub use models::comments::{Comment, CommentThread, CommentsResult, PostCommentSort};
-pub use models::feed::{BrowseFeed, Feed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab};
+pub use models::feed::{
+    BrowseFeed, Feed, FilterChip, HashtagFeed, HomeFeed, TrendingFeed, TrendingTab,
+};
 pub use models::format::{
     DownloadOptions, DownloadRange, FormatFilter, FormatOptions, FormatType, QualityPreference,
     StreamingFormat,
@@ -171,123 +174,150 @@ pub use models::video::{
     Thumbnail, VideoDetails, VideoInfo,
 };
 pub use parser::{
-    AccessibilityContextNode, AccessibilityDataNode, AccountItemNode,
-    AccountItemSectionHeaderNode, AccountItemSectionNode, AccountSectionListNode,
-    AddBannerToLiveChatCommandNode, AddChatItemActionNode, AddLiveChatTickerItemActionNode,
-    AddToPlaylistCommandNode, AddToPlaylistEndpointNode, AddToPlaylistNode,
-    AddToPlaylistServiceEndpointNode, AlertNode, AnchoredSectionNode,
-    AnimatedThumbnailOverlayViewNode, AppendContinuationItemsActionNode, AttributionViewNode,
-    AudioOnlyPlayabilityNode, AvatarStackViewNode, AvatarViewNode, BackstageImageNode,
-    BackgroundPromoNode, BadgeViewNode, BrowseEndpointNode, BrowseFeedActionsNode,
+    AboutChannelNode, AboutChannelViewNode, AccessibilityContextNode, AccessibilityDataNode,
+    AccountChannelNode, AccountItemNode, AccountItemSectionHeaderNode, AccountItemSectionNode,
+    AccountSectionListNode, ActiveAccountHeaderNode, AddBannerToLiveChatCommandNode,
+    AddChatItemActionNode, AddLiveChatTickerItemActionNode, AddToPlaylistCommandNode,
+    AddToPlaylistEndpointNode, AddToPlaylistNode, AddToPlaylistServiceEndpointNode, AlertNode,
+    AlertWithButtonNode, AnchoredSectionNode, AnimatedThumbnailOverlayViewNode,
+    AppendContinuationItemsActionNode, AttributionViewNode, AudioOnlyPlayabilityNode,
+    AuthorCommentBadgeNode, AutomixPreviewVideoNode, AvatarStackViewNode, AvatarViewNode,
+    BackgroundPromoNode, BackstageImageNode, BackstagePostNode, BackstagePostThreadNode,
+    BadgeViewNode, BrowseEndpointNode, BrowseFeedActionsNode, BrowserMediaSessionNode,
     BumperUserEduContentViewNode, ButtonCardViewNode, ButtonNode, ButtonViewNode,
     C4TabbedHeaderNode, CallToActionButtonNode, CardCollectionNode, CardNode, CarouselHeaderNode,
     CarouselItemNode, CarouselItemViewNode, CarouselLockupNode, CarouselTitleViewNode,
-    ChannelAboutFullMetadataNode, ChannelCardNode, ChannelHeaderNode, ChannelMetadataNode,
-    ChannelOwnerEmptyStateNode, ChannelSubMenuNode, ChannelSwitcherPageNode, ChapterNode,
-    ChildElementNode, ChipBarViewNode, ChipCloudChipNode, ChipCloudNode, ChipViewNode,
+    ChangeEngagementPanelVisibilityActionNode, ChannelAboutFullMetadataNode, ChannelAgeGateNode,
+    ChannelCardNode, ChannelExternalLinkViewNode, ChannelFeaturedContentNode,
+    ChannelHeaderLinksNode, ChannelHeaderLinksViewNode, ChannelHeaderNode, ChannelMetadataNode,
+    ChannelMobileHeaderNode, ChannelNode, ChannelOptionsNode, ChannelOwnerEmptyStateNode,
+    ChannelSubMenuNode, ChannelSwitcherHeaderNode, ChannelSwitcherPageNode, ChannelTaglineNode,
+    ChannelThumbnailWithLinkNode, ChannelVideoPlayerNode, ChapterNode, ChildElementNode,
+    ChildVideoNode, ChipBarViewNode, ChipCloudChipNode, ChipCloudNode, ChipViewNode,
     ClarificationNode, ClientSideToggleMenuItemNode, ClipAdStateNode, ClipCreationNode,
     ClipCreationScrubberNode, ClipCreationTextInputNode, ClipSectionNode,
-    CollaboratorInfoCardContentNode, CollectionThumbnailViewNode, CollageHeroImageNode,
+    CollaboratorInfoCardContentNode, CollageHeroImageNode, CollectionThumbnailViewNode,
     CommandContextNode, CommandExecutorCommandNode, CommentActionButtonsNode, CommentDialogNode,
-    CommentNode, CommentReplyDialogNode, CommentSimpleboxNode, CommentThreadNode,
-    CommentsEntryPointHeaderNode, CommentsHeaderNode, CompactChannelNode, CompactLinkNode,
-    CompactMixNode, CompactMovieNode, CompactPlaylistNode, CompactStationNode, CompactVideoNode,
-    ConfirmDialogNode, ContainerKind, ContentListItemViewNode, ContentMetadataViewNode,
-    ContentPreviewImageViewNode, ContinuationCommandNode, ContinuationEndpointNode,
-    ContinuationItemNode, ContinuationItemViewNode, ConversationBarNode, CopyLinkNode,
-    CreateCommentEndpointNode, CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode,
-    CreatePlaylistServiceEndpointNode, CreatorHeartNode, DecoratedAvatarViewNode,
-    DecoratedPlayerBarNode, DefaultPromoPanelNode, DeletePlaylistEndpointNode,
-    DescriptionPreviewViewNode, DialogHeaderViewNode, DialogNode, DialogViewNode, DidYouMeanNode,
-    DimChatItemActionNode, DislikeButtonViewNode, DismissableDialogContentSectionNode,
-    DismissableDialogNode, DownloadButtonNode, DownloadListItemViewNode, DropdownItemNode,
-    DropdownNode, DropdownViewNode, DynamicTextViewNode, ElementKind, ElementNode,
+    CommentNode, CommentRepliesNode, CommentReplyDialogNode, CommentSimpleboxNode,
+    CommentThreadNode, CommentViewNode, CommentsContinuationNode, CommentsEntryPointHeaderNode,
+    CommentsEntryPointTeaserNode, CommentsHeaderNode, CommentsSimpleboxNode, CompactChannelNode,
+    CompactLinkNode, CompactMixNode, CompactMovieNode, CompactPlaylistNode, CompactStationNode,
+    CompactVideoNode, CompositeVideoPrimaryInfoNode, ConfirmDialogNode, ContainerKind,
+    ContentListItemViewNode, ContentMetadataViewNode, ContentPreviewImageViewNode,
+    ContinuationCommandNode, ContinuationEndpointNode, ContinuationItemNode,
+    ContinuationItemViewNode, ConversationBarNode, CopyLinkNode, CreateCommentEndpointNode,
+    CreatePlaylistDialogFormViewNode, CreatePlaylistDialogNode, CreatePlaylistServiceEndpointNode,
+    CreatorHeartNode, CreatorHeartViewNode, DecoratedAvatarViewNode, DecoratedPlayerBarNode,
+    DefaultPromoPanelNode, DeletePlaylistEndpointNode, DescriptionPreviewViewNode,
+    DialogHeaderViewNode, DialogNode, DialogViewNode, DidYouMeanNode, DimChatItemActionNode,
+    DislikeButtonViewNode, DismissableDialogContentSectionNode, DismissableDialogNode,
+    DownloadButtonNode, DownloadListItemViewNode, DropdownItemNode, DropdownNode, DropdownViewNode,
+    DynamicTextViewNode, ElementKind, ElementNode, EmergencyOneboxNode,
     EmojiPickerCategoryButtonNode, EmojiPickerCategoryNode, EmojiPickerNode,
-    EmojiPickerUpsellCategoryNode, EmojiRunNode, EndScreenPlaylistNode, EndpointKind,
-    EndscreenElementNode, EndscreenNode, EngagementPanelSectionListNode,
+    EmojiPickerUpsellCategoryNode, EmojiRunNode, EndScreenPlaylistNode, EndScreenVideoNode,
+    EndpointKind, EndscreenElementNode, EndscreenNode, EngagementPanelSectionListNode,
     EngagementPanelTitleHeaderNode, EomSettingsDisclaimerNode, ExpandableMetadataNode,
-    ExpandableTabNode, ExpandedShelfContentsNode, FactoidNode, FancyDismissibleDialogNode,
-    FeedbackEndpointNode, FeedFilterChipBarNode, FeedNudgeNode, FeedTabbedHeaderNode,
-    FlexibleActionsViewNode, FormFooterViewNode, FormNode, FormPopupNode, GameCardNode,
-    GameDetailsNode, GetAccountsListInnertubeEndpointNode, GetKidsBlocklistPickerCommandNode,
-    GetMultiPageMenuActionNode, GridChannelNode, GridHeaderNode, GridMixNode, GridMovieNode,
-    GridNode, GridPlaylistNode, GridShelfViewNode, GridShowNode, GridVideoNode,
-    GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode, GuideDownloadsEntryNode,
-    GuideEntryNode, GuideSectionNode, GuideSubscriptionsSectionNode, HashtagHeaderNode,
-    HashtagTileNode, HeatMarkerNode, HeatmapNode, HeroPlaylistThumbnailNode,
+    ExpandableTabNode, ExpandableVideoDescriptionBodyNode, ExpandedShelfContentsNode, FactoidNode,
+    FancyDismissibleDialogNode, FeedFilterChipBarNode, FeedNudgeNode, FeedTabbedHeaderNode,
+    FeedbackEndpointNode, FlexibleActionsViewNode, FormFooterViewNode, FormNode, FormPopupNode,
+    FormatNode, GameCardNode, GameDetailsNode, GetAccountsListInnertubeEndpointNode,
+    GetKidsBlocklistPickerCommandNode, GetMultiPageMenuActionNode, GridChannelNode, GridHeaderNode,
+    GridMixNode, GridMovieNode, GridNode, GridPlaylistNode, GridShelfViewNode, GridShowNode,
+    GridVideoNode, GuideCollapsibleEntryNode, GuideCollapsibleSectionEntryNode,
+    GuideDownloadsEntryNode, GuideEntryNode, GuideSectionNode, GuideSubscriptionsSectionNode,
+    HashtagHeaderNode, HashtagTileNode, HeatMarkerNode, HeatmapNode, HeroPlaylistThumbnailNode,
     HideEngagementPanelEndpointNode, HighlightsCarouselNode, HistorySuggestionNode,
     HorizontalCardListNode, HorizontalListNode, HorizontalMovieListNode,
     HowThisWasMadeSectionViewNode, HypeFanCreditsSectionViewNode, HypePointsFactoidNode,
     IconLinkNode, ImageBannerViewNode, IncludingResultsForNode, InfoPanelContainerNode,
     InfoPanelContentNode, InfoRowNode, InteractiveTabbedHeaderNode, ItemSectionHeaderNode,
     ItemSectionNode, ItemSectionTabNode, ItemSectionTabbedHeaderNode, KidsBlocklistPickerItemNode,
-    KidsBlocklistPickerNode, KidsCategoriesHeaderNode, KidsHomeScreenNode, KidsKind, LegacyClassMeta,
-    LikeButtonNode, LikeButtonViewNode, LikeEndpointNode, ListItemViewNode, ListViewNode,
-    LiveChatActionPanelNode, LiveChatAutoModMessageNode, LiveChatBannerNode, LiveChatDialogNode,
-    LiveChatItemContextMenuEndpointNode, LiveChatItemListNode, LiveChatMembershipItemNode,
-    LiveChatMessageNode, LiveChatModeChangeMessageNode, LiveChatPaidStickerNode,
-    LiveChatParticipantsListNode, LiveChatViewerEngagementMessageNode, LockupMetadataViewNode,
-    LockupViewNode, MacroMarkersInfoItemNode, MacroMarkersListEntityNode,
-    MacroMarkersListItemNode, MacroMarkersListNode, MarkChatItemAsDeletedActionNode,
-    MenuFlexibleItemNode, MenuItemNode, MenuNavigationItemNode, MenuNode, MenuPopupNode,
-    MenuServiceItemDownloadNode, MenuServiceItemNode, MenuTitleNode, MerchandiseItemNode,
-    MerchandiseShelfNode, MessageNode, MetadataBadgeNode, MetadataRowContainerNode,
-    MetadataRowHeaderNode, MetadataRowNode, MetadataScreenNode, MicroformatDataNode, MixNode,
-    MobileTopbarNode, ModalWithTitleAndButtonNode, ModifyChannelNotificationPreferenceEndpointNode,
-    MovieNode, MovingThumbnailNode, MultiMarkersPlayerBarNode, MultiPageMenuNode,
-    MultiPageMenuNotificationSectionNode, MultiPageMenuSectionNode, MusicAutoplayNode, MusicCardShelfHeaderBasicNode, MusicCardShelfNode,
-    MusicCarouselShelfBasicHeaderNode, MusicCarouselShelfNode, MusicDescriptionShelfNode,
-    MusicDetailHeaderNode, MusicEditablePlaylistDetailHeaderNode, MusicHeaderNode,
-    MusicImmersiveHeaderNode, MusicInlineBadgeNode, MusicItemThumbnailOverlayNode,
-    MusicLargeCardItemCarouselNode, MusicMultiRowListItemNode, MusicNavigationButtonNode,
+    KidsBlocklistPickerNode, KidsCategoriesHeaderNode, KidsCategoryTabNode, KidsHomeScreenNode,
+    KidsKind, LegacyClassMeta, LikeButtonNode, LikeButtonViewNode, LikeEndpointNode,
+    ListItemViewNode, ListViewNode, LiveChatActionPanelNode, LiveChatAuthorBadgeNode,
+    LiveChatAutoModMessageNode, LiveChatBannerChatSummaryNode, LiveChatBannerHeaderNode,
+    LiveChatBannerNode, LiveChatBannerPollNode, LiveChatBannerRedirectNode, LiveChatDialogNode,
+    LiveChatHeaderNode, LiveChatItemBumperViewNode, LiveChatItemContextMenuEndpointNode,
+    LiveChatItemListNode, LiveChatMembershipItemNode, LiveChatMessageInputNode,
+    LiveChatMessageNode, LiveChatModeChangeMessageNode, LiveChatPaidMessageNode,
+    LiveChatPaidStickerNode, LiveChatParticipantNode, LiveChatParticipantsListNode,
+    LiveChatPlaceholderItemNode, LiveChatProductItemNode, LiveChatRestrictedParticipationNode,
+    LiveChatSponsorshipsGiftPurchaseAnnouncementNode,
+    LiveChatSponsorshipsGiftRedemptionAnnouncementNode, LiveChatSponsorshipsHeaderNode,
+    LiveChatTextMessageNode, LiveChatTickerPaidMessageItemNode, LiveChatTickerPaidStickerItemNode,
+    LiveChatTickerSponsorItemNode, LiveChatViewerEngagementMessageNode, LockupMetadataViewNode,
+    LockupViewNode, MacroMarkersInfoItemNode, MacroMarkersListEntityNode, MacroMarkersListItemNode,
+    MacroMarkersListNode, MarkChatItemAsDeletedActionNode,
+    MarkChatItemsByAuthorAsDeletedActionNode, MenuFlexibleItemNode, MenuItemNode,
+    MenuNavigationItemNode, MenuNode, MenuPopupNode, MenuServiceItemDownloadNode,
+    MenuServiceItemNode, MenuTitleNode, MerchandiseItemNode, MerchandiseShelfNode, MessageNode,
+    MetadataBadgeNode, MetadataRowContainerNode, MetadataRowHeaderNode, MetadataRowNode,
+    MetadataScreenNode, MicroformatDataNode, MixNode, MobileTopbarNode,
+    ModalWithTitleAndButtonNode, ModifyChannelNotificationPreferenceEndpointNode, MovieNode,
+    MovingThumbnailNode, MultiMarkersPlayerBarNode, MultiPageMenuNode,
+    MultiPageMenuNotificationSectionNode, MultiPageMenuSectionNode, MusicAutoplayNode,
+    MusicCardShelfHeaderBasicNode, MusicCardShelfNode, MusicCarouselShelfBasicHeaderNode,
+    MusicCarouselShelfNode, MusicDescriptionShelfNode, MusicDetailHeaderNode,
+    MusicDownloadStateBadgeNode, MusicEditablePlaylistDetailHeaderNode, MusicElementHeaderNode,
+    MusicHeaderNode, MusicImmersiveHeaderNode, MusicInlineBadgeNode, MusicItemThumbnailOverlayNode,
+    MusicLargeCardItemCarouselNode, MusicMenuItemDividerNode, MusicMultiRowListItemNode,
+    MusicMultiSelectMenuItemNode, MusicMultiSelectMenuNode, MusicNavigationButtonNode,
     MusicPlayButtonNode, MusicPlaylistEditHeaderNode, MusicPlaylistShelfNode, MusicQueueNode,
     MusicResponsiveHeaderNode, MusicResponsiveListItemFixedColumnNode,
     MusicResponsiveListItemFlexColumnNode, MusicResponsiveListItemNode, MusicShelfNode,
-    MusicSideAlignedItemNode, MusicTastebuilderShelfNode, MusicTastebuilderShelfThumbnailNode,
-    MusicTwoRowItemNode, MusicVisualHeaderNode, NavigateActionNode, NavigationEndpointNode,
-    NodeListExt, NotificationActionNode, NotificationNode, OpenOnePickAddVideoModalCommandNode,
+    MusicSideAlignedItemNode, MusicSortFilterButtonNode, MusicTastebuilderShelfNode,
+    MusicTastebuilderShelfThumbnailNode, MusicThumbnailNode, MusicTwoRowItemNode,
+    MusicVisualHeaderNode, NavigateActionNode, NavigationEndpointNode, NodeListExt,
+    NotificationActionNode, NotificationNode, OpenOnePickAddVideoModalCommandNode,
     OpenPopupActionNode, PageHeaderNode, PageHeaderViewNode, PageIndicatorViewNode,
     PageIntroductionNode, PanelFooterViewNode, Parser, ParserCategory, ParserDispatchTarget,
-    ParserRegistry, PdgReplyButtonViewNode, PerformCommentActionEndpointNode, PivotBarItemNode,
-    PivotBarNode, PivotButtonNode, PlayerCaptionsTracklistNode, PlayerErrorMessageNode,
-    PlayerLegacyDesktopYpcTrailerNode, PlayerOverlayNode, PlayerStoryboardSpecNode,
-    PlaylistAddToOptionNode, PlaylistCollaborationFormDataNode,
-    PlaylistCollaborationFormSchemaNode, PlaylistCollaborationViewNode,
-    PlaylistCollaborationViewModelPlaylistCollaboratorDataNode, PlaylistCustomThumbnailNode,
-    PlaylistEditEndpointNode, PlaylistHeaderNode, PlaylistInfoCardContentNode,
-    PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
-    PlaylistPanelVideoWrapperNode, PlaylistSidebarNode, PlaylistSidebarPrimaryInfoNode,
-    PlaylistSidebarSecondaryInfoNode, PlaylistThumbnailOverlayNode, PlaylistVideoListNode,
-    PlaylistVideoNode, PlaylistVideoThumbnailNode, PollNode, PostMultiImageNode, PostNode,
-    PrefetchWatchCommandNode, PremiereTrailerBadgeNode, ProductListHeaderNode,
-    ProductListItemNode, ProductListNode, ProfileColumnNode, ProfileColumnStatsEntryNode,
-    ProfileColumnStatsNode, ProfileColumnUserInfoNode, QuizNode, RecognitionShelfNode,
-    ReelShelfNode, ReelWatchEndpointNode, RelatedChipCloudNode,
-    RemoveBannerForLiveChatCommandNode, RemoveChatItemActionNode, RemoveChatItemByAuthorActionNode,
-    RendererContextNode, ReplaceChatItemActionNode, ReplaceLiveChatActionNode,
-    ReplayChatItemActionNode, RichGridNode, RichItemNode, RichListHeaderNode, RichMetadataNode,
-    RichMetadataRowNode, RichSectionNode, RichShelfNode, RunAttestationCommandNode, SearchBoxNode,
-    SearchFilterGroupNode, SearchFilterNode, SearchFilterOptionsDialogNode, SearchHeaderNode,
-    SearchRefinementCardNode, SearchSubMenuNode, SearchSuggestionNode,
-    SearchSuggestionsSectionNode, SecondarySearchContainerNode, SectionHeaderViewNode,
-    SectionListNode, SegmentedLikeDislikeButtonNode, SegmentedLikeDislikeButtonViewNode,
-    SendFeedbackActionNode, SettingBooleanNode, SettingsCheckboxNode, SettingsOptionsNode,
-    SettingsSidebarNode, SettingsSwitchNode, ShareEndpointNode, ShareEntityEndpointNode,
-    ShareEntityServiceEndpointNode, SharePanelHeaderNode, SharePanelTitleV15Node,
-    ShareTargetNode, SheetViewNode, ShelfNode, ShortNode, ShowCustomThumbnailNode,
-    ShowDialogCommandNode, ShowEngagementPanelActionNode, ShowLiveChatActionNode,
-    ShowSheetCommandNode, ShowingResultsForNode, SignalActionNode, SignalServiceEndpointNode,
-    SimpleCardContentNode, SimpleCardTeaserNode, SimpleMenuHeaderNode, SimpleTextSectionNode,
-    SingleColumnBrowseResultsNode, SingleColumnMusicWatchNextResultsNode, SingleHeroImageNode,
-    SlimOwnerNode, SortFilterHeaderNode, SortFilterSubMenuNode, StartAtNode,
-    StructuredDescriptionContentNode, StructuredDescriptionPlaylistLockupNode, SubFeedOptionNode,
-    SubFeedSelectorNode, SubscribeButtonNode, SubscribeButtonViewNode, SubscribeEndpointNode,
-    SubscriptionButtonNode, SubscriptionNotificationToggleButtonNode, TabNode, TabbedNode,
-    TabbedSearchResultsNode, TextCarouselItemViewNode, TextFieldViewNode, TextHeaderNode,
-    TextNode, TextRunNode, ThirdPartyShareTargetSectionNode, ThumbnailBadgeViewNode,
-    ThumbnailBottomOverlayViewNode, ThumbnailHoverOverlayToggleActionsViewNode,
-    ThumbnailHoverOverlayViewNode, ThumbnailLandscapePortraitNode, ThumbnailListNode,
-    ThumbnailNode, ThumbnailOverlayAvatarStackViewNode, ThumbnailOverlayBadgeViewNode,
+    ParserRegistry, PdgCommentChipNode, PdgReplyButtonViewNode, PerformCommentActionEndpointNode,
+    PivotBarItemNode, PivotBarNode, PivotButtonNode, PlayerAnnotationsExpandedNode,
+    PlayerCaptchaViewNode, PlayerCaptionsTracklistNode, PlayerControlsOverlayNode,
+    PlayerErrorMessageNode, PlayerLegacyDesktopYpcOfferNode, PlayerLegacyDesktopYpcTrailerNode,
+    PlayerLiveStoryboardSpecNode, PlayerMicroformatNode, PlayerOverflowNode,
+    PlayerOverlayAutoplayNode, PlayerOverlayNode, PlayerOverlayVideoDetailsNode,
+    PlayerStoryboardSpecNode, PlaylistAddToOptionNode, PlaylistCollaborationFormDataNode,
+    PlaylistCollaborationFormSchemaNode,
+    PlaylistCollaborationViewModelPlaylistCollaboratorDataNode, PlaylistCollaborationViewNode,
+    PlaylistCustomThumbnailNode, PlaylistEditEndpointNode, PlaylistHeaderNode,
+    PlaylistInfoCardContentNode, PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode,
+    PlaylistPanelVideoNode, PlaylistPanelVideoWrapperNode, PlaylistSidebarNode,
+    PlaylistSidebarPrimaryInfoNode, PlaylistSidebarSecondaryInfoNode, PlaylistThumbnailOverlayNode,
+    PlaylistVideoListNode, PlaylistVideoNode, PlaylistVideoThumbnailNode, PollHeaderNode, PollNode,
+    PostMultiImageNode, PostNode, PrefetchWatchCommandNode, PremiereTrailerBadgeNode,
+    ProductListHeaderNode, ProductListItemNode, ProductListNode, ProfileColumnNode,
+    ProfileColumnStatsEntryNode, ProfileColumnStatsNode, ProfileColumnUserInfoNode, QuizNode,
+    RecognitionShelfNode, ReelItemNode, ReelPlayerHeaderNode, ReelPlayerOverlayNode, ReelShelfNode,
+    ReelWatchEndpointNode, RelatedChipCloudNode, RemoveBannerForLiveChatCommandNode,
+    RemoveChatItemActionNode, RemoveChatItemByAuthorActionNode, RendererContextNode,
+    ReplaceChatItemActionNode, ReplaceLiveChatActionNode, ReplayChatItemActionNode, RichGridNode,
+    RichItemNode, RichListHeaderNode, RichMetadataNode, RichMetadataRowNode, RichSectionNode,
+    RichShelfNode, RunAttestationCommandNode, SearchBoxNode, SearchFilterGroupNode,
+    SearchFilterNode, SearchFilterOptionsDialogNode, SearchHeaderNode, SearchRefinementCardNode,
+    SearchSubMenuNode, SearchSuggestionNode, SearchSuggestionsSectionNode,
+    SecondarySearchContainerNode, SectionHeaderViewNode, SectionListNode,
+    SegmentedLikeDislikeButtonNode, SegmentedLikeDislikeButtonViewNode, SendFeedbackActionNode,
+    SettingBooleanNode, SettingsCheckboxNode, SettingsOptionsNode, SettingsSidebarNode,
+    SettingsSwitchNode, ShareEndpointNode, ShareEntityEndpointNode, ShareEntityServiceEndpointNode,
+    SharePanelHeaderNode, SharePanelTitleV15Node, ShareTargetNode, SharedPostNode, SheetViewNode,
+    ShelfNode, ShortNode, ShortsLockupViewNode, ShowCustomThumbnailNode, ShowDialogCommandNode,
+    ShowEngagementPanelActionNode, ShowEngagementPanelEndpointNode, ShowLiveChatActionNode,
+    ShowLiveChatActionPanelActionNode, ShowLiveChatDialogActionNode,
+    ShowLiveChatTooltipCommandNode, ShowSheetCommandNode, ShowingResultsForNode, SignalActionNode,
+    SignalServiceEndpointNode, SimpleCardContentNode, SimpleCardTeaserNode, SimpleMenuHeaderNode,
+    SimpleTextSectionNode, SingleActionEmergencySupportNode, SingleColumnBrowseResultsNode,
+    SingleColumnMusicWatchNextResultsNode, SingleHeroImageNode, SlimOwnerNode,
+    SlimVideoMetadataNode, SortFilterHeaderNode, SortFilterSubMenuNode, SponsorCommentBadgeNode,
+    StartAtNode, StructuredDescriptionContentNode, StructuredDescriptionPlaylistLockupNode,
+    SubFeedOptionNode, SubFeedSelectorNode, SubscribeButtonNode, SubscribeButtonViewNode,
+    SubscribeEndpointNode, SubscriptionButtonNode, SubscriptionNotificationToggleButtonNode,
+    TabNode, TabbedNode, TabbedSearchResultsNode, TextCarouselItemViewNode, TextFieldViewNode,
+    TextHeaderNode, TextNode, TextRunNode, ThirdPartyShareTargetSectionNode,
+    ThumbnailBadgeViewNode, ThumbnailBottomOverlayViewNode,
+    ThumbnailHoverOverlayToggleActionsViewNode, ThumbnailHoverOverlayViewNode,
+    ThumbnailLandscapePortraitNode, ThumbnailListNode, ThumbnailNode,
+    ThumbnailOverlayAvatarStackViewNode, ThumbnailOverlayBadgeViewNode,
     ThumbnailOverlayBottomPanelNode, ThumbnailOverlayEndorsementNode,
     ThumbnailOverlayHoverTextNode, ThumbnailOverlayInlineUnplayableNode,
     ThumbnailOverlayLoadingPreviewNode, ThumbnailOverlayNowPlayingNode,
@@ -296,122 +326,28 @@ pub use parser::{
     ThumbnailOverlayResumePlaybackNode, ThumbnailOverlaySidePanelNode,
     ThumbnailOverlayTimeStatusNode, ThumbnailOverlayTitleViewNode,
     ThumbnailOverlayToggleButtonNode, ThumbnailViewNode, TicketEventNode, TicketShelfNode,
-    TimedMarkerDecorationNode, TitleAndButtonListHeaderNode, ToggleButtonNode, ToggleButtonViewNode,
-    ToggleFormFieldNode, ToggleMenuServiceItemNode, TooltipNode, TopbarMenuButtonNode,
-    TranscriptFooterNode, TranscriptNode, TranscriptSearchBoxNode, TranscriptSearchPanelNode,
-    TranscriptSectionHeaderNode, TranscriptSegmentListNode, TranscriptSegmentNode,
-    TwoColumnBrowseResultsNode, TwoColumnSearchResultsNode, TwoColumnWatchNextResultsNode,
-    UnifiedSharePanelNode, UniversalWatchCardNode, UnsubscribeEndpointNode,
-    UpdateChannelSwitcherPageActionNode, UpdateDateTextActionNode, UpdateDescriptionActionNode,
-    UpdateEngagementPanelActionNode, UpdateEngagementPanelContentCommandNode,
-    UpdateLiveChatPollActionNode, UpdateSubscribeButtonActionNode, UpdateTitleActionNode,
-    UpdateToggleButtonTextActionNode, UpdateViewershipActionNode, UploadTimeFactoidNode,
-    UpsellDialogNode, VerticalListNode, VerticalWatchCardListNode, VideoAttributesSectionViewNode,
-    VideoDescriptionCourseSectionNode, VideoDescriptionInfocardsSectionNode,
-    VideoDescriptionMusicSectionNode, VideoDescriptionTranscriptSectionNode,
-    VideoDescriptionYouchatSectionViewNode, VideoMetadataCarouselViewNode, VideoNode,
-    VideoOwnerNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode, ViewCountFactoidNode,
-    ViewCountNode, VoiceReplyContainerViewNode, WatchCardRichHeaderNode,
-    WatchCardSectionSequenceNode, WatchEndpointNode, WatchNextEndScreenNode,
-    WatchNextEndpointNode, WatchNextTabbedResultsNode, YpcTrailerNode, YTNode, YTNodeVariant,
-    AutomixPreviewVideoNode,
-    VideoViewCountNode,
-    BrowserMediaSessionNode,
-    ChannelVideoPlayerNode,
-    ChildVideoNode,
-    EndScreenVideoNode,
-    ExpandableVideoDescriptionBodyNode,
-    PlayerAnnotationsExpandedNode,
-    PlayerCaptchaViewNode,
-    PlayerControlsOverlayNode,
-    PlayerLegacyDesktopYpcOfferNode,
-    PlayerMicroformatNode,
-    PlayerOverflowNode,
-    PlayerOverlayAutoplayNode,
-    PlayerOverlayVideoDetailsNode,
-    SlimVideoMetadataNode,
-    VideoAttributeViewNode,
-    VideoCardNode,
-    VideoDescriptionHeaderNode,
-    VideoInfoCardContentNode,
-    VideoSummaryContentViewNode,
-    VideoSummaryParagraphViewNode,
-    WatchCardCompactVideoNode,
-    WatchCardHeroVideoNode,
-    FormatNode,
-    VideoDetailsNode,
-    LiveChatAuthorBadgeNode,
-    LiveChatHeaderNode,
-    LiveChatMessageInputNode,
-    LiveChatParticipantNode,
-    LiveChatBannerChatSummaryNode,
-    LiveChatBannerHeaderNode,
-    LiveChatBannerRedirectNode,
-    LiveChatItemBumperViewNode,
-    LiveChatPaidMessageNode,
-    LiveChatPlaceholderItemNode,
-    LiveChatProductItemNode,
-    LiveChatRestrictedParticipationNode,
-    LiveChatSponsorshipsGiftPurchaseAnnouncementNode,
-    LiveChatSponsorshipsGiftRedemptionAnnouncementNode,
-    LiveChatSponsorshipsHeaderNode,
-    LiveChatTextMessageNode,
-    LiveChatTickerPaidMessageItemNode,
-    LiveChatTickerPaidStickerItemNode,
-    LiveChatTickerSponsorItemNode,
-    ShowLiveChatActionPanelActionNode,
-    ShowLiveChatDialogActionNode,
-    ShowLiveChatTooltipCommandNode,
-    MarkChatItemsByAuthorAsDeletedActionNode,
-    LiveChatBannerPollNode,
-    AboutChannelNode,
-    AboutChannelViewNode,
-    AccountChannelNode,
-    ChannelNode,
-    ChannelAgeGateNode,
-    ChannelExternalLinkViewNode,
-    ChannelFeaturedContentNode,
-    ChannelOptionsNode,
-    ChannelTaglineNode,
-    ChannelThumbnailWithLinkNode,
-    TopicChannelDetailsNode,
-    ActiveAccountHeaderNode,
-    ChannelHeaderLinksNode,
-    ChannelHeaderLinksViewNode,
-    ChannelMobileHeaderNode,
-    ChannelSwitcherHeaderNode,
-    AuthorCommentBadgeNode,
-    CommentRepliesNode,
-    CommentViewNode,
-    CommentsEntryPointTeaserNode,
-    CommentsSimpleboxNode,
-    PdgCommentChipNode,
-    SponsorCommentBadgeNode,
-    CommentsContinuationNode,
-    MusicDownloadStateBadgeNode,
-    MusicElementHeaderNode,
-    MusicSortFilterButtonNode,
-    MusicThumbnailNode,
-    MusicMenuItemDividerNode,
-    MusicMultiSelectMenuNode,
-    MusicMultiSelectMenuItemNode,
-    BackstagePostNode,
-    BackstagePostThreadNode,
-    SharedPostNode,
-    ReelItemNode,
-    ReelPlayerHeaderNode,
-    ReelPlayerOverlayNode,
-    ShortsLockupViewNode,
-    AlertWithButtonNode,
-    CompositeVideoPrimaryInfoNode,
-    EmergencyOneboxNode,
-    SingleActionEmergencySupportNode,
-    PlayerLiveStoryboardSpecNode,
-    PollHeaderNode,
-    ChangeEngagementPanelVisibilityActionNode,
-    ShowEngagementPanelEndpointNode,
-    CreatorHeartViewNode,
-    KidsCategoryTabNode
+    TimedMarkerDecorationNode, TitleAndButtonListHeaderNode, ToggleButtonNode,
+    ToggleButtonViewNode, ToggleFormFieldNode, ToggleMenuServiceItemNode, TooltipNode,
+    TopbarMenuButtonNode, TopicChannelDetailsNode, TranscriptFooterNode, TranscriptNode,
+    TranscriptSearchBoxNode, TranscriptSearchPanelNode, TranscriptSectionHeaderNode,
+    TranscriptSegmentListNode, TranscriptSegmentNode, TwoColumnBrowseResultsNode,
+    TwoColumnSearchResultsNode, TwoColumnWatchNextResultsNode, UnifiedSharePanelNode,
+    UniversalWatchCardNode, UnsubscribeEndpointNode, UpdateChannelSwitcherPageActionNode,
+    UpdateDateTextActionNode, UpdateDescriptionActionNode, UpdateEngagementPanelActionNode,
+    UpdateEngagementPanelContentCommandNode, UpdateLiveChatPollActionNode,
+    UpdateSubscribeButtonActionNode, UpdateTitleActionNode, UpdateToggleButtonTextActionNode,
+    UpdateViewershipActionNode, UploadTimeFactoidNode, UpsellDialogNode, VerticalListNode,
+    VerticalWatchCardListNode, VideoAttributeViewNode, VideoAttributesSectionViewNode,
+    VideoCardNode, VideoDescriptionCourseSectionNode, VideoDescriptionHeaderNode,
+    VideoDescriptionInfocardsSectionNode, VideoDescriptionMusicSectionNode,
+    VideoDescriptionTranscriptSectionNode, VideoDescriptionYouchatSectionViewNode,
+    VideoDetailsNode, VideoInfoCardContentNode, VideoMetadataCarouselViewNode, VideoNode,
+    VideoOwnerNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode, VideoSummaryContentViewNode,
+    VideoSummaryParagraphViewNode, VideoViewCountNode, ViewCountFactoidNode, ViewCountNode,
+    VoiceReplyContainerViewNode, WatchCardCompactVideoNode, WatchCardHeroVideoNode,
+    WatchCardRichHeaderNode, WatchCardSectionSequenceNode, WatchEndpointNode,
+    WatchNextEndScreenNode, WatchNextEndpointNode, WatchNextTabbedResultsNode, YTNode,
+    YTNodeVariant, YpcTrailerNode,
 };
 
 use crate::endpoints::account::{
@@ -422,9 +358,7 @@ use crate::endpoints::browse::get_channel;
 use crate::endpoints::channel::{
     get_channel_about, get_channel_community, get_channel_shorts, get_channel_videos,
 };
-use crate::endpoints::comments::{
-    get_comment_replies, get_comments, get_comments_with_options,
-};
+use crate::endpoints::comments::{get_comment_replies, get_comments, get_comments_with_options};
 use crate::endpoints::feed::{
     get_browse_feed, get_hashtag_feed, get_home_feed, get_home_feed_continuation, get_trending,
 };
@@ -499,7 +433,8 @@ impl Innertube {
         options: Option<&GetVideoInfoOptions>,
     ) -> Result<VideoInfo> {
         let sig_ts = Some(self.player.decipherer.signature_timestamp);
-        let player_future = fetch_player_response_with_options(&self.session, video_id, sig_ts, options);
+        let player_future =
+            fetch_player_response_with_options(&self.session, video_id, sig_ts, options);
         let next_future = get_watch_next(&self.session, video_id, None, None, None);
 
         let (player_response, watch_next_res) = tokio::join!(player_future, next_future);
@@ -538,10 +473,7 @@ impl Innertube {
     }
 
     /// Publish the initial playback event for a YouTube Music track.
-    pub async fn add_music_to_watch_history(
-        &self,
-        info: &VideoInfo,
-    ) -> Result<reqwest::Response> {
+    pub async fn add_music_to_watch_history(&self, info: &VideoInfo) -> Result<reqwest::Response> {
         info.add_to_music_watch_history(&self.session).await
     }
 
@@ -551,7 +483,8 @@ impl Innertube {
         info: &VideoInfo,
         start_time: f64,
     ) -> Result<reqwest::Response> {
-        info.update_music_watch_time(&self.session, start_time).await
+        info.update_music_watch_time(&self.session, start_time)
+            .await
     }
 
     /// Fetch Shorts video metadata and reel watch sequence navigation.
@@ -703,7 +636,11 @@ impl Innertube {
     ///
     /// This is the raw compatibility escape hatch for legacy `call()` users;
     /// typed endpoint wrappers should be preferred whenever available.
-    pub async fn call(&self, endpoint: &str, payload: serde_json::Value) -> Result<serde_json::Value> {
+    pub async fn call(
+        &self,
+        endpoint: &str,
+        payload: serde_json::Value,
+    ) -> Result<serde_json::Value> {
         let response = self.session.post_innertube(endpoint, payload).await?;
         response.json().await.map_err(InnertubeError::Network)
     }
@@ -715,14 +652,18 @@ impl Innertube {
         extra_payload: serde_json::Value,
     ) -> Result<serde_json::Value> {
         let path = endpoint.api_path.as_deref().ok_or_else(|| {
-            InnertubeError::NotFound("Navigation endpoint does not define an InnerTube API path".to_string())
+            InnertubeError::NotFound(
+                "Navigation endpoint does not define an InnerTube API path".to_string(),
+            )
         })?;
         let mut payload = endpoint.payload.clone();
         let payload_object = payload.as_object_mut().ok_or_else(|| {
             InnertubeError::Format("Navigation endpoint payload is not a JSON object".to_string())
         })?;
         let extra_object = extra_payload.as_object().ok_or_else(|| {
-            InnertubeError::Format("Navigation endpoint extra payload is not a JSON object".to_string())
+            InnertubeError::Format(
+                "Navigation endpoint extra payload is not a JSON object".to_string(),
+            )
         })?;
         payload_object.extend(extra_object.clone());
         self.call(path, payload).await
@@ -875,8 +816,14 @@ impl Innertube {
         comment_id: Option<&str>,
         continuation_token: Option<&str>,
     ) -> Result<CommentsResult> {
-        get_comments_with_options(&self.session, video_id, sort_by, comment_id, continuation_token)
-            .await
+        get_comments_with_options(
+            &self.session,
+            video_id,
+            sort_by,
+            comment_id,
+            continuation_token,
+        )
+        .await
     }
 
     /// Fetch next page of comments using a continuation token.
@@ -973,7 +920,8 @@ impl Innertube {
         &self,
         continuation_token: &str,
     ) -> Result<MusicHomeFeed> {
-        crate::endpoints::music::get_music_home_continuation(&self.session, continuation_token).await
+        crate::endpoints::music::get_music_home_continuation(&self.session, continuation_token)
+            .await
     }
 
     /// Fetch the first native typed page of a YouTube Music playlist.

@@ -64,11 +64,31 @@ impl PlaylistNode {
             .map(|t| t.text)
             .unwrap_or_else(|| "Untitled Playlist".to_string());
 
-        let author = target.get("ownerText")
+        let mut author = target.get("ownerText")
             .or_else(|| target.get("author"))
             .or_else(|| target.get("shortBylineText"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/avatarStack/avatarStackViewModel/text"))
+            .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/text"))
             .and_then(AuthorNode::from_value);
+
+        if let Some(ref mut auth) = author {
+            if auth.name.starts_with("by ") {
+                auth.name = auth.name.strip_prefix("by ").unwrap_or(&auth.name).trim().to_string();
+            } else if auth.name.starts_with("โดย ") {
+                auth.name = auth.name.strip_prefix("โดย ").unwrap_or(&auth.name).trim().to_string();
+            }
+
+            if auth.id.is_none() {
+                auth.id = target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/avatarStack/avatarStackViewModel/rendererContext/commandContext/onTap/innertubeCommand/browseEndpoint/browseId")
+                    .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/avatarStack/avatarStackViewModel/onTap/innertubeCommand/browseEndpoint/browseId"))
+                    .or_else(|| target.pointer("/ownerEndpoint/browseEndpoint/browseId"))
+                    .or_else(|| target.pointer("/shortBylineText/runs/0/navigationEndpoint/browseEndpoint/browseId"))
+                    .or_else(|| target.pointer("/ownerText/runs/0/navigationEndpoint/browseEndpoint/browseId"))
+                    .or_else(|| target.pointer("/videoOwner/videoOwnerRenderer/navigationEndpoint/browseEndpoint/browseId"))
+                    .and_then(|id| id.as_str())
+                    .map(|s| s.to_string());
+            }
+        }
 
         let description = target.get("descriptionText")
             .or_else(|| target.get("description"))

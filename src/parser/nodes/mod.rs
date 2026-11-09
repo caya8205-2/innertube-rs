@@ -3681,6 +3681,7 @@ impl YTNode {
             if let Some(n) = ReelPlayerOverlayNode::from_value(val) { return Some(YTNode::ReelPlayerOverlay(n)); }
         }
         if val.get("shortsLockupViewModel").is_some() {
+            if let Some(s) = ShortNode::from_value(val) { return Some(YTNode::Short(s)); }
             if let Some(n) = ShortsLockupViewNode::from_value(val) { return Some(YTNode::ShortsLockupView(n)); }
         }
         if val.get("alertWithButtonRenderer").is_some() {

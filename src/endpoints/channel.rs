@@ -69,7 +69,7 @@ pub async fn get_channel_shorts(
     } else {
         json!({
             "browseId": channel_id,
-            "params": "EgZzaG9ydHPyBgUKA5oBAA%3D%3D", // Shorts tab
+            "params": "EgZzaG9ydHPyBgUKA5oBAA==", // Shorts tab
         })
     };
 

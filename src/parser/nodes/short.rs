@@ -31,11 +31,26 @@ impl ShortNode {
 
         // 1. Check shortsLockupViewModel (modern ViewModel)
         if target.get("overlayMetadata").is_some() || target.pointer("/onTap/innertubeCommand/reelWatchEndpoint").is_some() {
-            let id = target.pointer("/onTap/innertubeCommand/reelWatchEndpoint/videoId")
+            let id = target
+                .pointer("/onTap/innertubeCommand/reelWatchEndpoint/videoId")
                 .or_else(|| target.pointer("/onTap/innertubeCommand/watchEndpoint/videoId"))
                 .or_else(|| target.get("videoId"))
-                .and_then(|v| v.as_str())?
-                .to_string();
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .or_else(|| {
+                    target
+                        .pointer("/onTap/innertubeCommand/commandMetadata/webCommandMetadata/url")
+                        .and_then(|u| u.as_str())
+                        .and_then(|u| u.strip_prefix("/shorts/"))
+                        .map(|s| s.split('?').next().unwrap_or(s).to_string())
+                })
+                .or_else(|| {
+                    target
+                        .get("entityId")
+                        .and_then(|e| e.as_str())
+                        .and_then(|e| e.strip_prefix("shorts-shelf-item-"))
+                        .map(|s| s.to_string())
+                })?;
 
             let title = target.pointer("/overlayMetadata/primaryText/content")
                 .and_then(|t| t.as_str())
