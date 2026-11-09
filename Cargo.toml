@@ -132,6 +132,10 @@ path = "examples/auth/debug_mutations.rs"
 
 # Diagnostics & Benchmarks
 [[example]]
+name = "debug_raw"
+path = "examples/diagnostics/debug_raw.rs"
+
+[[example]]
 name = "test_android_testsuite"
 path = "examples/diagnostics/test_android_testsuite.rs"
 

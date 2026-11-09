@@ -194,7 +194,15 @@ fn build_innertube_url(
 impl Session {
     /// Create a new `Session` instance.
     /// Fetches initial config from YouTube's `sw.js_data` or falls back to local generation.
-    pub async fn create(options: SessionOptions) -> Result<Self> {
+    pub async fn create(mut options: SessionOptions) -> Result<Self> {
+        let generate_locally = options.generate_session_locally.unwrap_or(false);
+        if options.cookie.is_none() && !generate_locally {
+            crate::log::load_dotenv();
+            options.cookie = std::env::var("INNERTUBE_COOKIE")
+                .or_else(|_| std::env::var("INNERTUBE_COOKIES"))
+                .ok();
+        }
+
         let http_client = reqwest::Client::builder()
             .cookie_store(true)
             .gzip(true)

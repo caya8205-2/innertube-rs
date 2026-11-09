@@ -9,18 +9,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== Testing YouTube Real-Time Live Chat Engine ===");
 
     // 1. Find a live stream dynamically
-    println!("1. Searching for an active live stream ('news live')...");
-    let search_res = yt.search("news live", None).await?;
+    println!("1. Searching for an active live stream ('live news')...");
+    let filters = innertube_rs::models::search::SearchFilters {
+        features: vec![innertube_rs::models::search::FeatureFilter::Live],
+        ..Default::default()
+    };
+    let search_res = yt.search_with_filters("live news", Some(&filters), None).await?;
     let live_video_id = search_res.items.iter().find_map(|item| match item {
         SearchResultItem::Video(v) => Some(v.video_id.clone()),
         _ => None,
-    }).unwrap_or_else(|| "21X5lGlDOfg".to_string());
+    }).unwrap_or_else(|| "jfKfPfyJRdk".to_string()); // Fallback to Lofi Girl
 
     println!("   >> Selected Live Video ID: [{}]", live_video_id);
 
     // 2. Extract live chat continuation token
     println!("2. Extracting live chat continuation token...");
-    let token_opt = yt.get_live_chat_token(&live_video_id).await?;
+    let mut token_opt = yt.get_live_chat_token(&live_video_id).await?;
+    if token_opt.is_none() {
+        println!("   >> Live chat not active on [{}], trying fallback live stream [jfKfPfyJRdk]...", live_video_id);
+        token_opt = yt.get_live_chat_token("jfKfPfyJRdk").await?;
+    }
 
     let token = match token_opt {
         Some(t) => {

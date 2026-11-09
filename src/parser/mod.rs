@@ -22,7 +22,7 @@ impl Parser {
     /// installed parser error handler.
     pub fn parse_tree_reporting(val: &Value) -> Vec<YTNode> {
         let mut results = Vec::new();
-        Self::traverse_recursive(val, &mut results);
+        Self::traverse_iterative(val, &mut results);
         results
     }
 
@@ -45,54 +45,59 @@ impl Parser {
         Self::parse_tree_reporting(val)
     }
 
-    fn traverse_recursive(val: &Value, results: &mut Vec<YTNode>) {
-        if val.is_null() {
-            return;
-        }
+    fn traverse_iterative(root: &Value, results: &mut Vec<YTNode>) {
+        let mut stack = vec![root];
 
-        // Skip ignored renderers silently (legacy IGNORED_LIST).
-        if let Value::Object(map) = val {
-            if map.len() == 1 {
-                if let Some(key) = map.keys().next() {
-                    let class_name = response::sanitize_class_name(key);
-                    if response::IGNORED_LIST.contains(&class_name.as_str()) {
-                        return;
+        while let Some(val) = stack.pop() {
+            if val.is_null() {
+                continue;
+            }
+
+            // Skip ignored renderers silently (legacy IGNORED_LIST).
+            if let Value::Object(map) = val {
+                if map.len() == 1 {
+                    if let Some(key) = map.keys().next() {
+                        let class_name = response::sanitize_class_name(key);
+                        if response::IGNORED_LIST.contains(&class_name.as_str()) {
+                            continue;
+                        }
                     }
                 }
             }
-        }
 
-        // Try parsing current node first
-        if let Some(node) = YTNode::parse(val) {
-            results.push(node);
-            // Even if matched, certain nodes like SectionList / RichGrid might contain nested items
-        } else if let Value::Object(map) = val {
-            // Report unknown single-key renderer/view payloads.
-            if map.len() == 1 {
-                if let Some(key) = map.keys().next() {
-                    if key.ends_with("Renderer") || key.ends_with("Model") || key.ends_with("View") {
-                        response::report_parser_error(response::ParserError {
-                            error_type: "class_not_found".to_string(),
-                            class_name: response::sanitize_class_name(key),
-                            detail: None,
-                        });
+            // Try parsing current node first
+            if let Some(node) = YTNode::parse(val) {
+                results.push(node);
+                // Even if matched, certain nodes like SectionList / RichGrid might contain nested items
+            } else if let Value::Object(map) = val {
+                // Report unknown single-key renderer/view payloads.
+                if map.len() == 1 {
+                    if let Some(key) = map.keys().next() {
+                        if key.ends_with("Renderer") || key.ends_with("Model") || key.ends_with("View") {
+                            response::report_parser_error(response::ParserError {
+                                error_type: "class_not_found".to_string(),
+                                class_name: response::sanitize_class_name(key),
+                                detail: None,
+                            });
+                        }
                     }
                 }
             }
-        }
 
-        match val {
-            Value::Object(map) => {
-                for (_, v) in map {
-                    Self::traverse_recursive(v, results);
+            match val {
+                Value::Object(map) => {
+                    // Push in reverse order so keys are processed in original order
+                    for v in map.values().rev() {
+                        stack.push(v);
+                    }
                 }
-            }
-            Value::Array(arr) => {
-                for item in arr {
-                    Self::traverse_recursive(item, results);
+                Value::Array(arr) => {
+                    for item in arr.iter().rev() {
+                        stack.push(item);
+                    }
                 }
+                _ => {}
             }
-            _ => {}
         }
     }
 }
