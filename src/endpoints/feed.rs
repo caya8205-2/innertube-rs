@@ -181,11 +181,13 @@ pub fn parse_home_feed_response(raw: &Value) -> Result<HomeFeed> {
 
     let parsed_tree = Parser::parse_tree(raw);
     let videos = parsed_tree.find_videos().into_iter().cloned().collect();
+    let playlists = parsed_tree.find_playlists().into_iter().cloned().collect();
     let continuation_token = Parser::parse_body_tree(raw).find_continuation_token();
 
     Ok(HomeFeed {
         filter_chips,
         videos,
+        playlists,
         continuation_token,
     })
 }

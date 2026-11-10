@@ -46,12 +46,16 @@ impl PlaylistNode {
             .or_else(|| val.get("pageHeaderRenderer"))
             .or_else(|| val.get("playlistRenderer"))
             .or_else(|| val.get("gridPlaylistRenderer"))
+            .or_else(|| val.get("lockupViewModel"))
+            .or_else(|| val.pointer("/richItemRenderer/content/lockupViewModel"))
             .or_else(|| val.pointer("/header/playlistHeaderRenderer"))
             .or_else(|| val.pointer("/header/pageHeaderRenderer"))
             .unwrap_or(val);
 
         let id = target.get("playlistId")
             .or_else(|| target.get("id"))
+            .or_else(|| target.get("contentId"))
+            .or_else(|| target.pointer("/rendererContext/commandContext/onTap/innertubeCommand/watchEndpoint/playlistId"))
             .or_else(|| target.pointer("/navigationEndpoint/watchEndpoint/playlistId"))
             .and_then(|i| i.as_str())
             .map(|s| s.to_string())
@@ -59,14 +63,22 @@ impl PlaylistNode {
 
         let title = target.get("title")
             .or_else(|| target.get("pageTitle"))
+            .or_else(|| target.pointer("/metadata/lockupMetadataViewModel/title"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/title"))
             .and_then(TextNode::from_value)
             .map(|t| t.text)
+            .or_else(|| {
+                target.pointer("/metadata/lockupMetadataViewModel/title/content")
+                    .or_else(|| target.pointer("/title/content"))
+                    .and_then(|t| t.as_str())
+                    .map(|s| s.to_string())
+            })
             .unwrap_or_else(|| "Untitled Playlist".to_string());
 
         let mut author = target.get("ownerText")
             .or_else(|| target.get("author"))
             .or_else(|| target.get("shortBylineText"))
+            .or_else(|| target.pointer("/metadata/lockupMetadataViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/text"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/avatarStack/avatarStackViewModel/text"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/text"))
             .and_then(AuthorNode::from_value);
@@ -109,6 +121,26 @@ impl PlaylistNode {
             video_count = digits.parse().ok();
         }
 
+        if video_count.is_none() {
+            if let Some(rows) = target.pointer("/metadata/lockupMetadataViewModel/metadata/contentMetadataViewModel/metadataRows").and_then(|r| r.as_array()) {
+                for r in rows {
+                    if let Some(parts) = r.get("metadataParts").and_then(|p| p.as_array()) {
+                        for p in parts {
+                            if let Some(txt) = p.pointer("/text/content").or_else(|| p.pointer("/text/runs/0/text")).and_then(|t| t.as_str()) {
+                                if txt.contains("video") || txt.contains("วิดีโอ") {
+                                    let digits: String = txt.chars().filter(|c| c.is_ascii_digit()).collect();
+                                    if let Ok(num) = digits.parse() {
+                                        video_count = Some(num);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if let Some(views_str) = target.get("viewCountText")
             .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/1/metadataParts/2/text"))
             .and_then(TextNode::from_value)
@@ -125,11 +157,20 @@ impl PlaylistNode {
         let thumbnails = ThumbnailListNode::from_value(
             target.pointer("/playlistHeaderBanner/heroPlaylistThumbnailRenderer/thumbnail")
                 .or_else(|| target.pointer("/content/pageHeaderViewModel/heroContent/previewImage/contentPreviewImageViewModel/image"))
+                .or_else(|| target.pointer("/contentImage/collectionThumbnailViewModel/primaryThumbnail/thumbnailViewModel/image"))
+                .or_else(|| target.pointer("/contentImage/thumbnailViewModel/image"))
                 .or_else(|| target.get("thumbnail"))
                 .unwrap_or(target)
         );
 
-        let endpoint = target.get("navigationEndpoint").and_then(NavigationEndpointNode::from_value);
+        let endpoint = target.get("navigationEndpoint")
+            .or_else(|| target.pointer("/content/pageHeaderViewModel/actions/actionsViewModel/primaryButton/buttonViewModel/onTap/innertubeCommand"))
+            .or_else(|| target.pointer("/rendererContext/commandContext/onTap/innertubeCommand"))
+            .and_then(NavigationEndpointNode::from_value);
+
+        if id.is_empty() && title == "Untitled Playlist" && author.is_none() {
+            return None;
+        }
 
         Some(Self {
             id,

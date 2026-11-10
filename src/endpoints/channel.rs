@@ -145,13 +145,38 @@ pub fn parse_channel_shorts_response(channel_id: &str, raw: &Value) -> Result<Ch
         ..Default::default()
     };
 
-    for s in parsed_tree.find_shorts() {
-        resp.shorts.push(ChannelShortItem {
-            video_id: s.id.clone(),
-            title: s.title.clone(),
-            views: s.view_count.clone(),
-            thumbnail: s.thumbnails.best_url().map(|u| u.to_string()),
-        });
+    for node in &parsed_tree {
+        match node {
+            crate::parser::YTNode::Short(s) => {
+                resp.shorts.push(ChannelShortItem {
+                    video_id: s.id.clone(),
+                    title: s.title.clone(),
+                    views: s.view_count.clone(),
+                    thumbnail: s.thumbnails.best_url().map(|u| u.to_string()),
+                });
+            }
+            crate::parser::YTNode::ShortsLockupView(slv) => {
+                let id = slv.on_tap_endpoint
+                    .as_ref()
+                    .and_then(|v| {
+                        v.pointer("/reelWatchEndpoint/videoId")
+                            .or_else(|| v.pointer("/innertubeCommand/reelWatchEndpoint/videoId"))
+                            .and_then(|i| i.as_str())
+                    })
+                    .map(String::from)
+                    .or_else(|| slv.entity_id.clone())
+                    .unwrap_or_default();
+                let title = slv.overlay_primary_text.as_ref().map(|t| t.text.clone()).unwrap_or_default();
+                let views = slv.overlay_secondary_text.as_ref().map(|t| t.text.clone());
+                resp.shorts.push(ChannelShortItem {
+                    video_id: id,
+                    title,
+                    views,
+                    thumbnail: slv.thumbnail.best_url().map(|u| u.to_string()),
+                });
+            }
+            _ => {}
+        }
     }
 
     resp.continuation_token = parsed_tree.find_continuation_token();
