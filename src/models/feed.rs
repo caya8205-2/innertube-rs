@@ -69,6 +69,8 @@ pub struct FilterChip {
 pub struct HomeFeed {
     pub filter_chips: Vec<FilterChip>,
     pub videos: Vec<VideoNode>,
+    #[serde(default)]
+    pub playlists: Vec<PlaylistNode>,
     pub continuation_token: Option<String>,
 }
 
