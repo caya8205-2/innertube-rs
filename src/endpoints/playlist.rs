@@ -5,7 +5,7 @@ use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
 use crate::models::playlist::{PlaylistContinuation, PlaylistVideoItem, PlaylistView};
 use crate::parser::nodes::misc::alert::AlertNode;
-use crate::parser::nodes::playlist::PlaylistNode;
+use crate::parser::nodes::playlist::{is_mix_playlist_id, PlaylistNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
 
 /// Fetch full YouTube playlist metadata and video list.
@@ -58,6 +58,10 @@ pub fn parse_playlist_browse_response(playlist_id: &str, raw: &Value) -> Result<
     let header_node = PlaylistNode::from_value(raw);
     let parsed_tree = Parser::parse_tree(raw);
 
+    // The requested ID is the ground truth for Mix detection: a /browse response
+    // for VLRD... is a Mix even when the header node is missing.
+    let is_mix = header_node.as_ref().is_some_and(|h| h.is_mix) || is_mix_playlist_id(playlist_id);
+
     let mut view = PlaylistView {
         id: playlist_id.to_string(),
         title: header_node.as_ref().map(|h| h.title.clone()).unwrap_or_else(|| "Untitled Playlist".to_string()),
@@ -70,7 +74,8 @@ pub fn parse_playlist_browse_response(playlist_id: &str, raw: &Value) -> Result<
         thumbnail: header_node.as_ref().and_then(|h| h.thumbnails.best_url().map(|s| s.to_string())),
         videos: Vec::new(),
         continuation_token: parsed_tree.find_continuation_token(),
-        is_editable: find_playlist_video_list_editable(raw),
+        is_editable: !is_mix && find_playlist_video_list_editable(raw),
+        is_mix,
     };
 
     // 3. Collect video items and assign 1-based index if missing
@@ -373,5 +378,69 @@ mod tests {
         assert_eq!(pl.videos[0].title, "Hit Track 1");
         assert_eq!(pl.videos[0].author, "Artist A");
         assert_eq!(pl.videos[0].index, Some(1)); // 1-based index assigned
+        assert!(!pl.is_mix);
+    }
+
+    #[test]
+    fn test_parse_mix_playlist_from_requested_id() {
+        let fixture = json!({
+            "header": {
+                "playlistHeaderRenderer": {
+                    "title": { "runs": [{ "text": "Mix - Caya Dev" }] }
+                }
+            },
+            "contents": {
+                "twoColumnBrowseResultsRenderer": {
+                    "tabs": [{
+                        "tabRenderer": {
+                            "content": {
+                                "sectionListRenderer": {
+                                    "contents": [{
+                                        "itemSectionRenderer": {
+                                            "contents": [{
+                                                "playlistVideoListRenderer": {
+                                                    "isEditable": true,
+                                                    "contents": [{
+                                                        "playlistVideoRenderer": {
+                                                            "videoId": "8XXPxLLgwt8",
+                                                            "title": { "runs": [{ "text": "Track 1" }] }
+                                                        }
+                                                    }]
+                                                }
+                                            }]
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    }]
+                }
+            }
+        });
+
+        let pl = parse_playlist_browse_response("VLRDEM5KXlGSfIinpcCL9eVl4XVw", &fixture).unwrap();
+        assert!(pl.is_mix);
+        assert!(!pl.is_editable, "Mix playlists must never be editable");
+    }
+
+    #[test]
+    fn test_parse_regular_playlist_ignores_mix_cards_in_body() {
+        let fixture = json!({
+            "header": {
+                "playlistHeaderRenderer": {
+                    "playlistId": "PL_regular_123",
+                    "title": { "runs": [{ "text": "My Playlist" }] }
+                }
+            },
+            "contents": {
+                "gridRadioRenderer": {
+                    "playlistId": "RDEM5KXlGSfIinpcCL9eVl4XVw",
+                    "title": { "runs": [{ "text": "Mix - Something" }] }
+                }
+            }
+        });
+
+        let pl = parse_playlist_browse_response("VLPL_regular_123", &fixture).unwrap();
+        assert!(!pl.is_mix);
     }
 }

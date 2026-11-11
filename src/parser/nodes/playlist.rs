@@ -19,6 +19,23 @@ pub struct PlaylistNode {
     pub last_updated: Option<String>,
     pub thumbnails: ThumbnailListNode,
     pub endpoint: Option<NavigationEndpointNode>,
+    /// Whether this playlist is a YouTube Mix (radio) playlist rather than a
+    /// user-created playlist.
+    ///
+    /// Detection covers all the shapes YouTube uses for Mix cards: an
+    /// `RD`-prefixed playlist ID, legacy `radioRenderer` families, and the
+    /// `MIX` badge overlay used by modern `lockupViewModel` cards.
+    #[serde(default)]
+    pub is_mix: bool,
+}
+
+/// Returns `true` when `id` names a YouTube radio (Mix) playlist.
+///
+/// Radio playlists always use `RD`-prefixed IDs (`RDEM...`, `RDCLAK...`,
+/// `RDAMVM...`), and `/browse` wraps every playlist ID in `VL` (`VLRD...`),
+/// so that prefix is stripped before the check.
+pub fn is_mix_playlist_id(id: &str) -> bool {
+    id.strip_prefix("VL").unwrap_or(id).starts_with("RD")
 }
 
 /// Represents an individual video item within a playlist (`PlaylistVideo.ts`).
@@ -47,6 +64,10 @@ impl PlaylistNode {
             .or_else(|| val.get("pageHeaderRenderer"))
             .or_else(|| val.get("playlistRenderer"))
             .or_else(|| val.get("gridPlaylistRenderer"))
+            // Legacy radio (Mix) renderers.
+            .or_else(|| val.get("radioRenderer"))
+            .or_else(|| val.get("compactRadioRenderer"))
+            .or_else(|| val.get("gridRadioRenderer"))
             .or_else(|| val.get("lockupViewModel"))
             .or_else(|| val.pointer("/richItemRenderer/content/lockupViewModel"))
             .or_else(|| val.pointer("/header/playlistHeaderRenderer"))
@@ -61,6 +82,8 @@ impl PlaylistNode {
             .and_then(|i| i.as_str())
             .map(|s| s.to_string())
             .unwrap_or_default();
+
+        let is_mix = detect_is_mix(val, target, &id);
 
         let title = target.get("title")
             .or_else(|| target.get("pageTitle"))
@@ -231,8 +254,85 @@ impl PlaylistNode {
             last_updated,
             thumbnails,
             endpoint,
+            is_mix,
         })
     }
+}
+
+/// Detects a YouTube Mix (radio) playlist from its parsed node.
+///
+/// Checked in order of reliability:
+/// 1. `RD`-prefixed playlist ID (the canonical signal).
+/// 2. `watchEndpoint.playlistId` of the card's tap action.
+/// 3. Legacy `radioRenderer` / `compactRadioRenderer` / `gridRadioRenderer`.
+/// 4. The `MIX` badge overlay (`imageName: "MIX"`) of modern lockup cards.
+fn detect_is_mix(val: &Value, target: &Value, id: &str) -> bool {
+    if is_mix_playlist_id(id) {
+        return true;
+    }
+
+    let endpoint_playlist_id = target
+        .pointer("/rendererContext/commandContext/onTap/innertubeCommand/watchEndpoint/playlistId")
+        .or_else(|| target.pointer("/navigationEndpoint/watchEndpoint/playlistId"))
+        .and_then(Value::as_str);
+    if endpoint_playlist_id.is_some_and(is_mix_playlist_id) {
+        return true;
+    }
+
+    if has_radio_renderer(target) || has_radio_renderer(val) {
+        return true;
+    }
+
+    // Badge overlays are only inspected on the node itself (never on a whole
+    // page fallback), so an unrelated Mix card elsewhere in the response
+    // cannot mark this playlist as a Mix.
+    const BADGE_PATHS: [&str; 5] = [
+        "/contentImage/collectionThumbnailViewModel/primaryThumbnail/thumbnailViewModel/overlays",
+        "/contentImage/thumbnailViewModel/overlays",
+        "/thumbnailViewModel/overlays",
+        "/thumbnail/thumbnailViewModel/overlays",
+        "/thumbnailOverlays",
+    ];
+
+    BADGE_PATHS
+        .iter()
+        .filter_map(|path| target.pointer(path))
+        .any(has_mix_badge)
+}
+
+fn has_radio_renderer(value: &Value) -> bool {
+    value.get("radioRenderer").is_some()
+        || value.get("compactRadioRenderer").is_some()
+        || value.get("gridRadioRenderer").is_some()
+}
+
+/// Recursively looks for a `MIX` badge inside thumbnail overlays.
+///
+/// The badge icon is locale-independent (`clientResource.imageName` is
+/// `"MIX"`), while the visible text is localized (`"Mix"`, `"มิกซ์"`, ...).
+fn has_mix_badge(value: &Value) -> bool {
+    match value {
+        Value::Object(map) => {
+            if map.get("imageName").and_then(Value::as_str) == Some("MIX") {
+                return true;
+            }
+            if map
+                .get("text")
+                .and_then(Value::as_str)
+                .is_some_and(is_mix_badge_text)
+            {
+                return true;
+            }
+            map.values().any(has_mix_badge)
+        }
+        Value::Array(items) => items.iter().any(has_mix_badge),
+        _ => false,
+    }
+}
+
+fn is_mix_badge_text(text: &str) -> bool {
+    let text = text.trim();
+    text.eq_ignore_ascii_case("mix") || text == "มิกซ์"
 }
 
 impl PlaylistVideoNode {
@@ -587,5 +687,160 @@ impl PlaylistSidebarSecondaryInfoNode {
         let button = node.get("button").cloned();
 
         Some(Self { owner, button })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_is_mix_playlist_id() {
+        assert!(is_mix_playlist_id("RDEM5KXlGSfIinpcCL9eVl4XVw"));
+        assert!(is_mix_playlist_id("VLRDEM5KXlGSfIinpcCL9eVl4XVw"));
+        assert!(is_mix_playlist_id("RDCLAK5uy_kExample"));
+        assert!(is_mix_playlist_id("RDAMVM8XXPxLLgwt8"));
+        assert!(!is_mix_playlist_id("PL8XXPxLLgwt8"));
+        assert!(!is_mix_playlist_id("VLPL8XXPxLLgwt8"));
+        assert!(!is_mix_playlist_id(""));
+    }
+
+    #[test]
+    fn test_lockup_mix_card_uses_mix_badge() {
+        // Shape returned by modern Mix cards: the badge is the only signal
+        // when the node itself does not expose an RD-prefixed playlist ID.
+        let val = json!({
+            "lockupViewModel": {
+                "contentId": "not-a-radio-id",
+                "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+                "contentImage": {
+                    "collectionThumbnailViewModel": {
+                        "primaryThumbnail": {
+                            "thumbnailViewModel": {
+                                "overlays": [{
+                                    "thumbnailOverlayBadgeViewModel": {
+                                        "thumbnailBadges": [{
+                                            "thumbnailBadgeViewModel": {
+                                                "icon": {
+                                                    "sources": [{ "clientResource": { "imageName": "MIX" } }]
+                                                },
+                                                "text": "มิกซ์"
+                                            }
+                                        }]
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                },
+                "metadata": {
+                    "lockupMetadataViewModel": {
+                        "title": { "content": "Mix - Test Artist" }
+                    }
+                }
+            }
+        });
+
+        let node = PlaylistNode::from_value(&val).expect("lockup mix card should parse");
+        assert!(node.is_mix);
+        assert_eq!(node.id, "not-a-radio-id");
+        assert_eq!(node.title, "Mix - Test Artist");
+    }
+
+    #[test]
+    fn test_lockup_mix_card_uses_localized_badge_text() {
+        let val = json!({
+            "lockupViewModel": {
+                "contentId": "not-a-radio-id",
+                "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+                "contentImage": {
+                    "thumbnailViewModel": {
+                        "overlays": [{
+                            "thumbnailOverlayBadgeViewModel": {
+                                "thumbnailBadges": [{
+                                    "thumbnailBadgeViewModel": { "text": "มิกซ์" }
+                                }]
+                            }
+                        }]
+                    }
+                },
+                "metadata": {
+                    "lockupMetadataViewModel": { "title": { "content": "Mix - Test" } }
+                }
+            }
+        });
+
+        let node = PlaylistNode::from_value(&val).expect("playlist lockup should parse");
+        assert!(node.is_mix);
+    }
+
+    #[test]
+    fn test_legacy_radio_renderer_is_mix() {
+        let val = json!({
+            "radioRenderer": {
+                "playlistId": "RDAMVM8XXPxLLgwt8",
+                "title": { "runs": [{ "text": "Radio Mix" }] }
+            }
+        });
+
+        let node = PlaylistNode::from_value(&val).expect("radio renderer should parse");
+        assert!(node.id.starts_with("RD"));
+        assert!(node.is_mix);
+    }
+
+    #[test]
+    fn test_regular_playlist_is_not_mix() {
+        let val = json!({
+            "lockupViewModel": {
+                "contentId": "PL8XXPxLLgwt8",
+                "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+                "metadata": {
+                    "lockupMetadataViewModel": {
+                        "title": { "content": "My Playlist" }
+                    }
+                }
+            }
+        });
+
+        let node = PlaylistNode::from_value(&val).expect("playlist lockup should parse");
+        assert!(!node.is_mix);
+    }
+
+    #[test]
+    fn test_mix_card_in_page_body_does_not_mark_header_as_mix() {
+        let val = json!({
+            "header": {
+                "playlistHeaderRenderer": {
+                    "playlistId": "PL8XXPxLLgwt8",
+                    "title": { "runs": [{ "text": "My Playlist" }] }
+                }
+            },
+            "contents": {
+                "richItemRenderer": {
+                    "content": {
+                        "lockupViewModel": {
+                            "contentId": "RDEM5KXlGSfIinpcCL9eVl4XVw",
+                            "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+                            "contentImage": {
+                                "thumbnailViewModel": {
+                                    "overlays": [{
+                                        "thumbnailOverlayBadgeViewModel": {
+                                            "thumbnailBadges": [{
+                                                "thumbnailBadgeViewModel": { "text": "Mix" }
+                                            }]
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        let node = PlaylistNode::from_value(&val).expect("header should parse");
+        assert_eq!(node.id, "PL8XXPxLLgwt8");
+        assert!(!node.is_mix);
     }
 }

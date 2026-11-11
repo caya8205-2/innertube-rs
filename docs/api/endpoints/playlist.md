@@ -13,5 +13,9 @@ use innertube_rs::endpoints::playlist::{get_playlist, get_playlist_continuation}
 ### `get_playlist(session: &Session, playlist_id: &str) -> Result<PlaylistView>`
 Fetches playlist header information, author, thumbnails, and initial tracklist.
 
+The returned `PlaylistView.is_mix` is `true` for YouTube Mix / radio playlists
+(`RD...` IDs) and `is_editable` is forced to `false` for them, so callers can
+route Mix cards to `/watch?v=...&list=RD...` instead of `/playlist`.
+
 ### `get_playlist_continuation(session: &Session, token: &str) -> Result<PlaylistContinuation>`
 Fetches subsequent pages of videos for large playlists using continuation tokens.

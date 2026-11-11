@@ -495,6 +495,7 @@ fn test_fixture_feed_mixin_continuations() {
         videos: vec![],
         continuation_token: Some("token_playlist".to_string()),
         is_editable: false,
+        is_mix: false,
     };
     assert!(playlist_view.has_continuation());
 

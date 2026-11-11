@@ -12,6 +12,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let playlist = yt.get_playlist(&playlist_id).await?;
 
     println!("Playlist Title: {}", playlist.title);
+    if playlist.is_mix {
+        println!("Type: YouTube Mix (radio playlist, cannot be edited)");
+    }
     if let Some(author) = &playlist.author {
         println!("Author: {} (ID: {:?})", author, playlist.author_id);
     }
