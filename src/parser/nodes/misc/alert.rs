@@ -17,6 +17,7 @@ impl AlertNode {
         let node = val
             .get("alertRenderer")
             .or_else(|| val.get("alertWithActionsRenderer"))
+            .or_else(|| val.get("alertWithButtonRenderer"))
             .unwrap_or(val);
 
         let text = node

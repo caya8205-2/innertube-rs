@@ -42,7 +42,8 @@ impl PlaylistNode {
             return None;
         }
 
-        let target = val.get("playlistHeaderRenderer")
+        let target = val
+            .get("playlistHeaderRenderer")
             .or_else(|| val.get("pageHeaderRenderer"))
             .or_else(|| val.get("playlistRenderer"))
             .or_else(|| val.get("gridPlaylistRenderer"))
@@ -65,11 +66,17 @@ impl PlaylistNode {
             .or_else(|| target.get("pageTitle"))
             .or_else(|| target.pointer("/metadata/lockupMetadataViewModel/title"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/title"))
+            .or_else(|| val.pointer("/sidebar/playlistSidebarRenderer/items/0/playlistSidebarPrimaryInfoRenderer/title"))
+            .or_else(|| val.pointer("/microformat/microformatDataRenderer/title"))
+            .or_else(|| val.pointer("/metadata/playlistMetadataRenderer/title"))
             .and_then(TextNode::from_value)
             .map(|t| t.text)
             .or_else(|| {
                 target.pointer("/metadata/lockupMetadataViewModel/title/content")
                     .or_else(|| target.pointer("/title/content"))
+                    .or_else(|| val.pointer("/header/pageHeaderRenderer/pageTitle"))
+                    .or_else(|| val.pointer("/microformat/microformatDataRenderer/title"))
+                    .or_else(|| val.pointer("/metadata/playlistMetadataRenderer/title"))
                     .and_then(|t| t.as_str())
                     .map(|s| s.to_string())
             })
@@ -81,13 +88,24 @@ impl PlaylistNode {
             .or_else(|| target.pointer("/metadata/lockupMetadataViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/text"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/avatarStack/avatarStackViewModel/text"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/metadata/contentMetadataViewModel/metadataRows/0/metadataParts/0/text"))
+            .or_else(|| val.pointer("/sidebar/playlistSidebarRenderer/items/1/playlistSidebarSecondaryInfoRenderer/videoOwner/videoOwnerRenderer/title"))
             .and_then(AuthorNode::from_value);
 
         if let Some(ref mut auth) = author {
             if auth.name.starts_with("by ") {
-                auth.name = auth.name.strip_prefix("by ").unwrap_or(&auth.name).trim().to_string();
+                auth.name = auth
+                    .name
+                    .strip_prefix("by ")
+                    .unwrap_or(&auth.name)
+                    .trim()
+                    .to_string();
             } else if auth.name.starts_with("โดย ") {
-                auth.name = auth.name.strip_prefix("โดย ").unwrap_or(&auth.name).trim().to_string();
+                auth.name = auth
+                    .name
+                    .strip_prefix("โดย ")
+                    .unwrap_or(&auth.name)
+                    .trim()
+                    .to_string();
             }
 
             if auth.id.is_none() {
@@ -97,6 +115,7 @@ impl PlaylistNode {
                     .or_else(|| target.pointer("/shortBylineText/runs/0/navigationEndpoint/browseEndpoint/browseId"))
                     .or_else(|| target.pointer("/ownerText/runs/0/navigationEndpoint/browseEndpoint/browseId"))
                     .or_else(|| target.pointer("/videoOwner/videoOwnerRenderer/navigationEndpoint/browseEndpoint/browseId"))
+                    .or_else(|| val.pointer("/sidebar/playlistSidebarRenderer/items/1/playlistSidebarSecondaryInfoRenderer/videoOwner/videoOwnerRenderer/navigationEndpoint/browseEndpoint/browseId"))
                     .and_then(|id| id.as_str())
                     .map(|s| s.to_string());
             }
@@ -105,8 +124,15 @@ impl PlaylistNode {
         let description = target.get("descriptionText")
             .or_else(|| target.get("description"))
             .or_else(|| target.pointer("/content/pageHeaderViewModel/description/descriptionViewModel/description"))
+            .or_else(|| val.pointer("/sidebar/playlistSidebarRenderer/items/0/playlistSidebarPrimaryInfoRenderer/description"))
             .and_then(TextNode::from_value)
-            .map(|t| t.text);
+            .map(|t| t.text)
+            .or_else(|| {
+                val.pointer("/microformat/microformatDataRenderer/description")
+                    .and_then(|d| d.as_str())
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string())
+            });
 
         let mut video_count = None;
         let mut view_count = None;
@@ -149,16 +175,39 @@ impl PlaylistNode {
             view_count = Some(views_str);
         }
 
-        let last_updated = target.get("lastUpdated")
+        let mut last_updated = target
+            .get("lastUpdated")
             .or_else(|| target.get("lastUpdatedText"))
             .and_then(TextNode::from_value)
             .map(|t| t.text);
+
+        // Sidebar stats fallback for video_count, view_count, and last_updated
+        if video_count.is_none() || view_count.is_none() || last_updated.is_none() {
+            if let Some(stats) = val.pointer("/sidebar/playlistSidebarRenderer/items/0/playlistSidebarPrimaryInfoRenderer/stats").and_then(|s| s.as_array()) {
+                for stat in stats {
+                    if let Some(txt_node) = TextNode::from_value(stat) {
+                        let txt = txt_node.text.trim();
+                        if video_count.is_none() && (txt.contains("video") || txt.contains("วิดีโอ")) {
+                            let digits: String = txt.chars().filter(|c| c.is_ascii_digit()).collect();
+                            video_count = digits.parse().ok();
+                        } else if view_count.is_none() && (txt.contains("view") || txt.contains("การดู")) {
+                            view_count = Some(txt.to_string());
+                        } else if last_updated.is_none() && (txt.contains("update") || txt.contains("Update") || txt.contains("อัปเดต")) {
+                            last_updated = Some(txt.to_string());
+                        }
+                    }
+                }
+            }
+        }
 
         let thumbnails = ThumbnailListNode::from_value(
             target.pointer("/playlistHeaderBanner/heroPlaylistThumbnailRenderer/thumbnail")
                 .or_else(|| target.pointer("/content/pageHeaderViewModel/heroContent/previewImage/contentPreviewImageViewModel/image"))
                 .or_else(|| target.pointer("/contentImage/collectionThumbnailViewModel/primaryThumbnail/thumbnailViewModel/image"))
                 .or_else(|| target.pointer("/contentImage/thumbnailViewModel/image"))
+                .or_else(|| val.pointer("/sidebar/playlistSidebarRenderer/items/0/playlistSidebarPrimaryInfoRenderer/thumbnailRenderer/playlistVideoThumbnailRenderer/thumbnail"))
+                .or_else(|| val.pointer("/sidebar/playlistSidebarRenderer/items/0/playlistSidebarPrimaryInfoRenderer/thumbnailRenderer/playlistCustomThumbnailRenderer/thumbnail"))
+                .or_else(|| val.pointer("/microformat/microformatDataRenderer/thumbnail"))
                 .or_else(|| target.get("thumbnail"))
                 .unwrap_or(target)
         );
@@ -192,18 +241,27 @@ impl PlaylistVideoNode {
             return None;
         }
 
-        let target = val.get("playlistVideoRenderer")
+        let target = val
+            .get("playlistVideoRenderer")
             .or_else(|| val.get("lockupViewModel"))
             .unwrap_or(val);
 
         // 1. Check lockupViewModel
-        if target.get("contentType").is_some() || target.pointer("/metadata/lockupMetadataViewModel").is_some() {
-            let id = target.pointer("/rendererContext/commandContext/onTap/innertubeCommand/watchEndpoint/videoId")
+        if target.get("contentType").is_some()
+            || target
+                .pointer("/metadata/lockupMetadataViewModel")
+                .is_some()
+        {
+            let id = target
+                .pointer(
+                    "/rendererContext/commandContext/onTap/innertubeCommand/watchEndpoint/videoId",
+                )
                 .or_else(|| target.get("contentId"))
                 .and_then(|v| v.as_str())?
                 .to_string();
 
-            let title = target.pointer("/metadata/lockupMetadataViewModel/title/content")
+            let title = target
+                .pointer("/metadata/lockupMetadataViewModel/title/content")
                 .and_then(|t| t.as_str())
                 .unwrap_or("Untitled")
                 .to_string();
@@ -238,25 +296,34 @@ impl PlaylistVideoNode {
         }
 
         // 2. Standard playlistVideoRenderer
-        let id = target.get("videoId")
+        let id = target
+            .get("videoId")
             .and_then(|v| v.as_str())
-            .or_else(|| target.pointer("/navigationEndpoint/watchEndpoint/videoId").and_then(|v| v.as_str()))
+            .or_else(|| {
+                target
+                    .pointer("/navigationEndpoint/watchEndpoint/videoId")
+                    .and_then(|v| v.as_str())
+            })
             .map(|s| s.to_string())?;
 
-        let title = target.get("title")
+        let title = target
+            .get("title")
             .and_then(TextNode::from_value)
             .map(|t| t.text)
             .unwrap_or_else(|| "Untitled".to_string());
 
-        let author = target.get("shortBylineText")
+        let author = target
+            .get("shortBylineText")
             .or_else(|| target.get("ownerText"))
             .and_then(AuthorNode::from_value);
 
-        let duration = target.get("lengthText")
+        let duration = target
+            .get("lengthText")
             .and_then(TextNode::from_value)
             .map(|t| t.text);
 
-        let duration_ms = target.get("lengthSeconds")
+        let duration_ms = target
+            .get("lengthSeconds")
             .and_then(|s| s.as_str())
             .and_then(|s| s.parse::<u64>().ok())
             .map(|sec| sec * 1000)
@@ -264,11 +331,15 @@ impl PlaylistVideoNode {
 
         let thumbnails = ThumbnailListNode::from_value(target.get("thumbnail").unwrap_or(target));
 
-        let index = target.get("index")
+        let index = target
+            .get("index")
             .and_then(TextNode::from_value)
             .and_then(|t| t.text.parse::<u32>().ok());
 
-        let is_playable = target.get("isPlayable").and_then(|p| p.as_bool()).unwrap_or(true);
+        let is_playable = target
+            .get("isPlayable")
+            .and_then(|p| p.as_bool())
+            .unwrap_or(true);
 
         let set_video_id = target
             .get("setVideoId")
@@ -357,7 +428,9 @@ impl PlaylistPanelVideoNode {
             .flatten()
             .find_map(|item| {
                 let action = item
-                    .pointer("/toggleMenuServiceItemRenderer/defaultServiceEndpoint/likeEndpoint/status")
+                    .pointer(
+                        "/toggleMenuServiceItemRenderer/defaultServiceEndpoint/likeEndpoint/status",
+                    )
                     .and_then(Value::as_str)?;
                 match action {
                     "LIKE" => Some("INDIFFERENT".to_string()),
@@ -439,9 +512,18 @@ pub struct PlaylistMetadataNode {
 impl PlaylistMetadataNode {
     pub fn from_value(val: &Value) -> Option<Self> {
         let node = val.get("playlistMetadataRenderer").unwrap_or(val);
-        let title = node.get("title").and_then(Value::as_str).map(ToString::to_string);
-        let description = node.get("description").and_then(Value::as_str).map(ToString::to_string);
-        let privacy = node.get("privacy").and_then(Value::as_str).map(ToString::to_string);
+        let title = node
+            .get("title")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+        let description = node
+            .get("description")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+        let privacy = node
+            .get("privacy")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
 
         Some(Self {
             title,
@@ -463,7 +545,10 @@ pub struct PlaylistSidebarPrimaryInfoNode {
 impl PlaylistSidebarPrimaryInfoNode {
     pub fn from_value(val: &Value) -> Option<Self> {
         let node = val.get("playlistSidebarPrimaryInfoRenderer").unwrap_or(val);
-        let title = node.get("title").and_then(TextNode::from_value).map(|t| t.text);
+        let title = node
+            .get("title")
+            .and_then(TextNode::from_value)
+            .map(|t| t.text);
 
         let mut stats = Vec::new();
         if let Some(arr) = node.get("stats").and_then(Value::as_array) {
@@ -474,7 +559,8 @@ impl PlaylistSidebarPrimaryInfoNode {
             }
         }
 
-        let thumbnails = ThumbnailListNode::from_value(node.get("thumbnailRenderer").unwrap_or(node));
+        let thumbnails =
+            ThumbnailListNode::from_value(node.get("thumbnailRenderer").unwrap_or(node));
 
         Some(Self {
             title,
@@ -494,11 +580,12 @@ pub struct PlaylistSidebarSecondaryInfoNode {
 
 impl PlaylistSidebarSecondaryInfoNode {
     pub fn from_value(val: &Value) -> Option<Self> {
-        let node = val.get("playlistSidebarSecondaryInfoRenderer").unwrap_or(val);
+        let node = val
+            .get("playlistSidebarSecondaryInfoRenderer")
+            .unwrap_or(val);
         let owner = node.get("videoOwner").cloned();
         let button = node.get("button").cloned();
 
         Some(Self { owner, button })
     }
 }
-

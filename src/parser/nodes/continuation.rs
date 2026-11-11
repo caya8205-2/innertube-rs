@@ -19,6 +19,9 @@ impl ContinuationNode {
             .unwrap_or(val);
 
         let token = target.pointer("/continuationEndpoint/continuationCommand/token")
+            .or_else(|| target.pointer("/continuationCommand/innertubeCommand/continuationCommand/token"))
+            .or_else(|| target.pointer("/continuationCommand/command/continuationCommand/token"))
+            .or_else(|| target.pointer("/continuationCommand/continuationCommand/token"))
             .or_else(|| target.pointer("/continuationEndpoint/command/token"))
             .or_else(|| target.pointer("/continuationEndpoint/browseContinuationEndpoint/continuation"))
             .or_else(|| target.pointer("/continuationEndpoint/nextContinuationData/continuation"))
@@ -27,6 +30,9 @@ impl ContinuationNode {
             .to_string();
 
         let endpoint_type = target.pointer("/continuationEndpoint/continuationCommand/request")
+            .or_else(|| target.pointer("/continuationCommand/innertubeCommand/continuationCommand/request"))
+            .or_else(|| target.pointer("/continuationCommand/command/continuationCommand/request"))
+            .or_else(|| target.pointer("/continuationCommand/continuationCommand/request"))
             .and_then(|r| r.as_str())
             .map(|s| s.to_string());
 
