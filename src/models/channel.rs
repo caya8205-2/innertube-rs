@@ -58,6 +58,9 @@ pub struct ChannelVideoItem {
     pub duration: Option<String>,
     pub views: Option<String>,
     pub thumbnail: Option<String>,
+    /// Watch progress reported by YouTube as a percentage (`0`–`100`).
+    #[serde(default)]
+    pub progress_percent: Option<u32>,
 }
 
 /// Channel Short item from Shorts tab.

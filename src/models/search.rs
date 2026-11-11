@@ -12,6 +12,9 @@ pub struct SearchVideoItem {
     pub view_count: Option<String>,
     pub published_time: Option<String>,
     pub thumbnails: Vec<Thumbnail>,
+    /// Watch progress reported by YouTube as a percentage (`0`–`100`).
+    #[serde(default)]
+    pub progress_percent: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

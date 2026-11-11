@@ -130,6 +130,7 @@ pub fn parse_channel_videos_response(channel_id: &str, raw: &Value) -> Result<Ch
             duration: v.duration.clone(),
             views: v.view_count.clone(),
             thumbnail: v.thumbnails.best_url().map(|s| s.to_string()),
+            progress_percent: v.progress_percent,
         });
     }
 

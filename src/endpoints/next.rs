@@ -88,6 +88,7 @@ pub fn parse_watch_next_response(video_id: &str, raw: &Value) -> Result<WatchNex
                     published_time_text: v.published_time.clone(),
                     is_live: v.is_live,
                     is_upcoming: v.is_upcoming,
+                    progress_percent: v.progress_percent,
                 });
             }
             results.continuation_token = parsed_tree.find_continuation_token();
