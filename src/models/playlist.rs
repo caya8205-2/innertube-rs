@@ -55,6 +55,13 @@ pub struct PlaylistView {
     /// Whether the signed-in user can edit this playlist
     /// (`playlistVideoListRenderer.isEditable`).
     pub is_editable: bool,
+    /// Whether this playlist is a YouTube Mix (radio) playlist (`RD...` IDs).
+    ///
+    /// Mixes auto-generate their queue, so clients should open them on
+    /// `/watch?v=...&list=RD...` instead of the regular `/playlist` page, and
+    /// should not offer playlist edit actions.
+    #[serde(default)]
+    pub is_mix: bool,
 }
 
 impl PlaylistView {

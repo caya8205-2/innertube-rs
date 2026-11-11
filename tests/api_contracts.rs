@@ -435,6 +435,7 @@ fn test_api_contract_15_playlist_and_continuation_contract() {
         }],
         continuation_token: Some("token_playlist_next".to_string()),
         is_editable: true,
+        is_mix: false,
     };
 
     assert!(playlist.has_continuation());

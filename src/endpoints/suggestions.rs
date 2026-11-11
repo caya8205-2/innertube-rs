@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use crate::core::session::Session;
 use crate::error::Result;
-use crate::models::suggestions::SearchSuggestionsResult;
+use crate::models::suggestions::{SearchSuggestion, SearchSuggestionsResult};
 
 /// Fetch search autocomplete suggestions for YouTube or YouTube Music with optional previous_query.
 pub async fn get_search_suggestions_with_options(
@@ -25,35 +25,35 @@ pub async fn get_search_suggestions_with_options(
         let raw: Value = resp.json().await?;
 
         let mut suggestions = Vec::new();
-        if let Some(contents) = raw.get("contents").and_then(|c| c.as_array()) {
+        let mut items = Vec::new();
+
+        if let Some(contents) = raw.pointer("/contents").and_then(|c| c.as_array()) {
             for sec in contents {
-                if let Some(sug_sec) = sec.get("searchSuggestionsSectionRenderer") {
-                    if let Some(items) = sug_sec.get("contents").and_then(|i| i.as_array()) {
-                        for item in items {
-                            if let Some(ssr) = item.get("searchSuggestionRenderer") {
-                                if let Some(runs) =
-                                    ssr.pointer("/suggestion/runs").and_then(|r| r.as_array())
-                                {
-                                    let full_text: String = runs
-                                        .iter()
-                                        .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
-                                        .collect();
-                                    if !full_text.is_empty() {
-                                        suggestions.push(full_text);
-                                    }
-                                }
-                            } else if let Some(history) = item.get("historySuggestionRenderer") {
-                                if let Some(runs) =
-                                    history.pointer("/suggestion/runs").and_then(|r| r.as_array())
-                                {
-                                    let full_text: String = runs
-                                        .iter()
-                                        .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
-                                        .collect();
-                                    if !full_text.is_empty() {
-                                        suggestions.push(full_text);
-                                    }
-                                }
+                if let Some(item_arr) = sec.pointer("/searchSuggestionsSectionRenderer/contents").and_then(|i| i.as_array()) {
+                    for item in item_arr {
+                        let is_history = item.pointer("/historySuggestionRenderer").is_some();
+                        let runs = item.pointer("/searchSuggestionRenderer/suggestion/runs")
+                            .or_else(|| item.pointer("/historySuggestionRenderer/suggestion/runs"))
+                            .and_then(|r| r.as_array());
+
+                        if let Some(runs) = runs {
+                            let full_text: String = runs
+                                .iter()
+                                .filter_map(|r| r.pointer("/text").and_then(|t| t.as_str()))
+                                .collect();
+
+                            if !full_text.is_empty() {
+                                suggestions.push(full_text.clone());
+                                items.push(SearchSuggestion {
+                                    text: full_text,
+                                    subtitle: None,
+                                    thumbnail: None,
+                                    channel_id: None,
+                                    canonical_name: None,
+                                    entity_id: None,
+                                    info_url: None,
+                                    is_history,
+                                });
                             }
                         }
                     }
@@ -65,6 +65,7 @@ pub async fn get_search_suggestions_with_options(
             query: query.to_string(),
             is_music: true,
             suggestions,
+            items,
         })
     } else {
         // Standard YouTube suggestions
@@ -103,12 +104,14 @@ pub async fn get_search_suggestions_with_options(
             .await?;
 
         let body_text: String = resp.text().await?;
-        let suggestions = parse_suggestions_payload(&body_text);
+        let items = parse_search_suggestions(&body_text);
+        let suggestions = items.iter().map(|it| it.text.clone()).collect();
 
         Ok(SearchSuggestionsResult {
             query: query.to_string(),
             is_music: false,
             suggestions,
+            items,
         })
     }
 }
@@ -122,41 +125,8 @@ pub async fn get_search_suggestions(
     get_search_suggestions_with_options(session, query, None, is_music).await
 }
 
-/// Parse Google suggestqueries response format: `["query", [["sug1", 0], ["sug2", 0]]]`.
-pub fn parse_suggestions_payload(raw_text: &str) -> Vec<String> {
-    let mut results = Vec::new();
-
-    // Sometimes responses have jsonp wrappers like `window.google.ac.h(...)`
-    let json_str = if let Some(start) = raw_text.find('(') {
-        if let Some(end) = raw_text.rfind(')') {
-            &raw_text[start + 1..end]
-        } else {
-            raw_text
-        }
-    } else {
-        raw_text
-    };
-
-    if let Ok(val) = serde_json::from_str::<Value>(json_str) {
-        if let Some(arr) = val.as_array() {
-            if arr.len() >= 2 {
-                if let Some(sug_list) = arr[1].as_array() {
-                    for sug in sug_list {
-                        if let Some(inner_arr) = sug.as_array() {
-                            if let Some(text) = inner_arr.first().and_then(|t| t.as_str()) {
-                                results.push(text.to_string());
-                            }
-                        } else if let Some(text) = sug.as_str() {
-                            results.push(text.to_string());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    results
-}
+// Re-export suggestion parsers from AST parser module
+pub use crate::parser::nodes::suggestions::{parse_search_suggestions, parse_suggestions_payload};
 
 #[cfg(test)]
 mod tests {
@@ -179,5 +149,26 @@ mod tests {
         assert_eq!(suggestions.len(), 2);
         assert_eq!(suggestions[0], "alan walker faded");
         assert_eq!(suggestions[1], "alan walker alone");
+    }
+
+    #[test]
+    fn test_parse_suggestions_rich_metadata() {
+        let sample = r#"window.google.ac.h(["mrbeast",[["mrbeast",0,[512,433,790,39],{"zae":"/g/11ffmnm29k","zaf":"@MrBeast","zai":"//yt3.googleusercontent.com/test.jpg","zao":"MrBeast","zav":"UCX6OQ3DkcsbYNE6H8uQQuVA","zaq":"https://en.wikipedia.org/wiki/MrBeast"}],["mrbeast gaming",0,[512,433]]]])"#;
+        let items = parse_search_suggestions(sample);
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].text, "mrbeast");
+        assert_eq!(items[0].subtitle.as_deref(), Some("@MrBeast"));
+        assert_eq!(items[0].thumbnail.as_deref(), Some("https://yt3.googleusercontent.com/test.jpg"));
+        assert_eq!(items[0].channel_id.as_deref(), Some("UCX6OQ3DkcsbYNE6H8uQQuVA"));
+        assert_eq!(items[0].canonical_name.as_deref(), Some("MrBeast"));
+        assert_eq!(items[0].entity_id.as_deref(), Some("/g/11ffmnm29k"));
+        assert_eq!(items[0].info_url.as_deref(), Some("https://en.wikipedia.org/wiki/MrBeast"));
+        assert!(items[0].is_history);
+
+        assert_eq!(items[1].text, "mrbeast gaming");
+        assert_eq!(items[1].subtitle, None);
+        assert_eq!(items[1].thumbnail, None);
+        assert_eq!(items[1].channel_id, None);
+        assert!(!items[1].is_history);
     }
 }

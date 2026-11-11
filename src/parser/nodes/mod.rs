@@ -12,6 +12,7 @@ pub mod music_extended;
 pub mod playlist;
 pub mod post;
 pub mod short;
+pub mod suggestions;
 pub mod video;
 
 use crate::parser::registry::YTNodeVariant;
@@ -283,11 +284,13 @@ pub use music_extended::{
     MusicShelfNode, MusicSideAlignedItemNode, MusicVisualHeaderNode,
 };
 pub use playlist::{
-    PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode, PlaylistPanelVideoNode,
-    PlaylistSidebarPrimaryInfoNode, PlaylistSidebarSecondaryInfoNode, PlaylistVideoNode,
+    is_mix_playlist_id, PlaylistMetadataNode, PlaylistNode, PlaylistPanelNode,
+    PlaylistPanelVideoNode, PlaylistSidebarPrimaryInfoNode, PlaylistSidebarSecondaryInfoNode,
+    PlaylistVideoNode,
 };
 pub use post::{BackstageImageNode, PostMultiImageNode, PostNode};
 pub use short::{ReelShelfNode, ShortNode};
+pub use suggestions::{parse_search_suggestions, parse_suggestions_payload};
 pub use video::{VideoNode, VideoPrimaryInfoNode, VideoSecondaryInfoNode};
 
 use serde::{Deserialize, Serialize};

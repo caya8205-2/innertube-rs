@@ -32,6 +32,9 @@ pub struct SearchPlaylistItem {
     pub author: String,
     pub video_count: Option<String>,
     pub thumbnails: Vec<Thumbnail>,
+    /// Whether this playlist card is a YouTube Mix (radio) playlist.
+    #[serde(default)]
+    pub is_mix: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
