@@ -156,7 +156,9 @@ pub use models::music::{
     MusicPlaylistPage, MusicPlaylistView, MusicSearchFilter, MusicSearchResults, MusicShelf,
     MusicTrackItem, MusicWatchPage,
 };
-pub use models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
+pub use models::next::{
+    AutoplayVideo, PlaylistPanelItem, RelatedVideo, VideoChapter, WatchNextResults,
+};
 pub use models::oauth::{DeviceAndUserCode, OAuth2ClientID, OAuth2Tokens};
 pub use models::playlist::{PlaylistContinuation, PlaylistVideoItem, PlaylistView};
 pub use models::post::{
