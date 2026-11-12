@@ -1,11 +1,14 @@
 use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use crate::core::session::Session;
 use crate::error::{InnertubeError, Result};
-use crate::models::next::{AutoplayVideo, PlaylistPanelItem, RelatedVideo, WatchNextResults};
+use crate::models::next::{
+    AutoplayVideo, PlaylistPanelItem, RelatedVideo, VideoChapter, WatchNextResults,
+};
 use crate::models::video::Thumbnail;
 use crate::parser::nodes::misc::text::TextNode;
 use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
-use crate::parser::{NodeListExt, Parser};
+use crate::parser::{NodeListExt, Parser, YTNode};
 
 /// Fetch Watch Next results (/next endpoint) including related videos, autoplay recommendations, and playlist items.
 pub async fn get_watch_next(
@@ -48,6 +51,9 @@ pub fn parse_watch_next_response(video_id: &str, raw: &Value) -> Result<WatchNex
     // Transcript engagement panel continuation (legacy MediaInfo.getTranscript).
     results.transcript_continuation_token = extract_transcript_continuation(raw);
 
+    // Chapters / key moments (player overlay markers + description macro markers).
+    results.chapters = extract_chapters(raw);
+
     let contents = match raw.get("contents") {
         Some(c) => c,
         None => return Ok(results),
@@ -88,6 +94,7 @@ pub fn parse_watch_next_response(video_id: &str, raw: &Value) -> Result<WatchNex
                     published_time_text: v.published_time.clone(),
                     is_live: v.is_live,
                     is_upcoming: v.is_upcoming,
+                    progress_percent: v.progress_percent,
                 });
             }
             results.continuation_token = parsed_tree.find_continuation_token();
@@ -200,6 +207,113 @@ fn extract_transcript_continuation(raw: &Value) -> Option<String> {
     walk(raw)
 }
 
+/// Extracts chapters / key moments from a `/next` response.
+///
+/// YouTube exposes them in two places:
+/// - `multiMarkersPlayerBarRenderer.markersMap[].value.chapters[]`
+///   (`chapterRenderer`, creator-defined chapters)
+/// - `macroMarkersListItemRenderer` items in the description chapters
+///   engagement panel (auto-generated "key moments")
+fn extract_chapters(raw: &Value) -> Vec<VideoChapter> {
+    if raw.get("playerOverlays").is_none() && raw.get("engagementPanels").is_none() {
+        return Vec::new();
+    }
+
+    let parsed_tree = Parser::parse_tree(raw);
+    let mut by_start: BTreeMap<u64, VideoChapter> = BTreeMap::new();
+
+    for node in &parsed_tree {
+        match node {
+            YTNode::Chapter(chapter) => {
+                if chapter.title.trim().is_empty() {
+                    continue;
+                }
+                merge_chapter(
+                    &mut by_start,
+                    VideoChapter {
+                        title: chapter.title.clone(),
+                        start_ms: chapter.time_range_start_millis,
+                        thumbnail: chapter.thumbnails.best_url().map(str::to_string),
+                    },
+                );
+            }
+            YTNode::MacroMarkersListItem(item) => {
+                if item.title.trim().is_empty() {
+                    continue;
+                }
+                let Some(start_ms) = item.time_description.as_deref().and_then(parse_timestamp_ms)
+                else {
+                    continue;
+                };
+                merge_chapter(
+                    &mut by_start,
+                    VideoChapter {
+                        title: item.title.clone(),
+                        start_ms,
+                        thumbnail: item.thumbnails.best_url().map(str::to_string),
+                    },
+                );
+            }
+            _ => {}
+        }
+    }
+
+    let chapters: Vec<VideoChapter> = by_start.into_values().collect();
+    merge_near_duplicate_chapters(chapters)
+}
+
+/// Merges the same chapter reported by both marker sources when their start
+/// times differ by a few hundred milliseconds (auto key-moments are rounded).
+fn merge_near_duplicate_chapters(chapters: Vec<VideoChapter>) -> Vec<VideoChapter> {
+    let mut merged: Vec<VideoChapter> = Vec::with_capacity(chapters.len());
+
+    for chapter in chapters {
+        let duplicate = merged.last_mut().filter(|previous| {
+            previous.title.trim().eq_ignore_ascii_case(chapter.title.trim())
+                && chapter.start_ms.saturating_sub(previous.start_ms) <= 2_000
+        });
+
+        match duplicate {
+            Some(previous) => {
+                if previous.thumbnail.is_none() && chapter.thumbnail.is_some() {
+                    previous.thumbnail = chapter.thumbnail;
+                }
+            }
+            None => merged.push(chapter),
+        }
+    }
+
+    merged
+}
+
+/// Keeps one chapter per start time, preferring a variant with a thumbnail.
+fn merge_chapter(map: &mut BTreeMap<u64, VideoChapter>, candidate: VideoChapter) {
+    match map.get(&candidate.start_ms) {
+        Some(existing) if existing.thumbnail.is_some() || candidate.thumbnail.is_none() => {}
+        _ => {
+            map.insert(candidate.start_ms, candidate);
+        }
+    }
+}
+
+/// Parses `m:ss` / `h:mm:ss` chapter timestamps into milliseconds.
+fn parse_timestamp_ms(text: &str) -> Option<u64> {
+    let text = text.trim();
+    if text.is_empty() {
+        return None;
+    }
+
+    let mut seconds: u64 = 0;
+    let mut parts = 0;
+    for part in text.split(':') {
+        let value: u64 = part.trim().parse().ok()?;
+        seconds = seconds.checked_mul(60)?.checked_add(value)?;
+        parts += 1;
+    }
+
+    (parts > 0).then(|| seconds.checked_mul(1000)).flatten()
+}
+
 fn parse_playlist_panel_video_renderer(pvr: &Value) -> Option<PlaylistPanelItem> {
     let video_id = pvr.get("videoId").and_then(Value::as_str)?.to_string();
     let title = TextNode::from_value(pvr.get("title").unwrap_or(&Value::Null)).map(|t| t.text).unwrap_or_default();
@@ -262,4 +376,138 @@ fn extract_comments_continuation_token(raw: &Value) -> Option<String> {
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn parses_chapters_from_markers_and_macro_markers() {
+        let raw = json!({
+            "playerOverlays": {
+                "playerOverlayRenderer": {
+                    "decoratedPlayerBarRenderer": {
+                        "decoratedPlayerBarRenderer": {
+                            "playerBar": {
+                                "multiMarkersPlayerBarRenderer": {
+                                    "markersMap": [{
+                                        "key": "DESCRIPTION_CHAPTERS",
+                                        "value": {
+                                            "chapters": [
+                                                {
+                                                    "chapterRenderer": {
+                                                        "title": { "simpleText": "Vectors" },
+                                                        "timeRangeStartMillis": 336000,
+                                                        "thumbnail": {
+                                                            "thumbnails": [{
+                                                                "url": "https://img.example/vectors.jpg",
+                                                                "width": 100,
+                                                                "height": 100
+                                                            }]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "chapterRenderer": {
+                                                        "title": { "simpleText": "String" },
+                                                        "timeRangeStartMillis": 794000
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "engagementPanels": [{
+                "engagementPanelSectionListRenderer": {
+                    "panelIdentifier": "engagement-panel-macro-markers-description-chapters",
+                    "content": {
+                        "macroMarkersListRenderer": {
+                            "contents": [
+                                {
+                                    "macroMarkersListItemRenderer": {
+                                        "title": { "simpleText": "Vectors" },
+                                        "timeDescription": { "simpleText": "5:36" },
+                                        "thumbnail": {
+                                            "thumbnails": [{
+                                                "url": "https://img.example/vectors-macro.jpg",
+                                                "width": 100,
+                                                "height": 100
+                                            }]
+                                        }
+                                    }
+                                },
+                                {
+                                    "macroMarkersListItemRenderer": {
+                                        "title": { "simpleText": "Hash Maps" },
+                                        "timeDescription": { "simpleText": "18:25" }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }]
+        });
+
+        let results = parse_watch_next_response("vid123", &raw).expect("parse");
+        assert_eq!(results.chapters.len(), 3, "duplicate start time must be merged");
+        assert_eq!(results.chapters[0].title, "Vectors");
+        assert_eq!(results.chapters[0].start_ms, 336_000);
+        assert_eq!(results.chapters[1].title, "String");
+        assert_eq!(results.chapters[1].start_ms, 794_000);
+        assert_eq!(results.chapters[2].title, "Hash Maps");
+        assert_eq!(results.chapters[2].start_ms, 1_105_000);
+    }
+
+    #[test]
+    fn parses_chapter_timestamps() {
+        assert_eq!(parse_timestamp_ms("0:00"), Some(0));
+        assert_eq!(parse_timestamp_ms("5:36"), Some(336_000));
+        assert_eq!(parse_timestamp_ms("1:02:03"), Some(3_723_000));
+        assert_eq!(parse_timestamp_ms("n/a"), None);
+        assert_eq!(parse_timestamp_ms(""), None);
+    }
+
+    #[test]
+    fn merges_duplicate_chapters_reported_by_both_sources() {
+        let merged = merge_near_duplicate_chapters(vec![
+            VideoChapter {
+                title: "Linearity properties".to_string(),
+                start_ms: 150_000,
+                thumbnail: None,
+            },
+            VideoChapter {
+                title: "Linearity properties".to_string(),
+                start_ms: 150_440,
+                thumbnail: Some("https://img.example/linearity.jpg".to_string()),
+            },
+            VideoChapter {
+                title: "Basis vectors".to_string(),
+                start_ms: 212_000,
+                thumbnail: None,
+            },
+        ]);
+
+        assert_eq!(merged.len(), 2);
+        assert_eq!(merged[0].start_ms, 150_000);
+        assert_eq!(
+            merged[0].thumbnail.as_deref(),
+            Some("https://img.example/linearity.jpg")
+        );
+        assert_eq!(merged[1].title, "Basis vectors");
+    }
+
+    #[test]
+    fn chapters_are_empty_without_overlays_or_panels() {
+        let raw = json!({ "contents": {} });
+        let results = parse_watch_next_response("vid123", &raw).expect("parse");
+        assert!(results.chapters.is_empty());
+    }
 }

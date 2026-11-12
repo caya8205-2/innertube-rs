@@ -3,6 +3,7 @@ use serde_json::Value;
 
 use super::misc::text::TextNode;
 use super::misc::thumbnail::ThumbnailListNode;
+use super::video::extract_progress_percent;
 
 /// Strongly typed GridVideo AST node (`gridVideoRenderer`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -24,6 +25,9 @@ pub struct GridVideoNode {
     pub upcoming: Option<Value>,
     pub upcoming_text: Option<String>,
     pub is_reminder_set: bool,
+    /// Watch progress reported by YouTube as a percentage (`0`–`100`).
+    #[serde(default)]
+    pub progress_percent: Option<u32>,
 }
 
 impl GridVideoNode {
@@ -65,6 +69,7 @@ impl GridVideoNode {
             upcoming: node.get("upcomingEventData").and_then(|d| d.get("startTime")).cloned(),
             upcoming_text: node.get("upcomingEventData").and_then(|d| d.get("upcomingEventText")).and_then(TextNode::from_value).map(|t| t.text),
             is_reminder_set,
+            progress_percent: extract_progress_percent(node),
         })
     }
 }
@@ -265,6 +270,9 @@ pub struct CompactVideoNode {
     pub service_endpoints: Option<Vec<Value>>,
     pub service_endpoint: Option<Value>,
     pub style: Option<String>,
+    /// Watch progress reported by YouTube as a percentage (`0`–`100`).
+    #[serde(default)]
+    pub progress_percent: Option<u32>,
 }
 
 impl CompactVideoNode {
@@ -290,6 +298,7 @@ impl CompactVideoNode {
             service_endpoints: node.get("serviceEndpoints").and_then(|v| v.as_array()).cloned(),
             service_endpoint: node.get("serviceEndpoint").cloned(),
             style: node.get("style").and_then(|v| v.as_str()).map(String::from),
+            progress_percent: extract_progress_percent(node),
         })
     }
 }

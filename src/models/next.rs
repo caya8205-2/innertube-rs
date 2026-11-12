@@ -16,6 +16,9 @@ pub struct RelatedVideo {
     pub published_time_text: Option<String>,
     pub is_live: bool,
     pub is_upcoming: bool,
+    /// Watch progress reported by YouTube as a percentage (`0`–`100`).
+    #[serde(default)]
+    pub progress_percent: Option<u32>,
 }
 
 /// An upcoming autoplay video recommendation.
@@ -40,6 +43,17 @@ pub struct PlaylistPanelItem {
     pub thumbnails: Vec<Thumbnail>,
 }
 
+/// A chapter / key moment reported by YouTube for the current video.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoChapter {
+    pub title: String,
+    /// Chapter start time in milliseconds.
+    pub start_ms: u64,
+    /// Best available chapter thumbnail URL.
+    pub thumbnail: Option<String>,
+}
+
 /// Consolidated Watch Next results from the `/next` endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -50,6 +64,9 @@ pub struct WatchNextResults {
     pub autoplay: Option<AutoplayVideo>,
     pub related_videos: Vec<RelatedVideo>,
     pub playlist_items: Vec<PlaylistPanelItem>,
+    /// Chapters / key moments of the current video, sorted by start time.
+    #[serde(default)]
+    pub chapters: Vec<VideoChapter>,
     pub continuation_token: Option<String>,
     /// Continuation token of the searchable-transcript engagement panel
     /// (legacy `MediaInfo.getTranscript` path).

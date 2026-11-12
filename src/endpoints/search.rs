@@ -58,6 +58,7 @@ pub async fn search_with_filters(
                         width: t.width.unwrap_or(0),
                         height: t.height.unwrap_or(0),
                     }).collect(),
+                    progress_percent: v.progress_percent,
                 }));
             }
             YTNode::ChannelCard(c) => {

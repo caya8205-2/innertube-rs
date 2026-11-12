@@ -23,6 +23,13 @@ pub struct VideoNode {
     pub is_live: bool,
     pub is_upcoming: bool,
     pub badges: Vec<String>,
+    /// Watch progress reported by YouTube as a percentage (`0`–`100`).
+    ///
+    /// Present on cards that show the red resume bar (home "continue
+    /// watching", history, library, search, …). `None` when YouTube does not
+    /// report progress for the item.
+    #[serde(default)]
+    pub progress_percent: Option<u32>,
 }
 
 impl VideoNode {
@@ -152,6 +159,8 @@ impl VideoNode {
                 .iter()
                 .any(|b| b.eq_ignore_ascii_case("PREMIERE") || b.eq_ignore_ascii_case("UPCOMING"));
 
+        let progress_percent = extract_progress_percent(target);
+
         Some(Self {
             id,
             title,
@@ -166,6 +175,7 @@ impl VideoNode {
             is_live,
             is_upcoming,
             badges,
+            progress_percent,
         })
     }
 }
@@ -451,6 +461,8 @@ fn parse_lockup_view_model(lvm: &Value) -> Option<VideoNode> {
         .pointer("/rendererContext/commandContext/onTap")
         .and_then(NavigationEndpointNode::from_value);
 
+    let progress_percent = extract_progress_percent(lvm);
+
     Some(VideoNode {
         id,
         title,
@@ -465,7 +477,45 @@ fn parse_lockup_view_model(lvm: &Value) -> Option<VideoNode> {
         is_live,
         is_upcoming: false,
         badges: Vec::new(),
+        progress_percent,
     })
+}
+
+/// Extracts the watch-progress percentage (`0`–`100`) from a video or lockup node.
+///
+/// YouTube reports progress in a few different shapes depending on the surface:
+/// - `thumbnailOverlayResumePlaybackRenderer.percentDurationWatched` (legacy
+///   `videoRenderer` cards, e.g. search results)
+/// - `thumbnailBottomOverlayViewModel.progressBar.thumbnailOverlayProgressBarViewModel.startPercent`
+///   (modern `lockupViewModel` cards: home "continue watching", history, library)
+pub(crate) fn extract_progress_percent(target: &Value) -> Option<u32> {
+    const OVERLAY_PATHS: [&str; 3] = [
+        "/thumbnailOverlays",
+        "/contentImage/thumbnailViewModel/overlays",
+        "/contentImage/collectionThumbnailViewModel/primaryThumbnail/thumbnailViewModel/overlays",
+    ];
+
+    OVERLAY_PATHS
+        .iter()
+        .filter_map(|path| target.pointer(path))
+        .filter_map(Value::as_array)
+        .flatten()
+        .find_map(|overlay| {
+            overlay
+                .pointer("/thumbnailOverlayResumePlaybackRenderer/percentDurationWatched")
+                .or_else(|| {
+                    overlay.pointer("/thumbnailOverlayProgressBarRenderer/percentDurationWatched")
+                })
+                .or_else(|| {
+                    overlay.pointer(
+                        "/thumbnailBottomOverlayViewModel/progressBar/thumbnailOverlayProgressBarViewModel/startPercent",
+                    )
+                })
+                .or_else(|| overlay.pointer("/thumbnailOverlayProgressBarView/startPercent"))
+                .or_else(|| overlay.pointer("/thumbnailOverlayProgressBarViewModel/startPercent"))
+                .and_then(Value::as_f64)
+                .map(|percent| percent.round().clamp(0.0, 100.0) as u32)
+        })
 }
 
 fn parse_duration_string_to_ms(d: &str) -> Option<u64> {
@@ -585,5 +635,84 @@ impl VideoSecondaryInfoNode {
             subscriber_count,
             description,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn lockup_progress_percent_is_extracted() {
+        let val = json!({
+            "lockupViewModel": {
+                "contentId": "vid123",
+                "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                "metadata": {
+                    "lockupMetadataViewModel": {
+                        "title": { "content": "Continue watching" }
+                    }
+                },
+                "contentImage": {
+                    "thumbnailViewModel": {
+                        "overlays": [{
+                            "thumbnailBottomOverlayViewModel": {
+                                "progressBar": {
+                                    "thumbnailOverlayProgressBarViewModel": {
+                                        "startPercent": 42
+                                    }
+                                }
+                            }
+                        }]
+                    }
+                }
+            }
+        });
+
+        let node = VideoNode::from_value(&val).expect("lockup video should parse");
+        assert_eq!(node.progress_percent, Some(42));
+    }
+
+    #[test]
+    fn legacy_resume_overlay_progress_percent_is_extracted() {
+        let val = json!({
+            "videoRenderer": {
+                "videoId": "vid123",
+                "title": { "simpleText": "Search result" },
+                "thumbnailOverlays": [{
+                    "thumbnailOverlayResumePlaybackRenderer": {
+                        "percentDurationWatched": 7
+                    }
+                }]
+            }
+        });
+
+        let node = VideoNode::from_value(&val).expect("videoRenderer should parse");
+        assert_eq!(node.progress_percent, Some(7));
+    }
+
+    #[test]
+    fn progress_percent_is_clamped_and_absent_by_default() {
+        let clamped = json!({
+            "videoRenderer": {
+                "videoId": "vid123",
+                "title": { "simpleText": "Over 100" },
+                "thumbnailOverlays": [{
+                    "thumbnailOverlayProgressBarView": { "startPercent": 150 }
+                }]
+            }
+        });
+        let node = VideoNode::from_value(&clamped).expect("videoRenderer should parse");
+        assert_eq!(node.progress_percent, Some(100));
+
+        let plain = json!({
+            "videoRenderer": {
+                "videoId": "vid123",
+                "title": { "simpleText": "No progress" }
+            }
+        });
+        let node = VideoNode::from_value(&plain).expect("videoRenderer should parse");
+        assert_eq!(node.progress_percent, None);
     }
 }

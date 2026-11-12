@@ -76,6 +76,33 @@ fn parse_library_sections(raw: &Value) -> Vec<crate::models::account::LibrarySec
     let mut sections = Vec::new();
 
     fn walk(v: &Value, out: &mut Vec<crate::models::account::LibrarySection>) {
+        // Modern library layout: richSectionRenderer.content.richShelfRenderer
+        // (history / watch later / liked videos / playlists).
+        if let Some(shelf) = v.get("richShelfRenderer") {
+            let title = TextNode::from_value(shelf.get("title").unwrap_or(&Value::Null))
+                .map(|t| t.text)
+                .unwrap_or_default();
+            let icon_type = shelf
+                .pointer("/icon/iconType")
+                .and_then(Value::as_str)
+                .map(ToString::to_string);
+            let items = shelf
+                .get("contents")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+
+            let videos = shelf_videos(&items);
+            if !videos.is_empty() {
+                out.push(crate::models::account::LibrarySection {
+                    title,
+                    icon_type,
+                    videos,
+                });
+            }
+            return;
+        }
+
         if let Some(shelf) = v.get("shelfRenderer") {
             let title = TextNode::from_value(shelf.get("title").unwrap_or(&Value::Null))
                 .map(|t| t.text)
@@ -91,13 +118,7 @@ fn parse_library_sections(raw: &Value) -> Vec<crate::models::account::LibrarySec
                 .cloned()
                 .unwrap_or_default();
 
-            let mut videos = Vec::new();
-            for item in &items {
-                if let Some(video) = crate::parser::nodes::video::VideoNode::from_value(item) {
-                    videos.push(video);
-                }
-            }
-
+            let videos = shelf_videos(&items);
             out.push(crate::models::account::LibrarySection {
                 title,
                 icon_type,
@@ -114,6 +135,28 @@ fn parse_library_sections(raw: &Value) -> Vec<crate::models::account::LibrarySec
 
     walk(raw, &mut sections);
     sections
+}
+
+/// Parse video items from a library shelf, skipping playlist lockups.
+fn shelf_videos(items: &[Value]) -> Vec<VideoNode> {
+    let mut videos = Vec::new();
+    for item in items {
+        let content = item.pointer("/richItemRenderer/content").unwrap_or(item);
+        if let Some(lockup) = content.get("lockupViewModel") {
+            let is_video = lockup
+                .get("contentType")
+                .and_then(Value::as_str)
+                .map(|kind| kind.contains("VIDEO"))
+                .unwrap_or(true);
+            if !is_video {
+                continue;
+            }
+        }
+        if let Some(video) = VideoNode::from_value(item) {
+            videos.push(video);
+        }
+    }
+    videos
 }
 
 /// Fetch account notifications (`POST /notification/get_notification_menu`).
@@ -209,5 +252,84 @@ mod tests {
 
         assert_eq!(parse_unseen_notifications_count(&action_response), 7);
         assert_eq!(parse_unseen_notifications_count(&json!({})), 0);
+    }
+
+    #[test]
+    fn parses_modern_rich_shelf_videos_with_progress() {
+        let raw = json!({
+            "contents": {
+                "twoColumnBrowseResultsRenderer": {
+                    "tabs": [{
+                        "tabRenderer": {
+                            "content": {
+                                "richGridRenderer": {
+                                    "contents": [{
+                                        "richSectionRenderer": {
+                                            "content": {
+                                                "richShelfRenderer": {
+                                                    "title": { "runs": [{ "text": "History" }] },
+                                                    "contents": [
+                                                        {
+                                                            "richItemRenderer": {
+                                                                "content": {
+                                                                    "lockupViewModel": {
+                                                                        "contentId": "vid123",
+                                                                        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                                                                        "metadata": {
+                                                                            "lockupMetadataViewModel": {
+                                                                                "title": { "content": "Watched video" }
+                                                                            }
+                                                                        },
+                                                                        "contentImage": {
+                                                                            "thumbnailViewModel": {
+                                                                                "overlays": [{
+                                                                                    "thumbnailBottomOverlayViewModel": {
+                                                                                        "progressBar": {
+                                                                                            "thumbnailOverlayProgressBarViewModel": {
+                                                                                                "startPercent": 55
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }]
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        {
+                                                            "richItemRenderer": {
+                                                                "content": {
+                                                                    "lockupViewModel": {
+                                                                        "contentId": "PL123",
+                                                                        "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+                                                                        "metadata": {
+                                                                            "lockupMetadataViewModel": {
+                                                                                "title": { "content": "Playlist card" }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    }]
+                }
+            }
+        });
+
+        let sections = parse_library_sections(&raw);
+        assert_eq!(sections.len(), 1);
+        assert_eq!(sections[0].title, "History");
+        assert_eq!(sections[0].videos.len(), 1, "playlist lockups must be skipped");
+        assert_eq!(sections[0].videos[0].id, "vid123");
+        assert_eq!(sections[0].videos[0].progress_percent, Some(55));
     }
 }
