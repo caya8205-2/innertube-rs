@@ -135,6 +135,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### 4. Fetch Watch Next (Related Videos + Chapters)
+
+```rust
+use innertube_rs::Innertube;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let yt = Innertube::new().await?;
+    let next = yt.get_watch_next("rfscVS0vtbw").await?;
+
+    // Chapters / key moments of the current video, sorted by start time
+    for chapter in &next.chapters {
+        println!("{:>6}ms  {}", chapter.start_ms, chapter.title);
+    }
+
+    // Related recommendations (watch progress is exposed when YouTube reports it)
+    for video in &next.related_videos {
+        println!("{} (progress: {:?})", video.title, video.progress_percent);
+    }
+
+    Ok(())
+}
+```
+
 ---
 
 ## Examples
@@ -153,6 +177,9 @@ cargo run --example get_music_artist
 
 # Download audio stream to file
 cargo run --example download_audio
+
+# Fetch related videos and chapters for a video
+cargo run --example get_watch_next
 ```
 
 ---

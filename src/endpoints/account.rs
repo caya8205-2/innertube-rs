@@ -93,13 +93,11 @@ fn parse_library_sections(raw: &Value) -> Vec<crate::models::account::LibrarySec
                 .unwrap_or_default();
 
             let videos = shelf_videos(&items);
-            if !videos.is_empty() {
-                out.push(crate::models::account::LibrarySection {
-                    title,
-                    icon_type,
-                    videos,
-                });
-            }
+            out.push(crate::models::account::LibrarySection {
+                title,
+                icon_type,
+                videos,
+            });
             return;
         }
 
@@ -331,5 +329,44 @@ mod tests {
         assert_eq!(sections[0].videos.len(), 1, "playlist lockups must be skipped");
         assert_eq!(sections[0].videos[0].id, "vid123");
         assert_eq!(sections[0].videos[0].progress_percent, Some(55));
+    }
+
+    #[test]
+    fn keeps_empty_modern_shelf_like_legacy() {
+        let raw = json!({
+            "contents": {
+                "richGridRenderer": {
+                    "contents": [{
+                        "richSectionRenderer": {
+                            "content": {
+                                "richShelfRenderer": {
+                                    "title": { "runs": [{ "text": "Playlists" }] },
+                                    "contents": [{
+                                        "richItemRenderer": {
+                                            "content": {
+                                                "lockupViewModel": {
+                                                    "contentId": "PL123",
+                                                    "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+                                                    "metadata": {
+                                                        "lockupMetadataViewModel": {
+                                                            "title": { "content": "Playlist card" }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    }]
+                }
+            }
+        });
+
+        let sections = parse_library_sections(&raw);
+        assert_eq!(sections.len(), 1, "empty shelves are retained for parity with legacy");
+        assert_eq!(sections[0].title, "Playlists");
+        assert!(sections[0].videos.is_empty(), "playlist lockups are skipped");
     }
 }

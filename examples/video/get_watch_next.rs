@@ -18,6 +18,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Current Channel     : {}", author);
     }
 
+    if !watch_next.chapters.is_empty() {
+        println!("\nChapters / Key Moments ({} found):", watch_next.chapters.len());
+        for (i, chapter) in watch_next.chapters.iter().enumerate() {
+            let secs = chapter.start_ms / 1000;
+            println!(
+                "  [{:2}] {:02}:{:02}:{:02} - {}",
+                i + 1,
+                secs / 3600,
+                (secs % 3600) / 60,
+                secs % 60,
+                chapter.title
+            );
+        }
+    }
+
     if let Some(autoplay) = &watch_next.autoplay {
         println!("\n▶ Autoplay Next Video:");
         println!("  - Title  : {}", autoplay.title);

@@ -215,46 +215,48 @@ fn extract_transcript_continuation(raw: &Value) -> Option<String> {
 /// - `macroMarkersListItemRenderer` items in the description chapters
 ///   engagement panel (auto-generated "key moments")
 fn extract_chapters(raw: &Value) -> Vec<VideoChapter> {
-    if raw.get("playerOverlays").is_none() && raw.get("engagementPanels").is_none() {
-        return Vec::new();
-    }
-
-    let parsed_tree = Parser::parse_tree(raw);
     let mut by_start: BTreeMap<u64, VideoChapter> = BTreeMap::new();
 
-    for node in &parsed_tree {
-        match node {
-            YTNode::Chapter(chapter) => {
-                if chapter.title.trim().is_empty() {
-                    continue;
+    // Scope parsing to the marker subtrees; the full response is already walked for related videos.
+    for key in ["playerOverlays", "engagementPanels"] {
+        let Some(subtree) = raw.get(key) else {
+            continue;
+        };
+        let parsed = Parser::parse_tree(subtree);
+        for node in &parsed {
+            match node {
+                YTNode::Chapter(chapter) => {
+                    if chapter.title.trim().is_empty() {
+                        continue;
+                    }
+                    merge_chapter(
+                        &mut by_start,
+                        VideoChapter {
+                            title: chapter.title.clone(),
+                            start_ms: chapter.time_range_start_millis,
+                            thumbnail: chapter.thumbnails.best_url().map(str::to_string),
+                        },
+                    );
                 }
-                merge_chapter(
-                    &mut by_start,
-                    VideoChapter {
-                        title: chapter.title.clone(),
-                        start_ms: chapter.time_range_start_millis,
-                        thumbnail: chapter.thumbnails.best_url().map(str::to_string),
-                    },
-                );
-            }
-            YTNode::MacroMarkersListItem(item) => {
-                if item.title.trim().is_empty() {
-                    continue;
+                YTNode::MacroMarkersListItem(item) => {
+                    if item.title.trim().is_empty() {
+                        continue;
+                    }
+                    let Some(start_ms) = item.time_description.as_deref().and_then(parse_timestamp_ms)
+                    else {
+                        continue;
+                    };
+                    merge_chapter(
+                        &mut by_start,
+                        VideoChapter {
+                            title: item.title.clone(),
+                            start_ms,
+                            thumbnail: item.thumbnails.best_url().map(str::to_string),
+                        },
+                    );
                 }
-                let Some(start_ms) = item.time_description.as_deref().and_then(parse_timestamp_ms)
-                else {
-                    continue;
-                };
-                merge_chapter(
-                    &mut by_start,
-                    VideoChapter {
-                        title: item.title.clone(),
-                        start_ms,
-                        thumbnail: item.thumbnails.best_url().map(str::to_string),
-                    },
-                );
+                _ => {}
             }
-            _ => {}
         }
     }
 
