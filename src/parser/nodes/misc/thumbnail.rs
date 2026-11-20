@@ -63,6 +63,17 @@ impl ThumbnailListNode {
         self.thumbnails.first().map(|t| t.url.as_str())
     }
 
+    /// URL of the thumbnail with the largest reported width.
+    ///
+    /// YouTube does not guarantee thumbnail list order, so use this when the
+    /// payload may be sorted either way (e.g. channel avatars).
+    pub fn largest_url(&self) -> Option<&str> {
+        self.thumbnails
+            .iter()
+            .max_by_key(|t| t.width.unwrap_or(0))
+            .map(|t| t.url.as_str())
+    }
+
     pub fn first_url(&self) -> Option<&str> {
         self.thumbnails.last().map(|t| t.url.as_str())
     }
@@ -90,6 +101,7 @@ mod tests {
         let list = ThumbnailListNode::from_value(&val);
         assert_eq!(list.thumbnails.len(), 3);
         assert_eq!(list.best_url(), Some("https://thumb_large.jpg"));
+        assert_eq!(list.largest_url(), Some("https://thumb_large.jpg"));
         assert_eq!(list.first_url(), Some("https://thumb_small.jpg"));
     }
 }

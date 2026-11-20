@@ -427,9 +427,13 @@ impl Innertube {
 
     /// Fetch complete parsed video metadata, player response, and Watch Next results concurrently.
     ///
-    /// Matches YouTube.js `Innertube.getInfo(video_id, options)` 1:1 by issuing parallel requests
-    /// to `/player` and `/next`.
-    pub async fn get_info(
+    /// This is the "everything" call: it issues `/player` and `/next` in
+    /// parallel. Prefer [`Innertube::get_basic_info`] when Watch Next data is
+    /// not needed.
+    ///
+    /// The YouTube.js `Innertube.getInfo(video_id, options)` name is preserved
+    /// by the [`Innertube::get_info`] alias.
+    pub async fn get_full_info(
         &self,
         video_id: &str,
         options: Option<&GetVideoInfoOptions>,
@@ -450,6 +454,16 @@ impl Innertube {
             cpn,
             po_token: self.session.po_token.clone(),
         })
+    }
+
+    /// YouTube.js `Innertube.getInfo` parity alias for
+    /// [`Innertube::get_full_info`].
+    pub async fn get_info(
+        &self,
+        video_id: &str,
+        options: Option<&GetVideoInfoOptions>,
+    ) -> Result<VideoInfo> {
+        self.get_full_info(video_id, options).await
     }
 
     /// Fetch player-only metadata and streaming formats for a video ID with options.

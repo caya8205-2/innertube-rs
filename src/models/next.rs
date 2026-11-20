@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::video::Thumbnail;
+use serde::{Deserialize, Serialize};
 
 /// A video recommendation or related video item from the `/next` endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -9,6 +9,7 @@ pub struct RelatedVideo {
     pub title: String,
     pub author: String,
     pub author_id: Option<String>,
+    pub author_avatar: Option<String>,
     pub duration_text: Option<String>,
     pub duration_seconds: Option<u64>,
     pub thumbnails: Vec<Thumbnail>,
@@ -61,6 +62,8 @@ pub struct WatchNextResults {
     pub current_video_id: String,
     pub current_title: Option<String>,
     pub current_author: Option<String>,
+    pub current_author_id: Option<String>,
+    pub current_author_avatar: Option<String>,
     pub autoplay: Option<AutoplayVideo>,
     pub related_videos: Vec<RelatedVideo>,
     pub playlist_items: Vec<PlaylistPanelItem>,

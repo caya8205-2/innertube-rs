@@ -8,6 +8,7 @@ use crate::models::next::{
 use crate::models::video::Thumbnail;
 use crate::parser::nodes::misc::text::TextNode;
 use crate::parser::nodes::misc::thumbnail::ThumbnailListNode;
+use crate::parser::nodes::video::{VideoPrimaryInfoNode, VideoSecondaryInfoNode};
 use crate::parser::{NodeListExt, Parser, YTNode};
 
 /// Fetch Watch Next results (/next endpoint) including related videos, autoplay recommendations, and playlist items.
@@ -61,12 +62,36 @@ pub fn parse_watch_next_response(video_id: &str, raw: &Value) -> Result<WatchNex
 
     // 1. Two Column Layout (Standard Desktop)
     if let Some(two_col) = contents.get("twoColumnWatchNextResults") {
-        // Extract current video metadata if available
-        if let Some(primary_info) = two_col.pointer("/results/results/contents/0/videoPrimaryInfoRenderer") {
-            results.current_title = TextNode::from_value(primary_info.get("title").unwrap_or(&Value::Null)).map(|t| t.text);
+        // The result list is not fixed-order: shelves such as
+        // `ticketShelfRenderer` can be inserted before the primary/secondary
+        // renderers, so find them by key instead of by index. The renderer
+        // payloads themselves are parsed by the AST nodes.
+        let result_items = two_col
+            .pointer("/results/results/contents")
+            .and_then(|c| c.as_array());
+
+        if let Some(primary) = result_items
+            .and_then(|items| {
+                items
+                    .iter()
+                    .find(|item| item.get("videoPrimaryInfoRenderer").is_some())
+            })
+            .and_then(VideoPrimaryInfoNode::from_value)
+        {
+            results.current_title = Some(primary.title);
         }
-        if let Some(owner) = two_col.pointer("/results/results/contents/1/videoSecondaryInfoRenderer/owner/videoOwnerRenderer") {
-            results.current_author = TextNode::from_value(owner.get("title").unwrap_or(&Value::Null)).map(|t| t.text);
+
+        if let Some(secondary) = result_items
+            .and_then(|items| {
+                items
+                    .iter()
+                    .find(|item| item.get("videoSecondaryInfoRenderer").is_some())
+            })
+            .and_then(VideoSecondaryInfoNode::from_value)
+        {
+            results.current_author = secondary.owner_name;
+            results.current_author_id = secondary.owner_channel_id;
+            results.current_author_avatar = secondary.owner_avatar;
         }
 
         // Extract Autoplay
@@ -83,6 +108,7 @@ pub fn parse_watch_next_response(video_id: &str, raw: &Value) -> Result<WatchNex
                     title: v.title.clone(),
                     author: v.author.as_ref().map(|a| a.name.clone()).unwrap_or_default(),
                     author_id: v.author.as_ref().and_then(|a| a.id.clone()),
+                    author_avatar: v.author.as_ref().and_then(|a| a.avatar_url().map(String::from)),
                     duration_text: v.duration.clone(),
                     duration_seconds: v.duration_ms.map(|ms| ms / 1000),
                     thumbnails: v.thumbnails.thumbnails.iter().map(|t| Thumbnail {

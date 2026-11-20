@@ -68,6 +68,23 @@ pub struct PlayerResponse {
     pub playback_tracking: Option<PlaybackTracking>,
 }
 
+impl PlayerResponse {
+    /// Caption tracks already present in this player response.
+    ///
+    /// Reads `captions.playerCaptionsTracklistRenderer` from the payload that
+    /// was fetched for this response; no additional `/player` request is made.
+    pub fn caption_tracks(&self) -> Vec<crate::models::transcript::TranscriptTrack> {
+        let Some(captions) = self.captions.as_ref() else {
+            return Vec::new();
+        };
+
+        crate::endpoints::transcript::extract_caption_tracks_from_player(
+            &serde_json::json!({ "captions": captions }),
+        )
+        .unwrap_or_default()
+    }
+}
+
 /// Playback tracking base URLs (legacy `IPlaybackTracking`).
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -345,17 +362,7 @@ impl VideoInfo {
                 )
             })?;
 
-        let caption_tracks = self
-            .player_response
-            .captions
-            .as_ref()
-            .map(|c| {
-                crate::endpoints::transcript::extract_caption_tracks_from_player(
-                    &serde_json::json!({ "captions": c }),
-                )
-            })
-            .transpose()?
-            .unwrap_or_default();
+        let caption_tracks = self.player_response.caption_tracks();
 
         let info = crate::utils::streaming_info::get_streaming_info(
             streaming_data,

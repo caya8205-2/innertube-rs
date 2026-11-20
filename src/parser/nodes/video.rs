@@ -591,6 +591,8 @@ impl VideoPrimaryInfoNode {
 pub struct VideoSecondaryInfoNode {
     pub owner_name: Option<String>,
     pub owner_channel_id: Option<String>,
+    /// Channel avatar parsed from `owner.videoOwnerRenderer.thumbnail`.
+    pub owner_avatar: Option<String>,
     pub subscriber_count: Option<String>,
     pub description: Option<String>,
 }
@@ -612,6 +614,11 @@ impl VideoSecondaryInfoNode {
             .and_then(Value::as_str)
             .map(ToString::to_string);
 
+        let owner_avatar = target
+            .pointer("/owner/videoOwnerRenderer/thumbnail")
+            .map(ThumbnailListNode::from_value)
+            .and_then(|list| list.largest_url().map(ToString::to_string));
+
         let subscriber_count = target
             .pointer("/owner/videoOwnerRenderer/subscriberCountText")
             .and_then(TextNode::from_value)
@@ -632,6 +639,7 @@ impl VideoSecondaryInfoNode {
         Some(Self {
             owner_name,
             owner_channel_id,
+            owner_avatar,
             subscriber_count,
             description,
         })
