@@ -82,4 +82,12 @@ impl AuthorNode {
             is_verified_artist,
         })
     }
+
+    /// Largest channel-avatar URL carried by this author node.
+    ///
+    /// These thumbnails come from the author/`decoratedAvatarViewModel`
+    /// payload, not from the video's own cover image.
+    pub fn avatar_url(&self) -> Option<&str> {
+        self.thumbnails.largest_url()
+    }
 }
